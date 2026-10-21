@@ -1,0 +1,14 @@
+{
+  "name": "@pulso/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@pulso/contracts": "workspace:*",
+    "@pulso/tse": "workspace:*"
+  }
+}
