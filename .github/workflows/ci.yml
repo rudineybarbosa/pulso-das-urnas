@@ -34,8 +34,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check:
+    name: Há aplicação?
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.check.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f package.json ] && [ -f pnpm-lock.yaml ]; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+            echo "Sem package.json/pnpm-lock.yaml nesta fase: checks de aplicação ignorados."
+          fi
+
   quality:
     name: Lint, tipos, testes e build
+    needs: check
+    if: needs.check.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +73,8 @@ jobs:
 
   e2e:
     name: E2E e acessibilidade (modo fake)
+    needs: check
+    if: needs.check.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
