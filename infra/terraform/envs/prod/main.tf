@@ -94,7 +94,7 @@ module "runtime" {
   image            = var.image
   snapshots_bucket = module.data.snapshots_bucket
   assets_bucket    = module.data.assets_bucket
-  min_instances    = 1
+  min_instances    = 0
   max_instances    = 6
   depends_on       = [module.apis, module.data]
 }

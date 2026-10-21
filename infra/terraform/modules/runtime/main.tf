@@ -31,6 +31,12 @@ resource "google_storage_bucket_iam_member" "api_snapshots" {
   member = "serviceAccount:${google_service_account.api.email}"
 }
 
+resource "google_project_iam_member" "ingest_run_jobs" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.ingest.email}"
+}
+
 resource "google_storage_bucket_iam_member" "ingest_snapshots" {
   bucket = var.snapshots_bucket
   role   = "roles/storage.objectCreator"
@@ -86,7 +92,9 @@ resource "google_cloud_run_v2_job" "ingest" {
       timeout         = "55s"
       max_retries     = 1
       containers {
-        image = var.image
+        image   = var.image
+        command = ["pnpm"]
+        args    = ["--filter", "@pulso/ingest", "dev"]
         env {
           name  = "DATA_MODE"
           value = "real"
