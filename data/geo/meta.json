@@ -1,0 +1,614 @@
+{
+  "versao": "1.0.0-836b409ff9c9",
+  "geradoEm": "2026-10-21T22:30:52.791Z",
+  "estados": [
+    {
+      "id": "12",
+      "sigla": "AC",
+      "nome": "Acre",
+      "centroide": [
+        -70.4836,
+        -9.216
+      ],
+      "bbox": [
+        -73.9904,
+        -11.1458,
+        -66.6269,
+        -7.1119
+      ],
+      "municipios": 22
+    },
+    {
+      "id": "27",
+      "sigla": "AL",
+      "nome": "Alagoas",
+      "centroide": [
+        -36.6197,
+        -9.5136
+      ],
+      "bbox": [
+        -38.2374,
+        -10.4969,
+        -35.1528,
+        -8.8212
+      ],
+      "municipios": 102
+    },
+    {
+      "id": "16",
+      "sigla": "AP",
+      "nome": "Amapá",
+      "centroide": [
+        -51.9769,
+        1.4518
+      ],
+      "bbox": [
+        -54.8722,
+        -1.1159,
+        -49.8898,
+        4.5086
+      ],
+      "municipios": 16
+    },
+    {
+      "id": "13",
+      "sigla": "AM",
+      "nome": "Amazonas",
+      "centroide": [
+        -64.653,
+        -4.1577
+      ],
+      "bbox": [
+        -73.8016,
+        -9.8181,
+        -56.4021,
+        2.2442
+      ],
+      "municipios": 62
+    },
+    {
+      "id": "29",
+      "sigla": "BA",
+      "nome": "Bahia",
+      "centroide": [
+        -41.7222,
+        -12.4606
+      ],
+      "bbox": [
+        -46.5532,
+        -18.3372,
+        -37.3413,
+        -8.5329
+      ],
+      "municipios": 417
+    },
+    {
+      "id": "23",
+      "sigla": "CE",
+      "nome": "Ceará",
+      "centroide": [
+        -39.6168,
+        -5.0867
+      ],
+      "bbox": [
+        -41.4143,
+        -7.8325,
+        -37.2527,
+        -2.8034
+      ],
+      "municipios": 184
+    },
+    {
+      "id": "53",
+      "sigla": "DF",
+      "nome": "Distrito Federal",
+      "centroide": [
+        -47.8004,
+        -15.786
+      ],
+      "bbox": [
+        -48.2776,
+        -16.0502,
+        -47.3083,
+        -15.5019
+      ],
+      "municipios": 1
+    },
+    {
+      "id": "32",
+      "sigla": "ES",
+      "nome": "Espírito Santo",
+      "centroide": [
+        -40.6698,
+        -19.5841
+      ],
+      "bbox": [
+        -41.8747,
+        -21.3013,
+        -39.6679,
+        -17.8944
+      ],
+      "municipios": 78
+    },
+    {
+      "id": "52",
+      "sigla": "GO",
+      "nome": "Goiás",
+      "centroide": [
+        -49.6047,
+        -16.0359
+      ],
+      "bbox": [
+        -53.2484,
+        -19.4675,
+        -45.9074,
+        -12.445
+      ],
+      "municipios": 246
+    },
+    {
+      "id": "21",
+      "sigla": "MA",
+      "nome": "Maranhão",
+      "centroide": [
+        -45.2773,
+        -5.0845
+      ],
+      "bbox": [
+        -48.7554,
+        -10.2508,
+        -41.7969,
+        -1.1838
+      ],
+      "municipios": 217
+    },
+    {
+      "id": "51",
+      "sigla": "MT",
+      "nome": "Mato Grosso",
+      "centroide": [
+        -55.9165,
+        -12.9368
+      ],
+      "bbox": [
+        -61.6278,
+        -18.0341,
+        -50.2249,
+        -7.3561
+      ],
+      "municipios": 141
+    },
+    {
+      "id": "50",
+      "sigla": "MS",
+      "nome": "Mato Grosso do Sul",
+      "centroide": [
+        -54.8442,
+        -20.3088
+      ],
+      "bbox": [
+        -58.1486,
+        -24.0683,
+        -50.9352,
+        -17.1714
+      ],
+      "municipios": 79
+    },
+    {
+      "id": "31",
+      "sigla": "MG",
+      "nome": "Minas Gerais",
+      "centroide": [
+        -44.6481,
+        -18.4463
+      ],
+      "bbox": [
+        -51.0005,
+        -22.9228,
+        -39.8566,
+        -14.2468
+      ],
+      "municipios": 853
+    },
+    {
+      "id": "15",
+      "sigla": "PA",
+      "nome": "Pará",
+      "centroide": [
+        -53.06,
+        -3.9724
+      ],
+      "bbox": [
+        -58.8954,
+        -9.8411,
+        -46.1041,
+        2.5836
+      ],
+      "municipios": 144
+    },
+    {
+      "id": "25",
+      "sigla": "PB",
+      "nome": "Paraíba",
+      "centroide": [
+        -36.823,
+        -7.1184
+      ],
+      "bbox": [
+        -38.7651,
+        -8.3031,
+        -34.7931,
+        -6.0284
+      ],
+      "municipios": 223
+    },
+    {
+      "id": "41",
+      "sigla": "PR",
+      "nome": "Paraná",
+      "centroide": [
+        -51.6143,
+        -24.6365
+      ],
+      "bbox": [
+        -54.619,
+        -26.6278,
+        -48.0963,
+        -22.5162
+      ],
+      "municipios": 399
+    },
+    {
+      "id": "26",
+      "sigla": "PE",
+      "nome": "Pernambuco",
+      "centroide": [
+        -38.0074,
+        -8.3269
+      ],
+      "bbox": [
+        -41.3582,
+        -9.4455,
+        -32.4079,
+        -3.8455
+      ],
+      "municipios": 185
+    },
+    {
+      "id": "22",
+      "sigla": "PI",
+      "nome": "Piauí",
+      "centroide": [
+        -42.9595,
+        -7.3811
+      ],
+      "bbox": [
+        -46.0126,
+        -10.9289,
+        -40.4771,
+        -2.7573
+      ],
+      "municipios": 224
+    },
+    {
+      "id": "33",
+      "sigla": "RJ",
+      "nome": "Rio de Janeiro",
+      "centroide": [
+        -42.6598,
+        -22.2183
+      ],
+      "bbox": [
+        -44.8096,
+        -23.3676,
+        -40.9611,
+        -20.766
+      ],
+      "municipios": 92
+    },
+    {
+      "id": "24",
+      "sigla": "RN",
+      "nome": "Rio Grande do Norte",
+      "centroide": [
+        -36.6689,
+        -5.8357
+      ],
+      "bbox": [
+        -38.5626,
+        -6.9305,
+        -34.9686,
+        -4.8314
+      ],
+      "municipios": 167
+    },
+    {
+      "id": "43",
+      "sigla": "RS",
+      "nome": "Rio Grande do Sul",
+      "centroide": [
+        -53.2998,
+        -29.6987
+      ],
+      "bbox": [
+        -57.5943,
+        -33.7439,
+        -49.713,
+        -27.094
+      ],
+      "municipios": 497
+    },
+    {
+      "id": "11",
+      "sigla": "RO",
+      "nome": "Rondônia",
+      "centroide": [
+        -62.8454,
+        -10.9181
+      ],
+      "bbox": [
+        -66.8103,
+        -13.6931,
+        -59.7794,
+        -7.9757
+      ],
+      "municipios": 52
+    },
+    {
+      "id": "14",
+      "sigla": "RR",
+      "nome": "Roraima",
+      "centroide": [
+        -61.3923,
+        2.0827
+      ],
+      "bbox": [
+        -64.8106,
+        -1.4479,
+        -58.8954,
+        5.2718
+      ],
+      "municipios": 15
+    },
+    {
+      "id": "42",
+      "sigla": "SC",
+      "nome": "Santa Catarina",
+      "centroide": [
+        -50.4629,
+        -27.2473
+      ],
+      "bbox": [
+        -53.8372,
+        -29.3257,
+        -48.3737,
+        -25.977
+      ],
+      "municipios": 295
+    },
+    {
+      "id": "35",
+      "sigla": "SP",
+      "nome": "São Paulo",
+      "centroide": [
+        -48.7459,
+        -22.2583
+      ],
+      "bbox": [
+        -53.1054,
+        -25.309,
+        -44.1842,
+        -19.78
+      ],
+      "municipios": 645
+    },
+    {
+      "id": "28",
+      "sigla": "SE",
+      "nome": "Sergipe",
+      "centroide": [
+        -37.4228,
+        -10.5753
+      ],
+      "bbox": [
+        -38.205,
+        -11.5215,
+        -36.3957,
+        -9.5149
+      ],
+      "municipios": 75
+    },
+    {
+      "id": "17",
+      "sigla": "TO",
+      "nome": "Tocantins",
+      "centroide": [
+        -48.3306,
+        -10.1426
+      ],
+      "bbox": [
+        -50.7285,
+        -13.3291,
+        -45.7236,
+        -5.1919
+      ],
+      "municipios": 139
+    }
+  ],
+  "fontes": [
+    {
+      "escopo": "estados",
+      "url": "https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome",
+      "hash": "sha256:6b001067b04e037095410ce8d33e11a2d77bf63750354a09608b12f086324f04",
+      "bytes": 2446
+    },
+    {
+      "escopo": "br",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=UF",
+      "hash": "sha256:09bc90c2391229ed1b07f11bbde0986180139f64b5e882379d8926c21eff0052",
+      "bytes": 251135
+    },
+    {
+      "escopo": "uf/12",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/12?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:270afebd3ffbca1750592cadb20ec65f65b88e3c91b4ab4c11871872a0679772",
+      "bytes": 103358
+    },
+    {
+      "escopo": "uf/27",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/27?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:ab1b1e740bb633ccc58906c3bdd43965d9556336bda73152a5312134cd4f3fee",
+      "bytes": 86342
+    },
+    {
+      "escopo": "uf/16",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/16?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:c9253f81329301e2984c94d4cb3f08d0dd72b383d37c5a3677f7afa8c3f33f38",
+      "bytes": 123540
+    },
+    {
+      "escopo": "uf/13",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/13?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:2496481609f0c34d0189ce076e4970b75185cf38775fe0b46cedee23c4f730b4",
+      "bytes": 677470
+    },
+    {
+      "escopo": "uf/29",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/29?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:909017a4f91e7950cea123d2601a53b64c70acdb2b256548be25ca9e703cc572",
+      "bytes": 873982
+    },
+    {
+      "escopo": "uf/23",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/23?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:f292f3fc5fd5aba049cb153800055e9e07767af55b1afe1c15977613f9662d85",
+      "bytes": 311039
+    },
+    {
+      "escopo": "uf/53",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/53?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:b6a1159a1029a4534f183ed96a14360b3b2dc602501dc3ddfd2b71952cb97c2b",
+      "bytes": 2603
+    },
+    {
+      "escopo": "uf/32",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/32?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:b65b4ce5d7c72504e99e363068c35206398ce5d380ec4d1e4065e17cd7669e19",
+      "bytes": 153934
+    },
+    {
+      "escopo": "uf/52",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/52?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:b047558c4a611c3b52da514486b2b4898f56c4b38d69ed765cd74b41ebec48fe",
+      "bytes": 734377
+    },
+    {
+      "escopo": "uf/21",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/21?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:74e94df4a853440b185d791650fde2938c10c39a4468045c58c0673db22e453b",
+      "bytes": 457327
+    },
+    {
+      "escopo": "uf/51",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/51?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:ec3845b293909a7a2f65a30855b243621c9230aec16058ec175167a7413f381a",
+      "bytes": 850075
+    },
+    {
+      "escopo": "uf/50",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/50?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:2390b70e792ca4f24c54e8e26afbd1457f1e019b295fa852f56602a26524223f",
+      "bytes": 373409
+    },
+    {
+      "escopo": "uf/31",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/31?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:6700b0db2c39a9238a47c553fa12020b0bcb0b66fce3416cafa8d3aab4e93ec6",
+      "bytes": 1824901
+    },
+    {
+      "escopo": "uf/15",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/15?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:88ec5a369b5e29c86bf6c9a71d1f77e9176f52d94e99f0b155dab851bed9a163",
+      "bytes": 755558
+    },
+    {
+      "escopo": "uf/25",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/25?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:16f6cb8495460d850a7d58dd607c787fd405610721555e8dfc25ed931c3190ad",
+      "bytes": 215340
+    },
+    {
+      "escopo": "uf/41",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/41?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:e9e25db0578e6ee9d10b4658af18cba2b9b3b72fd18a973f2806a6073770a859",
+      "bytes": 727970
+    },
+    {
+      "escopo": "uf/26",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/26?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:148078d58bbc3cd164385492e519c02f12a7d57b898eb038742b01432b20d67f",
+      "bytes": 223489
+    },
+    {
+      "escopo": "uf/22",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/22?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:67639849b3f900062ab35204bfbcd746d0aa891a6abfb185c4b5dd5ec2a87fb1",
+      "bytes": 284921
+    },
+    {
+      "escopo": "uf/33",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/33?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:e3db2bf8a62083e3244397484c743871035141b1b53c4b2b41f662e55b794c6c",
+      "bytes": 153090
+    },
+    {
+      "escopo": "uf/24",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/24?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:68fd860f10672e0e4ec0006bbd417a93b2692ee99201a5d9db2978ff2fd6946e",
+      "bytes": 129491
+    },
+    {
+      "escopo": "uf/43",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/43?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:18b8734d915aba772757c73cf9b68e9b0ca71499a6a5856b4424f6a41a431c82",
+      "bytes": 880952
+    },
+    {
+      "escopo": "uf/11",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/11?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:080c2a101d64d8ff8eaa084c3eb2f972ad552c31beb2bcc5e4f50cb41e2f99fe",
+      "bytes": 232110
+    },
+    {
+      "escopo": "uf/14",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/14?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:4b69972f864220f2f56b1734b0e8dba5cbd2c88f909bbe09180da0b607f71d21",
+      "bytes": 133062
+    },
+    {
+      "escopo": "uf/42",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/42?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:2e97966746dab34a05e3a02f4a79e2b85550fce5afa5baac5e47e8f5141be5da",
+      "bytes": 450837
+    },
+    {
+      "escopo": "uf/35",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/35?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:a9296e20334db2f4c6d86e74d97dec46842ab0c849f5b93076633c5e8348668d",
+      "bytes": 1011746
+    },
+    {
+      "escopo": "uf/28",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/28?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:ed4ec46239674003552c2a99e016968696ef8b6979dda3cf6042a749475ef2c5",
+      "bytes": 81308
+    },
+    {
+      "escopo": "uf/17",
+      "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/17?formato=application/vnd.geo%2Bjson&qualidade=intermediaria&intrarregiao=municipio",
+      "hash": "sha256:6d1776c4626279723ff49d0a8f9f8f24f93f87d767a6a3060f0daebb2b1eb611",
+      "bytes": 456346
+    }
+  ]
+}
