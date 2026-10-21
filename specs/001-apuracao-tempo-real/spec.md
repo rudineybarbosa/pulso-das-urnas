@@ -10,6 +10,24 @@
 
 > Esta é a spec canônica do Spec Kit para a v1. Os detalhes normativos por requisito estão em [docs/requisitos](../../docs/requisitos/), e o design aprovado em [docs/superpowers/specs](../../docs/superpowers/specs/2026-10-20-pulso-das-urnas-design.md).
 
+## Recorte desta implementação
+
+Decidido no [grill-me](grilling.md):
+
+- **Entrega vertical end-to-end**: contratos, domínio, parser do TSE, API, mapa, painel, busca, corrida e testes, com infraestrutura pronta para aplicar.
+- **Dois modos de dados**: `fake` (replay e cenários, padrão local) e `real` (TSE apenas no servidor).
+- **Sem deploy em nuvem nesta execução**: Terraform é validado com `fmt`/`validate`/`plan`; o apply é humano (Q-02).
+- **Fora**: login, admin, fotos, áudio, SSE/telão, CSV, push, outros idiomas e dados por zona/seção.
+- **Prova**: ATs da fatia verdes, convergência, revisão sem bloqueio e `prova-de-entrega` na URL local.
+
+## Decisões de aceite
+
+1. A primeira tela útil é o mapa do Brasil com os 27 estados e a cor do líder do maior cargo (US1).
+2. O drill-down completo (estado → município → painel) é obrigatório na entrega, não opcional (US2).
+3. A corrida e a cena final são parte da entrega, não "fase futura" (US3).
+4. Acessibilidade e modo fake são critérios de aceite, não polish (US4).
+5. Nenhum número exibido pode existir fora do snapshot com fonte e horário (US5).
+
 ## User Scenarios & Testing
 
 ### User Story 1 — Entender o país e o meu estado (Priority: P1)
