@@ -2,7 +2,7 @@
 
 A apuração das eleições brasileiras em tempo real, estado por estado, cidade por cidade — com um mapa clicável e uma corrida de cavalinhos que mostra a disputa acontecendo.
 
-> **Status:** especificação aprovada para implementação (v0.1.0, 20/10/2026). Ainda não há código de produto neste repositório.
+> **Status:** fatia vertical v1 implementada e verificada em 21/10/2026 (mapa, busca, painel, corrida, API, ingestão e testes). O deploy em nuvem e os itens de v1.1 estão em [docs/operacao/convergencia-2026-10-21.md](docs/operacao/convergencia-2026-10-21.md).
 
 ## O que o sistema faz
 

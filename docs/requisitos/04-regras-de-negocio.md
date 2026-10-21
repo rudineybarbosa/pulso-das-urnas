@@ -50,7 +50,7 @@ cor(uf) = corDoPartido(lider(uf, cargoEmDestaque(uf)))
 
 - Sem líder, o preenchimento e o rótulo seguem o estado de ausência de RN-035 (`sem_voto`, `sem_dado`, `nao_aplicavel`, `sem_lider_elegivel`). `retificado` é flag acumulável: não troca o preenchimento.
 - Empate → hachura neutra (RN-008).
-- A cor NUNCA é calculada a partir de um cargo menor quando o maior existe, mesmo que o menor tenha mais votos.
+- A cor NUNCA é calculada a partir de um cargo menor quando o maior existe, mesmo que o menor tenha mais votos — e NÃO muda quando o usuário seleciona outro cargo nos chips; a seleção altera painel, tabela e legenda, não o preenchimento do mapa.
 - A troca de cor obedece à histerese de RN-038: no máximo 1 mudança a cada 10 s, liderança nova só com margem sustentada por 2 snapshots; abaixo disso o detalhe marca "disputa acirrada".
 - Erro ou atraso da fonte NUNCA troca a cor: mantém o último snapshot e aplica o selo de frescor de RN-039.
 

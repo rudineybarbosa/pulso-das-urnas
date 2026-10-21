@@ -40,7 +40,7 @@ O usuário DEVE poder escolher o pleito e o turno. A escolha altera cargos, mapa
 
 ### RF-006 — Selecionar cargo
 O usuário DEVE poder escolher o cargo exibido por chips. O chip padrão é o maior cargo em disputa (RN-005). A escolha é refletida na URL (`?cargo=`).
-- O mapa, a legenda, o painel e a corrida reagem à troca.
+- O cabeçalho, o painel, a tabela e a legenda reagem à troca. O mapa permanece colorido pelo cargo em destaque (RN-006); a corrida continua no maior cargo nacional.
 - Deep link com `?cargo=` inválido para o escopo ou pleito DEVE redirecionar para o cargo em destaque, com o mesmo aviso não bloqueante de RF-005, sem erro de página e sem alterar o restante da URL (RN-036).
 - Aceite: AT-003.
 

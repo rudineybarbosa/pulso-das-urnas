@@ -31,12 +31,12 @@ A convergência compara o código com o **recorte aprovado no grill-me**: fatia 
 | FR-002 maior cargo/cor | Implementado | `packages/domain/offices.ts` + `panorama` |
 | FR-003 estados de cor | Implementado | mapa + `resolveStatus`; a11y/e2e |
 | FR-004 drill-down | Implementado | `BrazilMap`/`StateMap`; e2e J-02 |
-| FR-005 painel de votos | Implementado | `ScopePanel`; teste de componente |
+| FR-005 painel de votos | Parcial | `ScopePanel`; em real, município só tem arquivo próprio para SP |
 | FR-006 busca | Implementado | `SearchCombobox`; e2e |
-| FR-007 atualização/frescor | Implementado | polling 5 s + `Freshness` |
+| FR-007 atualização/frescor | Parcial | três idades; falta `fonte_sem_atualizacao` |
 | FR-008 corrida | Implementado | `RaceTrack`; e2e |
 | FR-009 pausa/reduced motion | Implementado | botão + media query; e2e |
-| FR-010 teclado/tabela | Implementado | `DataTable`, foco, axe |
+| FR-010 teclado/tabela | Parcial | foco/Esc/tabela paginada; falta setas/`aria-live` agregado |
 | FR-011 URL | Parcial | URL por UF/IBGE; slug/301 e OG pré-renderizado ficam para v1.1 |
 | FR-012 fonte/não oficialidade | Implementado | rodapé + `index.html` |
 | FR-013 degradação | Implementado | estados de ausência e mensagens |
