@@ -49,6 +49,19 @@ describe("bordas do parser", () => {
     expect(municipalities.ufs.SP?.[0]?.ibge).toBe(3550308)
   })
 
+  it("dvt ausente não vira Válido", () => {
+    const parsed = parseResult({
+      carg: [
+        {
+          cd: "1",
+          nmn: "Presidente",
+          agr: [{ par: [{ sg: "PL", cand: [{ n: "22", nm: "FULANO", vap: "10" }] }] }],
+        },
+      ],
+    })
+    expect(parsed.offices[0]?.candidates[0]?.destinacao).toBe("Desconhecido")
+  })
+
   it("progresso vazio não quebra", () => {
     const progress = parseProgress({ ele: "6257", t: "1" })
     expect(progress.byUf).toEqual({})

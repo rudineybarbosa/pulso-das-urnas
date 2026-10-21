@@ -5,7 +5,8 @@ export type OfficeType = "majoritario" | "proporcional"
 export type AbsenceStatus = "ok" | "sem_voto" | "sem_dado" | "nao_aplicavel" | "sem_lider_elegivel"
 export type FreshnessStatus =
   "ao_vivo" | "desatualizado" | "fonte_indisponivel" | "finalizado" | "arquivado"
-export type VoteDestination = "Válido" | "Válido (legenda)" | "Anulado" | "Anulado sub judice"
+export type VoteDestination =
+  "Válido" | "Válido (legenda)" | "Anulado" | "Anulado sub judice" | "Desconhecido"
 
 export interface Office {
   id: string
@@ -85,6 +86,7 @@ export interface ScopeData {
     uf: string
     cor: PartyColor | null
     lider: { candidatoId: string; nome: string; partido: string; votos: number } | null
+    percentual: number | null
   }>
 }
 
@@ -97,6 +99,7 @@ export interface FallbackOrigin {
 
 export interface ScopeSnapshot {
   apiVersion: "1"
+  modo?: "fake" | "real"
   versao: string
   catalogVersion: string
   status: AbsenceStatus
@@ -121,15 +124,17 @@ export interface StateSummary {
     votos: number
     percentual: number
   } | null
-  votosValidos: number
-  percentualApurado: number
+  votosValidos: number | null
+  percentualApurado: number | null
   status: AbsenceStatus
   origem: FallbackOrigin | null
   disputaAcirrada: boolean
+  empate?: boolean
 }
 
 export interface Panorama {
   apiVersion: "1"
+  modo?: "fake" | "real"
   versao: string
   catalogVersion: string
   geradoEm: string
@@ -154,6 +159,7 @@ export interface RaceHorse {
 
 export interface Race {
   apiVersion: "1"
+  modo?: "fake" | "real"
   versao: string
   cargo: Office & { escopo: "br" }
   apuracao: Apuracao
@@ -197,7 +203,13 @@ export const candidateSchema = z.object({
   percentualBase: z.enum(["oficial_validos", "calculado_validos"]),
   calculado: z.boolean(),
   situacao: z.string(),
-  destinacao: z.enum(["Válido", "Válido (legenda)", "Anulado", "Anulado sub judice"]),
+  destinacao: z.enum([
+    "Válido",
+    "Válido (legenda)",
+    "Anulado",
+    "Anulado sub judice",
+    "Desconhecido",
+  ]),
   eleito: z.boolean(),
   vices: z.array(z.object({ nome: z.string(), partido: z.string().optional() })).optional(),
 })
@@ -298,7 +310,7 @@ export const panoramaSchema = z.object({
         uf: z.string(),
         nome: z.string(),
         status: z.string(),
-        votosValidos: z.number(),
+        votosValidos: z.number().nullable(),
       })
       .passthrough(),
   ),

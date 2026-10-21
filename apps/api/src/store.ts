@@ -15,6 +15,7 @@ import type {
 } from "@pulso/contracts"
 import {
   computeShare,
+  isEligible,
   nextLeader,
   orderCandidates,
   pickLeader,
@@ -92,8 +93,11 @@ export class DataStore {
   private readonly municipalities = loadMunicipalities()
   private readonly partyTable = readPartyTable()
   private readonly byUf = new Map<string, Map<string, ParsedScope>>()
-  private readonly nationalPresident: ParsedScope
-  private readonly spCity: ParsedScope | null
+  private readonly leaderState = new Map<
+    string,
+    { leader: { id: string; votos: number } | null; streak: number; lastAt: number }
+  >()
+  private readonly nationalPresident: ParsedScope | null
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
@@ -101,14 +105,7 @@ export class DataStore {
     this.speed = options.speed ?? 600
     this.now = options.now ?? (() => Date.now())
     this.startedAt = this.now()
-    this.nationalPresident = this.load("2026/6257/br-c0001-e006257-u.json")
-    this.spCity = (() => {
-      try {
-        return this.load("2026/6257/sp71072-c0001-e006257-u.json")
-      } catch {
-        return null
-      }
-    })()
+    this.nationalPresident = this.tryLoad("2026/6257/br-c0001-e006257-u.json")
     for (const [uf] of UF_CODES) {
       const offices = new Map<string, ParsedScope>()
       try {
@@ -130,9 +127,23 @@ export class DataStore {
   private load(relative: string): ParsedScope {
     if (this.mode === "real") {
       const snapshot = join(findRepoRoot(), "data", "snapshots", "raw", relative)
-      if (existsSync(snapshot)) return loadResultFile(snapshot)
+      if (!existsSync(snapshot)) throw new Error(`snapshot real ausente: ${relative}`)
+      return loadResultFile(snapshot)
     }
     return loadResult(relative)
+  }
+
+  private tryLoad(relative: string): ParsedScope | null {
+    try {
+      return this.load(relative)
+    } catch {
+      return null
+    }
+  }
+
+  private tryLoadCity(uf: string, tse: string, code: string): ParsedScope | null {
+    if (code !== PRESIDENT) return null
+    return this.tryLoad(`2026/6257/${uf.toLowerCase()}${tse}-c0001-e006257-u.json`)
   }
 
   progress(): number {
@@ -162,18 +173,42 @@ export class DataStore {
     return this.mode === "real" ? true : this.scenario === "fim"
   }
 
-  private source(scope = "br", generation = "fake"): SourceInfo {
+  private source(parsed: ParsedScope | null, scope = "br", generation = "fake"): SourceInfo {
     const now = this.now()
+    if (this.mode === "real") {
+      if (!parsed) {
+        return {
+          nome: "Tribunal Superior Eleitoral",
+          url: `https://resultados.tse.jus.br/oficial/ele2026/6257/dados/${scope}/`,
+          generationId: "",
+          generatedAt: new Date(0).toISOString(),
+          collectedAt: new Date(now).toISOString(),
+          parserVersion: "1.0.0",
+          status: "fonte_indisponivel",
+          sourceAgeSeconds: 999_999,
+          collectedAgeSeconds: 999_999,
+          snapshotAgeSeconds: 999_999,
+        }
+      }
+      return {
+        nome: "Tribunal Superior Eleitoral",
+        url: `https://resultados.tse.jus.br/oficial/ele2026/6257/dados/${scope}/`,
+        generationId: parsed.generationId,
+        generatedAt: parsed.generatedAt,
+        collectedAt: new Date(now).toISOString(),
+        parserVersion: "1.0.0",
+        status: parsed.finished ? "finalizado" : "ao_vivo",
+        sourceAgeSeconds: Math.max(0, Math.round((now - Date.parse(parsed.generatedAt)) / 1000)),
+        collectedAgeSeconds: 0,
+        snapshotAgeSeconds: 0,
+      }
+    }
     const stale = this.scenario === "erro-fonte" || this.scenario === "offline"
-    const generated = this.mode === "real" ? now - 5 * 60_000 : now
     return {
       nome: "Tribunal Superior Eleitoral",
-      url:
-        this.mode === "real"
-          ? `https://resultados.tse.jus.br/oficial/ele2026/6257/dados/${scope}/`
-          : "local://fixtures",
+      url: "local://fixtures",
       generationId: generation,
-      generatedAt: new Date(generated).toISOString(),
+      generatedAt: new Date(now).toISOString(),
       collectedAt: new Date(stale ? now - 120_000 : now).toISOString(),
       parserVersion: "1.0.0",
       status: stale ? "desatualizado" : this.finished() ? "finalizado" : "ao_vivo",
@@ -266,17 +301,36 @@ export class DataStore {
 
   panorama(cargoId = PRESIDENT): Panorama {
     const code = cargoId || PRESIDENT
-    const parsedFor = (uf: string) => this.parsedFor(uf, code)
+    const featured = PRESIDENT
+    const parsedFor = (uf: string) => this.parsedFor(uf, featured)
     const national = this.nationalPresident
     const progress = this.progress()
     const states: StateSummary[] = UF_CODES.map(([uf, ibge]) => {
       const parsed = parsedFor(uf)
-      const office = this.office(parsed, code)
-      const candidates = this.candidates(parsed, code)
+      const office = this.office(parsed, featured)
+      const candidates = this.candidates(parsed, featured)
       const valid = round((office?.validVotes ?? 0) * (progress / 100))
       const leaderResult = pickLeader(candidates)
-      const leader = progress > 0 ? leaderResult.candidate : null
       const tie = progress > 0 && leaderResult.tie.length > 1
+      const incoming = progress > 0 && !tie ? leaderResult.candidate : null
+      const key = `${uf}:${featured}`
+      const previous = this.leaderState.get(key)
+      const stable = nextLeader(
+        previous?.leader ?? null,
+        incoming ? { id: incoming.id, votos: incoming.votos } : null,
+        valid,
+        previous?.streak ?? 0,
+        this.now(),
+        previous?.lastAt ?? 0,
+      )
+      this.leaderState.set(key, {
+        leader: stable.leader,
+        streak: stable.streak,
+        lastAt: stable.lastAt,
+      })
+      const leader = stable.leader
+        ? (candidates.find((candidate) => candidate.id === stable.leader?.id) ?? null)
+        : null
       const status = resolveStatus({
         hasFile: parsed !== null && office !== null,
         applies: true,
@@ -284,6 +338,7 @@ export class DataStore {
         hasEligibleLeader: leader !== null,
       })
       const color = leader && !tie ? this.color(leader.partido) : null
+      const absent = status === "sem_dado" || status === "nao_aplicavel"
       return {
         uf,
         nome: UF_NAMES[uf] ?? uf,
@@ -298,20 +353,22 @@ export class DataStore {
               percentual: computeShare(leader.votos, valid),
             }
           : null,
-        votosValidos: valid,
-        percentualApurado: progress,
+        votosValidos: absent ? null : valid,
+        percentualApurado: absent ? null : progress,
         status,
         origem: null,
-        disputaAcirrada: false,
+        disputaAcirrada: stable.acirrada,
+        empate: tie,
       }
     })
 
     return {
       apiVersion: "1",
-      versao: `6257:${code}:${this.scenario}:${progress}`,
+      modo: this.mode,
+      versao: `6257:${code}:${national?.generationId ?? "sem"}:${this.catalog.version}:${progress}`,
       catalogVersion: this.catalog.version,
       geradoEm: new Date(this.now()).toISOString(),
-      fonte: this.source(),
+      fonte: this.source(national, "br", `${this.scenario}:${progress}`),
       pleito: {
         id: code === GOVERNOR ? "3220" : "3220",
         nome:
@@ -336,7 +393,7 @@ export class DataStore {
     const leader = pickLeader(candidates).candidate
     const status = resolveStatus({
       hasFile: parsed !== null && office !== null,
-      applies: true,
+      applies: this.cargos(uf).some((cargo) => cargo.id === code),
       validVotes: valid,
       hasEligibleLeader: leader !== null,
     })
@@ -357,6 +414,7 @@ export class DataStore {
       snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
         const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
         const cityLeader = pickLeader(cityCandidates).candidate
+        const cityValid = cityCandidates.reduce((total, candidate) => total + candidate.votos, 0)
         return {
           ibge: city.ibge,
           nome: city.nome,
@@ -370,6 +428,7 @@ export class DataStore {
                 votos: cityLeader.votos,
               }
             : null,
+          percentual: cityLeader ? computeShare(cityLeader.votos, cityValid) : null,
         }
       })
     }
@@ -407,6 +466,28 @@ export class DataStore {
     const [uf, cities] = ufEntry
     const city = cities.find((entry) => entry.ibge === ibge)
     if (!city) return null
+    const escopo = {
+      tipo: "municipio" as const,
+      id: city.tse,
+      nome: city.nome,
+      uf,
+      ibge: city.ibge,
+    }
+    if (this.mode === "real") {
+      const cityParsed = this.tryLoadCity(uf, city.tse, code)
+      if (!cityParsed) return this.snapshotEnvelope(escopo, code, null, [], "sem_dado")
+      const cityCandidates = this.candidates(cityParsed, code)
+      const cityOffice = this.office(cityParsed, code)
+      const cityValid = round((cityOffice?.validVotes ?? 0) * (this.progress() / 100))
+      const cityLeader = pickLeader(cityCandidates).candidate
+      const cityStatus = resolveStatus({
+        hasFile: cityOffice !== null,
+        applies: true,
+        validVotes: cityValid,
+        hasEligibleLeader: cityLeader !== null,
+      })
+      return this.snapshotEnvelope(escopo, code, cityParsed, cityCandidates, cityStatus)
+    }
     const parsed = this.parsedFor(uf, code)
     const candidates = this.cityCandidates(parsed, code, ibge)
     const base = this.office(parsed, code)
@@ -414,18 +495,23 @@ export class DataStore {
     const leader = pickLeader(candidates).candidate
     const status = resolveStatus({
       hasFile: parsed !== null && base !== null,
-      applies: true,
+      applies: this.cargos(uf).some((cargo) => cargo.id === code),
       validVotes: valid,
       hasEligibleLeader: leader !== null,
     })
-    const snapshot = this.snapshotEnvelope(
-      { tipo: "municipio", id: city.tse, nome: city.nome, uf, ibge: city.ibge },
-      code,
-      parsed,
-      candidates,
-      status,
-    )
-    if (snapshot.dados) snapshot.dados.resumo.votosValidos = valid
+    const snapshot = this.snapshotEnvelope(escopo, code, parsed, candidates, status)
+    if (snapshot.dados) {
+      snapshot.dados.resumo.votosValidos = valid
+      const ufValid = round((base?.validVotes ?? 0) * (this.progress() / 100))
+      const ratio = ufValid > 0 ? valid / ufValid : 0
+      const eleitorado = round((parsed?.electorate.total ?? 0) * ratio)
+      snapshot.dados.resumo.eleitorado = eleitorado
+      snapshot.dados.resumo.comparecimento = round((parsed?.electorate.turnout ?? 0) * ratio)
+      snapshot.dados.resumo.abstencao = Math.max(
+        0,
+        eleitorado - snapshot.dados.resumo.comparecimento,
+      )
+    }
     return snapshot
   }
 
@@ -441,12 +527,13 @@ export class DataStore {
     const valid = round((office?.validVotes ?? 0) * (progress / 100))
     return {
       apiVersion: "1",
-      versao: `${parsed?.electionId ?? "6257"}:${escopo.id}:${code}:${this.scenario}:${progress}`,
+      modo: this.mode,
+      versao: `${parsed?.electionId ?? "6257"}:${escopo.id}:${code}:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${progress}`,
       catalogVersion: this.catalog.version,
       status,
       retificado: this.scenario === "retificacao",
       geradoEm: new Date(this.now()).toISOString(),
-      fonte: this.source(escopo.uf?.toLowerCase() ?? "br", `${this.scenario}:${progress}`),
+      fonte: this.source(parsed, escopo.uf?.toLowerCase() ?? "br", `${this.scenario}:${progress}`),
       escopo,
       cargo: this.officeInfo(parsed, code),
       origem: null,
@@ -472,23 +559,26 @@ export class DataStore {
   race(): Race {
     const parsed = this.nationalPresident
     const candidates = this.candidates(parsed, PRESIDENT)
-    const leader = pickLeader(candidates).candidate
-    const second =
-      orderCandidates(candidates.filter((candidate) => candidate.id !== leader?.id))[0] ?? null
+    const eligible = orderCandidates(candidates.filter((candidate) => isEligible(candidate)))
+    const leader = eligible[0] ?? null
+    const second = eligible[1] ?? null
+    const validVotes = round(
+      (this.office(parsed, PRESIDENT)?.validVotes ?? 0) * (this.progress() / 100),
+    )
     const position = racePositions({
       progress: this.progress(),
       votesA: leader?.votos ?? 0,
       votesB: second?.votos ?? 0,
-      validVotes: round(
-        (this.office(parsed, PRESIDENT)?.validVotes ?? 0) * (this.progress() / 100),
-      ),
+      validVotes,
     })
-    const horses = [leader, second].filter(
-      (candidate): candidate is Candidate => candidate !== null,
-    )
+    const horses =
+      this.progress() === 0 || validVotes === 0 || !parsed
+        ? []
+        : [leader, second].filter((candidate): candidate is Candidate => candidate !== null)
     return {
       apiVersion: "1",
-      versao: `6257:1:${this.scenario}:${this.progress()}`,
+      modo: this.mode,
+      versao: `6257:1:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${this.progress()}`,
       cargo: { ...this.officeInfo(parsed, PRESIDENT), escopo: "br" },
       apuracao: this.apuracao(parsed),
       cavalos: horses.map((candidate, index) => ({
@@ -506,7 +596,12 @@ export class DataStore {
         lider: leader?.id ?? null,
       },
       ultimaUltrapassagem: null,
-      interesses: this.progress() === 0 ? "sem_voto" : this.finished() ? "finalizado" : "ao_vivo",
+      interesses:
+        this.progress() === 0 || validVotes === 0 || (this.mode === "real" && !parsed)
+          ? "sem_voto"
+          : this.finished()
+            ? "finalizado"
+            : "ao_vivo",
     }
   }
 
@@ -579,6 +674,16 @@ export class DataStore {
 
   hasUf(uf: string): boolean {
     return UF_CODES.some(([sigla]) => sigla === uf)
+  }
+
+  hasPleito(id: string): boolean {
+    return this.catalog.pleitos.some((pleito) => pleito.id === id)
+  }
+
+  hasCargo(id: string): boolean {
+    return this.catalog.pleitos.some((pleito) =>
+      pleito.elections.some((election) => election.offices.some((office) => office.id === id)),
+    )
   }
 
   cargos(uf?: string): Office[] {

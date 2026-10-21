@@ -19,6 +19,29 @@ describe("bordas de cor", () => {
     ).toBeGreaterThanOrEqual(4.5)
   })
 
+  it("troca com 0,5% dos válidos ou 500 votos, nunca com ambos exigidos", () => {
+    const first = nextLeader({ id: "a", votos: 1000 }, { id: "b", votos: 1051 }, 10_000, 0, 1000, 0)
+    const second = nextLeader(
+      { id: "a", votos: 1000 },
+      { id: "b", votos: 1051 },
+      10_000,
+      first.streak,
+      11_000,
+      first.lastAt,
+    )
+    expect(first.changed).toBe(false)
+    expect(second.changed).toBe(true)
+    const below = nextLeader(
+      { id: "a", votos: 1000 },
+      { id: "b", votos: 1400 },
+      100_000,
+      0,
+      1000,
+      0,
+    )
+    expect(below.changed).toBe(false)
+  })
+
   it("aceita líder ausente e repetido", () => {
     expect(nextLeader(null, null, 0, 0).changed).toBe(false)
     expect(nextLeader(null, { id: "a", votos: 1 }, 10, 0).changed).toBe(true)

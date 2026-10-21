@@ -68,6 +68,25 @@ describe("API", () => {
     expect(response.json().apuracao.finalizada).toBe(true)
   })
 
+  it("corrida sem votos não inventa cavalos", async () => {
+    const response = await app("sem-votos").inject({ method: "GET", url: "/api/v1/corrida" })
+    expect(response.json().cavalos).toEqual([])
+  })
+
+  it("rejeita cargo e pleito inexistentes", async () => {
+    const cargo = await app().inject({ method: "GET", url: "/api/v1/panorama?cargo=99" })
+    expect(cargo.statusCode).toBe(404)
+    expect(cargo.json().code).toBe("CARGO_NAO_ENCONTRADO")
+    const pleito = await app().inject({ method: "GET", url: "/api/v1/panorama?pleito=9999" })
+    expect(pleito.statusCode).toBe(404)
+    expect(pleito.json().code).toBe("PLEITO_NAO_ENCONTRADO")
+  })
+
+  it("cargo inexistente no DF é não aplicável", async () => {
+    const response = await app().inject({ method: "GET", url: "/api/v1/escopos/df?cargo=7" })
+    expect(response.json().status).toBe("nao_aplicavel")
+  })
+
   it("corrida tem dois cavalos", async () => {
     const response = await app().inject({ method: "GET", url: "/api/v1/corrida" })
     const body = response.json()

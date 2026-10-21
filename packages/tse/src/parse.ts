@@ -32,12 +32,15 @@ function toInteger(value: string | undefined, fallback = 0): number {
 
 function normalizeDestination(value: string | undefined): VoteDestination {
   switch (value) {
+    case "Válido":
+      return "Válido"
     case "Anulado":
     case "Anulado sub judice":
     case "Válido (legenda)":
+    case "Desconhecido":
       return value
     default:
-      return "Válido"
+      return "Desconhecido"
   }
 }
 

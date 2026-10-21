@@ -46,13 +46,26 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
   const store = options.store ?? new DataStore()
   const limit = options.rateLimit ?? 300
   const buckets = new Map<string, RateEntry>()
-  const app = Fastify({ logger: false, disableRequestLogging: true })
+  const app = Fastify({ logger: false, disableRequestLogging: true, trustProxy: true })
+
+  app.addHook("onSend", async (_request, reply, payload) => {
+    reply.header(
+      "Content-Security-Policy",
+      "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+    )
+    reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+    reply.header("X-Content-Type-Options", "nosniff")
+    reply.header("Referrer-Policy", "strict-origin-when-cross-origin")
+    reply.header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
+    return payload
+  })
 
   app.addHook("onRequest", async (request, reply) => {
     reply.header("x-request-id", request.id)
     if (request.url.startsWith("/healthz") || request.url.startsWith("/readyz")) return
     const ip = request.ip || "unknown"
     const now = Date.now()
+    if (buckets.size > 10_000) buckets.clear()
     const entry = buckets.get(ip)
     if (!entry || entry.reset < now) {
       buckets.set(ip, { count: 1, reset: now + 60_000 })
@@ -101,6 +114,37 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     return reply.type("application/json; charset=utf-8").send(body)
   }
 
+  function validScope(
+    request: FastifyRequest,
+    reply: FastifyReply,
+    query: Record<string, string | undefined>,
+  ): string | FastifyReply {
+    if (query.pleito && !store.hasPleito(query.pleito)) {
+      return problem(
+        reply,
+        404,
+        "PLEITO_NAO_ENCONTRADO",
+        "Pleito não encontrado",
+        "Não há pleito com esse código.",
+        request.url,
+        request.id,
+      )
+    }
+    const cargo = query.cargo ?? "1"
+    if (!store.hasCargo(cargo)) {
+      return problem(
+        reply,
+        404,
+        "CARGO_NAO_ENCONTRADO",
+        "Cargo não encontrado",
+        "Não há cargo com esse código.",
+        request.url,
+        request.id,
+      )
+    }
+    return cargo
+  }
+
   app.get("/healthz", async () => ({ status: "ok" }))
   app.get("/readyz", async (_request, reply) => {
     const panorama = store.panorama("1")
@@ -121,11 +165,12 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
 
   app.get("/api/v1/panorama", async (request, reply) => {
     const query = request.query as Record<string, string | undefined>
-    const cargo = query.cargo ?? "1"
+    const validated = validScope(request, reply, query)
+    if (typeof validated !== "string") return validated
     return cached(
       request,
       reply,
-      store.panorama(cargo),
+      store.panorama(validated),
       "public, max-age=0, s-maxage=3, stale-while-revalidate=5, stale-if-error=22",
     )
   })
@@ -134,6 +179,8 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const params = request.params as { uf: string }
     const query = request.query as Record<string, string | undefined>
     const uf = params.uf.toUpperCase()
+    const validated = validScope(request, reply, query)
+    if (typeof validated !== "string") return validated
     if (!/^[A-Z]{2}$/.test(uf)) {
       return problem(
         reply,
@@ -168,7 +215,9 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const params = request.params as { ibge: string }
     const query = request.query as Record<string, string | undefined>
     const ibge = numberParam(params.ibge, 0)
-    const snapshot = store.municipality(ibge, query.cargo ?? "1")
+    const validated = validScope(request, reply, query)
+    if (typeof validated !== "string") return validated
+    const snapshot = store.municipality(ibge, validated)
     if (!snapshot) {
       return problem(
         reply,

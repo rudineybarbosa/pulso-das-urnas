@@ -111,6 +111,7 @@ export interface HysteresisState {
 export interface HysteresisResult extends HysteresisState {
   changed: boolean
   acirrada: boolean
+  lastAt: number
 }
 
 /** RN-038: troca só com 0,5% dos válidos ou 500 votos, por 2 snapshots. */
@@ -119,24 +120,27 @@ export function nextLeader(
   incoming: LeaderVotes | null,
   validVotes: number,
   streak: number,
+  now = Date.now(),
+  lastAt = 0,
 ): HysteresisResult {
   if (!incoming) {
-    return { leader: null, streak: 0, changed: previous !== null, acirrada: false }
+    return { leader: null, streak: 0, changed: previous !== null, acirrada: false, lastAt }
   }
   if (!previous) {
-    return { leader: incoming, streak: 0, changed: true, acirrada: false }
+    return { leader: incoming, streak: 0, changed: true, acirrada: false, lastAt: now }
   }
   if (previous.id === incoming.id) {
-    return { leader: incoming, streak: 0, changed: false, acirrada: false }
+    return { leader: incoming, streak: 0, changed: false, acirrada: false, lastAt }
   }
-  const threshold = Math.max(validVotes * 0.005, 500)
   const difference = incoming.votos - previous.votos
-  if (difference >= threshold) {
-    const nextStreak = streak + 1
+  const relevant = difference >= validVotes * 0.005 || difference >= 500
+  const intervalReady = lastAt === 0 || now - lastAt >= 10_000
+  if (relevant) {
+    const nextStreak = intervalReady ? streak + 1 : streak
     if (nextStreak >= 2) {
-      return { leader: incoming, streak: 0, changed: true, acirrada: false }
+      return { leader: incoming, streak: 0, changed: true, acirrada: false, lastAt: now }
     }
-    return { leader: previous, streak: nextStreak, changed: false, acirrada: true }
+    return { leader: previous, streak: nextStreak, changed: false, acirrada: true, lastAt }
   }
-  return { leader: previous, streak: 0, changed: false, acirrada: true }
+  return { leader: previous, streak: 0, changed: false, acirrada: true, lastAt }
 }

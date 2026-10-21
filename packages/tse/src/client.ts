@@ -54,7 +54,7 @@ export async function fetchTseJson(url: string, options: FetchOptions = {}): Pro
     } catch (error) {
       lastError = error
       if (attempt === retries) break
-      await sleep(250 * 2 ** attempt)
+      await sleep(1000 * 2 ** attempt)
     }
   }
   throw lastError instanceof Error ? lastError : new Error("Falha ao consultar o TSE")
