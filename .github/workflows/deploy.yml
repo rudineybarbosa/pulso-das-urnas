@@ -2,15 +2,6 @@ name: Deploy
 
 on:
   push:
-    branches: [dev]
-    paths:
-      - "apps/**"
-      - "packages/**"
-      - "infra/terraform/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "firebase.json"
-      - ".github/workflows/deploy.yml"
     tags: ["v*"]
   workflow_dispatch:
     inputs:

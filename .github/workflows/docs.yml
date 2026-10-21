@@ -18,6 +18,7 @@ on:
       - ".opencode/**"
       - ".github/skills/**"
       - "scripts/check-*.mjs"
+  workflow_dispatch:
 
 permissions:
   contents: read

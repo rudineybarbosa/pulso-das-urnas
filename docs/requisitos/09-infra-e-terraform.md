@@ -88,7 +88,8 @@ flowchart LR
 ```
 
 - Autenticação GCP: **Workload Identity Federation** (sem chave JSON).
-- `terraform plan` em PR, salvo como artefato; `apply` só em `dev`/tag.
+- `terraform plan` em PR, salvo como artefato; `apply` só com `workflow_dispatch`, tag ou quando o ambiente estiver configurado.
+- Enquanto o WIF e os secrets (`GCP_WIF_PROVIDER`, `GCP_DEPLOY_SA`, `FIREBASE_TOKEN`) não existirem, o workflow Deploy fica **manual** e o publish é feito pelo runbook; nenhum push em `dev` dispara apply.
 - Deploy do frontend só depois do apply, para herdar variáveis e rewrites.
 - Rollback: `gcloud run services update-traffic --to-revisions` e `firebase hosting:rollback`; documentado no runbook.
 - Tag `v*` promove para `prod`; `main` só recebe release PR de `dev`.
