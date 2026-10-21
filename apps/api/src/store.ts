@@ -1,0 +1,602 @@
+import { existsSync, readFileSync } from "node:fs"
+import { join } from "node:path"
+import type {
+  Apuracao,
+  Candidate,
+  Office,
+  Panorama,
+  PartyColor,
+  Pleito,
+  Race,
+  Resumo,
+  ScopeSnapshot,
+  SourceInfo,
+  StateSummary,
+} from "@pulso/contracts"
+import {
+  computeShare,
+  nextLeader,
+  orderCandidates,
+  pickLeader,
+  racePositions,
+  resolvePartyColor,
+  resolveStatus,
+} from "@pulso/domain"
+import {
+  findRepoRoot,
+  loadCatalog,
+  loadMunicipalities,
+  loadResult,
+  loadResultFile,
+  presidentFixture,
+  stateFixture,
+  UF_CODES,
+  UF_NAMES,
+  type ParsedOffice,
+  type ParsedScope,
+} from "@pulso/tse"
+
+export type DataMode = "fake" | "real"
+export type Scenario =
+  | "sem-votos"
+  | "parcial"
+  | "virada"
+  | "empate"
+  | "fim"
+  | "erro-fonte"
+  | "dois-turnos"
+  | "dois-turnos-parcial"
+  | "retificacao"
+  | "suplementar"
+  | "catalogo-alterado"
+  | "candidato-removido"
+  | "offline"
+  | "geometria-ausente"
+
+export interface StoreOptions {
+  mode?: DataMode
+  scenario?: Scenario
+  speed?: number
+  now?: () => number
+}
+
+interface PartyTable {
+  [sigla: string]: { hex: string; fonte?: string }
+}
+
+const PRESIDENT = "1"
+const GOVERNOR = "3"
+
+function readPartyTable(): PartyTable {
+  const path = join(findRepoRoot(), "data", "party-colors.json")
+  return JSON.parse(readFileSync(path, "utf8")) as PartyTable
+}
+
+function hashNumber(value: string): number {
+  let hash = 0
+  for (const char of value) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  return hash
+}
+
+function round(value: number): number {
+  return Math.round(value)
+}
+
+export class DataStore {
+  readonly mode: DataMode
+  readonly scenario: Scenario
+  private readonly speed: number
+  private readonly now: () => number
+  private readonly startedAt: number
+  private readonly catalog = loadCatalog()
+  private readonly municipalities = loadMunicipalities()
+  private readonly partyTable = readPartyTable()
+  private readonly byUf = new Map<string, Map<string, ParsedScope>>()
+  private readonly nationalPresident: ParsedScope
+  private readonly spCity: ParsedScope | null
+
+  constructor(options: StoreOptions = {}) {
+    this.mode = options.mode ?? "fake"
+    this.scenario = options.scenario ?? "parcial"
+    this.speed = options.speed ?? 600
+    this.now = options.now ?? (() => Date.now())
+    this.startedAt = this.now()
+    this.nationalPresident = this.load("2026/6257/br-c0001-e006257-u.json")
+    this.spCity = (() => {
+      try {
+        return this.load("2026/6257/sp71072-c0001-e006257-u.json")
+      } catch {
+        return null
+      }
+    })()
+    for (const [uf] of UF_CODES) {
+      const offices = new Map<string, ParsedScope>()
+      try {
+        offices.set(PRESIDENT, this.load(presidentFixture(uf)))
+      } catch {
+        /* estado sem arquivo é sem_dado */
+      }
+      for (const code of ["3", "5", "6", "7", "8"]) {
+        try {
+          offices.set(code, this.load(stateFixture(uf, code)))
+        } catch {
+          /* cargo indisponível naquele estado */
+        }
+      }
+      this.byUf.set(uf, offices)
+    }
+  }
+
+  private load(relative: string): ParsedScope {
+    if (this.mode === "real") {
+      const snapshot = join(findRepoRoot(), "data", "snapshots", "raw", relative)
+      if (existsSync(snapshot)) return loadResultFile(snapshot)
+    }
+    return loadResult(relative)
+  }
+
+  progress(): number {
+    if (this.mode === "real") return 100
+    if (this.scenario === "sem-votos" || this.scenario === "dois-turnos") return 0
+    if (this.scenario === "fim" || this.scenario === "empate") return 100
+    if (this.scenario === "dois-turnos-parcial") return 40
+    if (
+      this.scenario === "parcial" ||
+      this.scenario === "erro-fonte" ||
+      this.scenario === "offline" ||
+      this.scenario === "retificacao" ||
+      this.scenario === "suplementar" ||
+      this.scenario === "catalogo-alterado" ||
+      this.scenario === "candidato-removido"
+    ) {
+      return 60
+    }
+    if (this.scenario === "virada") {
+      const elapsed = (this.now() - this.startedAt) / 1000
+      return Math.min(100, Math.round(elapsed * this.speed * 0.2))
+    }
+    return 60
+  }
+
+  private finished(): boolean {
+    return this.mode === "real" ? true : this.scenario === "fim"
+  }
+
+  private source(scope = "br", generation = "fake"): SourceInfo {
+    const now = this.now()
+    const stale = this.scenario === "erro-fonte" || this.scenario === "offline"
+    const generated = this.mode === "real" ? now - 5 * 60_000 : now
+    return {
+      nome: "Tribunal Superior Eleitoral",
+      url:
+        this.mode === "real"
+          ? `https://resultados.tse.jus.br/oficial/ele2026/6257/dados/${scope}/`
+          : "local://fixtures",
+      generationId: generation,
+      generatedAt: new Date(generated).toISOString(),
+      collectedAt: new Date(stale ? now - 120_000 : now).toISOString(),
+      parserVersion: "1.0.0",
+      status: stale ? "desatualizado" : this.finished() ? "finalizado" : "ao_vivo",
+      sourceAgeSeconds: stale ? 120 : 0,
+      collectedAgeSeconds: stale ? 120 : 0,
+      snapshotAgeSeconds: 0,
+    }
+  }
+
+  private apuracao(parsed: ParsedScope | null): Apuracao {
+    const progress = parsed ? this.progress() : 0
+    return {
+      secoesTotalizadas: Math.round((parsed?.sections.counted ?? 0) * (progress / 100)),
+      secoesTotal: parsed?.sections.total ?? 0,
+      percentual: progress,
+      finalizada: this.finished() && progress >= 100,
+    }
+  }
+
+  private resumo(parsed: ParsedScope | null): Resumo {
+    const progress = parsed ? this.progress() / 100 : 0
+    return {
+      votosValidos: round((parsed?.votes.valid ?? 0) * progress),
+      brancos: round((parsed?.votes.blank ?? 0) * progress),
+      nulos: round((parsed?.votes.null ?? 0) * progress),
+      comparecimento: round((parsed?.electorate.turnout ?? 0) * progress),
+      abstencao: round((parsed?.electorate.abstention ?? 0) * (1 - progress)),
+      eleitorado: parsed?.electorate.total ?? 0,
+      basePercentual: "validos",
+    }
+  }
+
+  private office(parsed: ParsedScope | null, code: string): ParsedOffice | null {
+    if (!parsed) return null
+    return parsed.offices.find((entry) => entry.office.id === code) ?? null
+  }
+
+  private candidates(parsed: ParsedScope | null, code: string): Candidate[] {
+    const office = this.office(parsed, code)
+    if (!office) return []
+    const progress = this.progress() / 100
+    const valid = round(office.validVotes * progress)
+    return office.candidates
+      .filter(
+        (candidate) =>
+          !(this.scenario === "candidato-removido" && candidate.id === office.candidates[0]?.id),
+      )
+      .map((candidate) => {
+        let factor = progress
+        if (this.scenario === "virada" && code === PRESIDENT) {
+          factor = Math.pow(progress, candidate === office.candidates[0] ? 1 : 0.7)
+        }
+        if (this.scenario === "empate") factor = progress
+        const votes = round(candidate.votos * factor)
+        return {
+          ...candidate,
+          votos: votes,
+          percentual: computeShare(votes, valid),
+          percentualBase: "calculado_validos" as const,
+          calculado: true,
+        }
+      })
+  }
+
+  private officeInfo(parsed: ParsedScope | null, code: string): Office {
+    const office = this.office(parsed, code)
+    if (office) return office.office
+    const names: Record<string, string> = {
+      "1": "Presidente",
+      "3": "Governador",
+      "5": "Senador",
+      "6": "Deputado Federal",
+      "7": "Deputado Estadual",
+      "8": "Deputado Distrital",
+    }
+    return {
+      id: code,
+      nome: names[code] ?? `Cargo ${code}`,
+      tipo: ["6", "7", "8", "13"].includes(code) ? "proporcional" : "majoritario",
+    }
+  }
+
+  private parsedFor(uf: string, code: string): ParsedScope | null {
+    return this.byUf.get(uf)?.get(code) ?? null
+  }
+
+  private color(party: string): PartyColor {
+    return resolvePartyColor(party, this.partyTable)
+  }
+
+  panorama(cargoId = PRESIDENT): Panorama {
+    const code = cargoId || PRESIDENT
+    const parsedFor = (uf: string) => this.parsedFor(uf, code)
+    const national = this.nationalPresident
+    const progress = this.progress()
+    const states: StateSummary[] = UF_CODES.map(([uf, ibge]) => {
+      const parsed = parsedFor(uf)
+      const office = this.office(parsed, code)
+      const candidates = this.candidates(parsed, code)
+      const valid = round((office?.validVotes ?? 0) * (progress / 100))
+      const leaderResult = pickLeader(candidates)
+      const leader = progress > 0 ? leaderResult.candidate : null
+      const tie = progress > 0 && leaderResult.tie.length > 1
+      const status = resolveStatus({
+        hasFile: parsed !== null && office !== null,
+        applies: true,
+        validVotes: valid,
+        hasEligibleLeader: leader !== null,
+      })
+      const color = leader && !tie ? this.color(leader.partido) : null
+      return {
+        uf,
+        nome: UF_NAMES[uf] ?? uf,
+        ibge,
+        cor: color,
+        lider: leader
+          ? {
+              candidatoId: leader.id,
+              nome: leader.nomeUrna,
+              partido: leader.partido,
+              votos: leader.votos,
+              percentual: computeShare(leader.votos, valid),
+            }
+          : null,
+        votosValidos: valid,
+        percentualApurado: progress,
+        status,
+        origem: null,
+        disputaAcirrada: false,
+      }
+    })
+
+    return {
+      apiVersion: "1",
+      versao: `6257:${code}:${this.scenario}:${progress}`,
+      catalogVersion: this.catalog.version,
+      geradoEm: new Date(this.now()).toISOString(),
+      fonte: this.source(),
+      pleito: {
+        id: code === GOVERNOR ? "3220" : "3220",
+        nome:
+          code === GOVERNOR ? "Eleições Gerais 2026 — Estadual" : "Eleições Gerais 2026 — Federal",
+        turno: 1,
+      },
+      cargoEmDestaque: this.officeInfo(national, PRESIDENT),
+      cargoSelecionado: this.officeInfo(national, code),
+      apuracao: this.apuracao(national),
+      resumo: this.resumo(national),
+      estados: states,
+    }
+  }
+
+  scopeSnapshot(uf: string, cargoId = PRESIDENT): ScopeSnapshot {
+    const code = cargoId || PRESIDENT
+    const parsed = this.parsedFor(uf, code)
+    const office = this.office(parsed, code)
+    const candidates = this.candidates(parsed, code)
+    const progress = this.progress()
+    const valid = round((office?.validVotes ?? 0) * (progress / 100))
+    const leader = pickLeader(candidates).candidate
+    const status = resolveStatus({
+      hasFile: parsed !== null && office !== null,
+      applies: true,
+      validVotes: valid,
+      hasEligibleLeader: leader !== null,
+    })
+    const snapshot = this.snapshotEnvelope(
+      {
+        tipo: "uf",
+        id: uf.toLowerCase(),
+        nome: UF_NAMES[uf] ?? uf,
+        uf,
+        ibge: UF_CODES.find(([sigla]) => sigla === uf)?.[1],
+      },
+      code,
+      parsed,
+      candidates,
+      status,
+    )
+    if (snapshot.dados) {
+      snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
+        const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
+        const cityLeader = pickLeader(cityCandidates).candidate
+        return {
+          ibge: city.ibge,
+          nome: city.nome,
+          uf,
+          cor: cityLeader ? this.color(cityLeader.partido) : null,
+          lider: cityLeader
+            ? {
+                candidatoId: cityLeader.id,
+                nome: cityLeader.nomeUrna,
+                partido: cityLeader.partido,
+                votos: cityLeader.votos,
+              }
+            : null,
+        }
+      })
+    }
+    return snapshot
+  }
+
+  cityCandidates(parsed: ParsedScope | null, code: string, ibge: number): Candidate[] {
+    if (!parsed) return []
+    const base = this.office(parsed, code)
+    if (!base) return []
+    const progress = this.progress() / 100
+    const factor = (0.4 + (hashNumber(String(ibge)) % 1000) / 1000) / 18
+    const candidates = base.candidates.map((candidate) => {
+      const skew = 0.55 + (hashNumber(`${candidate.partido}#${ibge}`) % 900) / 1000
+      return {
+        ...candidate,
+        votos: round(candidate.votos * factor * progress * skew),
+      }
+    })
+    const valid = candidates.reduce((total, candidate) => total + candidate.votos, 0)
+    return candidates.map((candidate) => ({
+      ...candidate,
+      percentual: computeShare(candidate.votos, valid),
+      percentualBase: "calculado_validos" as const,
+      calculado: true,
+    }))
+  }
+
+  municipality(ibge: number, cargoId = PRESIDENT): ScopeSnapshot | null {
+    const code = cargoId || PRESIDENT
+    const ufEntry = Object.entries(this.municipalities.ufs).find(([, cities]) =>
+      cities.some((city) => city.ibge === ibge),
+    )
+    if (!ufEntry) return null
+    const [uf, cities] = ufEntry
+    const city = cities.find((entry) => entry.ibge === ibge)
+    if (!city) return null
+    const parsed = this.parsedFor(uf, code)
+    const candidates = this.cityCandidates(parsed, code, ibge)
+    const base = this.office(parsed, code)
+    const valid = candidates.reduce((total, candidate) => total + candidate.votos, 0)
+    const leader = pickLeader(candidates).candidate
+    const status = resolveStatus({
+      hasFile: parsed !== null && base !== null,
+      applies: true,
+      validVotes: valid,
+      hasEligibleLeader: leader !== null,
+    })
+    const snapshot = this.snapshotEnvelope(
+      { tipo: "municipio", id: city.tse, nome: city.nome, uf, ibge: city.ibge },
+      code,
+      parsed,
+      candidates,
+      status,
+    )
+    if (snapshot.dados) snapshot.dados.resumo.votosValidos = valid
+    return snapshot
+  }
+
+  private snapshotEnvelope(
+    escopo: ScopeSnapshot["escopo"],
+    code: string,
+    parsed: ParsedScope | null,
+    candidates: Candidate[],
+    status: ScopeSnapshot["status"],
+  ): ScopeSnapshot {
+    const progress = this.progress()
+    const office = this.office(parsed, code)
+    const valid = round((office?.validVotes ?? 0) * (progress / 100))
+    return {
+      apiVersion: "1",
+      versao: `${parsed?.electionId ?? "6257"}:${escopo.id}:${code}:${this.scenario}:${progress}`,
+      catalogVersion: this.catalog.version,
+      status,
+      retificado: this.scenario === "retificacao",
+      geradoEm: new Date(this.now()).toISOString(),
+      fonte: this.source(escopo.uf?.toLowerCase() ?? "br", `${this.scenario}:${progress}`),
+      escopo,
+      cargo: this.officeInfo(parsed, code),
+      origem: null,
+      dados:
+        status === "sem_dado" || status === "nao_aplicavel"
+          ? null
+          : {
+              apuracao: this.apuracao(parsed),
+              resumo: {
+                votosValidos: valid,
+                brancos: round((office?.blank ?? 0) * (progress / 100)),
+                nulos: round((office?.nullVotes ?? 0) * (progress / 100)),
+                comparecimento: round((parsed?.electorate.turnout ?? 0) * (progress / 100)),
+                abstencao: round((parsed?.electorate.abstention ?? 0) * (1 - progress / 100)),
+                eleitorado: parsed?.electorate.total ?? 0,
+                basePercentual: "validos",
+              },
+              candidatos: orderCandidates(candidates),
+            },
+    }
+  }
+
+  race(): Race {
+    const parsed = this.nationalPresident
+    const candidates = this.candidates(parsed, PRESIDENT)
+    const leader = pickLeader(candidates).candidate
+    const second =
+      orderCandidates(candidates.filter((candidate) => candidate.id !== leader?.id))[0] ?? null
+    const position = racePositions({
+      progress: this.progress(),
+      votesA: leader?.votos ?? 0,
+      votesB: second?.votos ?? 0,
+      validVotes: round(
+        (this.office(parsed, PRESIDENT)?.validVotes ?? 0) * (this.progress() / 100),
+      ),
+    })
+    const horses = [leader, second].filter(
+      (candidate): candidate is Candidate => candidate !== null,
+    )
+    return {
+      apiVersion: "1",
+      versao: `6257:1:${this.scenario}:${this.progress()}`,
+      cargo: { ...this.officeInfo(parsed, PRESIDENT), escopo: "br" },
+      apuracao: this.apuracao(parsed),
+      cavalos: horses.map((candidate, index) => ({
+        posicao: index + 1,
+        candidatoId: candidate.id,
+        nomeUrna: candidate.nomeUrna,
+        partido: candidate.partido,
+        cor: this.color(candidate.partido).hex,
+        votos: candidate.votos,
+        percentual: candidate.percentual,
+      })),
+      diferenca: {
+        votos: Math.abs((leader?.votos ?? 0) - (second?.votos ?? 0)),
+        normalizada: Number(position.g.toFixed(4)),
+        lider: leader?.id ?? null,
+      },
+      ultimaUltrapassagem: null,
+      interesses: this.progress() === 0 ? "sem_voto" : this.finished() ? "finalizado" : "ao_vivo",
+    }
+  }
+
+  pleitos(): Pleito[] {
+    const progress = this.progress()
+    return this.catalog.pleitos
+      .filter((pleito) => pleito.id === "3220" || pleito.id === "3221")
+      .map((pleito) => ({
+        id: pleito.id,
+        nome: pleito.name,
+        data: pleito.date,
+        estado:
+          pleito.id === "3221" ? "nao_iniciada" : this.finished() ? "finalizado" : "em_apuracao",
+        cargos: pleito.elections.flatMap((election) => election.offices),
+        turnos: pleito.elections.map((election) => ({
+          eleicao: election.id,
+          turno: election.turno,
+          nome: election.name,
+          percentualApurado: pleito.id === "3221" ? 0 : progress,
+        })),
+      }))
+  }
+
+  localidades(query: string) {
+    const items = [
+      ...UF_CODES.map(([uf]) => ({
+        tipo: "estado" as const,
+        nome: UF_NAMES[uf] ?? uf,
+        uf,
+        slug: uf.toLowerCase(),
+      })),
+      ...Object.entries(this.municipalities.ufs).flatMap(([uf, cities]) =>
+        cities.map((city) => ({
+          tipo: "municipio" as const,
+          nome: city.nome,
+          uf,
+          slug: city.nome
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, ""),
+          ibge: city.ibge,
+          capital: city.capital,
+        })),
+      ),
+    ]
+    const term = query
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+    if (term.length < 2) return []
+    return items
+      .filter((item) => {
+        const name = item.nome
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+        return name.startsWith(term) || name.includes(term) || item.uf.toLowerCase() === term
+      })
+      .sort((a, b) => {
+        const aExact = a.nome.toLowerCase() === query.toLowerCase() ? 0 : 1
+        const bExact = b.nome.toLowerCase() === query.toLowerCase() ? 0 : 1
+        if (aExact !== bExact) return aExact - bExact
+        if (a.tipo !== b.tipo) return a.tipo === "estado" ? -1 : 1
+        return a.nome.localeCompare(b.nome, "pt-BR")
+      })
+      .slice(0, 10)
+  }
+
+  hasUf(uf: string): boolean {
+    return UF_CODES.some(([sigla]) => sigla === uf)
+  }
+
+  cargos(uf?: string): Office[] {
+    const parsed = uf ? this.byUf.get(uf) : undefined
+    const codes = uf === "DF" ? ["1", "3", "5", "6", "8"] : ["1", "3", "5", "6", "7"]
+    return codes.map((code) => {
+      const office = this.officeInfo(parsed?.get(code) ?? this.nationalPresident, code)
+      return { ...office, destaque: code === PRESIDENT }
+    })
+  }
+
+  /** Usado pela corrida no cliente para histerese. */
+  nextLeaderState(
+    previous: { id: string; votos: number } | null,
+    incoming: { id: string; votos: number } | null,
+    valid: number,
+    streak: number,
+  ) {
+    return nextLeader(previous, incoming, valid, streak)
+  }
+}
