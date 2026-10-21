@@ -26,6 +26,8 @@ on:
       - "load/**"
       - "scripts/**"
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
