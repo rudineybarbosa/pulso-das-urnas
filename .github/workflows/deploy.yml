@@ -1,0 +1,93 @@
+name: Deploy
+
+on:
+  push:
+    branches: [dev]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Ambiente
+        type: choice
+        options: [dev, prod]
+        default: dev
+      apply:
+        description: Aplicar Terraform (sem isso, só plan)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Terraform plan (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('infra/terraform/envs/dev/main.tf') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.9.8 }
+      - name: Init e plan
+        working-directory: infra/terraform/envs/${{ inputs.environment || 'dev' }}
+        run: |
+          terraform init
+          terraform plan -input=false -out=tfplan
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infra/terraform/envs/*/tfplan
+
+  deploy:
+    name: Publicar
+    needs: plan
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.apply }}
+    runs-on: ubuntu-latest
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'prod' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Imagem da API
+        run: |
+          gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
+          IMAGE="southamerica-east1-docker.pkg.dev/${PROJECT_ID}/pulso/api:${GITHUB_SHA}"
+          docker build -f apps/api/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT }}
+      - name: Terraform apply
+        working-directory: infra/terraform/envs/${{ startsWith(github.ref, 'refs/tags/v') && 'prod' || 'dev' }}
+        run: |
+          terraform init
+          terraform apply -auto-approve -input=false
+      - name: Hospedagem
+        run: npx firebase-tools deploy --only hosting --project "$PROJECT_ID" --non-interactive
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      - name: Fumaça
+        run: |
+          curl -fsS "https://${HOST}/healthz"
+          curl -fsS "https://${HOST}/api/v1/pleitos" > /dev/null
+        env:
+          HOST: ${{ vars.PUBLIC_HOST }}

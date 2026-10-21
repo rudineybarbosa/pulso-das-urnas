@@ -1,0 +1,34 @@
+name: Smoke
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Saúde e contrato
+        env:
+          HOST: ${{ vars.PUBLIC_HOST }}
+        run: |
+          if [ -z "$HOST" ]; then echo "PUBLIC_HOST não configurado; smoke ignorado"; exit 0; fi
+          set -e
+          curl -fsS --max-time 20 "https://$HOST/healthz" | grep -q '"ok"'
+          curl -fsS --max-time 20 "https://$HOST/api/v1/pleitos" | grep -q 'apiVersion'
+          curl -fsS --max-time 20 "https://$HOST/" | grep -qi 'Pulso das Urnas'
+      - name: Cabeçalhos de cache
+        if: ${{ vars.PUBLIC_HOST != '' }}
+        env:
+          HOST: ${{ vars.PUBLIC_HOST }}
+        run: |
+          echo "--- primeira requisição"
+          curl -sSI --max-time 20 "https://$HOST/api/v1/panorama?pleito=6257&cargo=1" | tr -d '\r' | egrep -i 'HTTP/|cache-control|etag|x-cache'
+          sleep 2
+          echo "--- segunda requisição"
+          curl -sSI --max-time 20 "https://$HOST/api/v1/panorama?pleito=6257&cargo=1" | tr -d '\r' | egrep -i 'HTTP/|cache-control|etag|x-cache'

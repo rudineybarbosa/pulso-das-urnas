@@ -1,0 +1,51 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+out/
+.turbo/
+apps/*/dist/
+packages/*/dist/
+
+# Testes
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Ambiente
+.env
+.env.*
+!.env.example
+*.local
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+tfplan
+*.tfplan
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# SO e editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Temporários
+tmp/
+.cache/

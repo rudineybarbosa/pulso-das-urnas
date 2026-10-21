@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Documentação e skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Skills espelhadas
+        run: node scripts/check-skills.mjs
+      - name: Links internos
+        run: |
+          if [ -f scripts/check-links.mjs ]; then node scripts/check-links.mjs; else echo "check-links ainda não implementado"; fi
+
+  app:
+    name: Lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test -- --coverage
+      - run: pnpm build
+      - name: Orçamento de bytes
+        run: pnpm size
+
+  e2e:
+    name: E2E (modo fake)
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - run: pnpm test:a11y
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  infra:
+    name: Terraform
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('infra/terraform/**/*.tf') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.9.8 }
+      - name: fmt
+        run: terraform fmt -check -recursive infra/terraform
+      - name: validate
+        run: |
+          for dir in infra/terraform/envs/*; do
+            (cd "$dir" && terraform init -backend=false -input=false && terraform validate)
+          done
