@@ -44,3 +44,11 @@ pnpm build
 - Tela e animação: `DESIGN.md` e `docs/requisitos/07-ux-mapa-e-animacoes.md`
 - Infra: `docs/requisitos/09-infra-e-terraform.md`
 - Skills: `.github/skills/<nome>/SKILL.md`
+- Spec Kit: `SPECKIT-USAGE.md`, `.specify/memory/constitution.md` e `specs/001-apuracao-tempo-real/spec.md`
+
+## Agentes e Spec Kit
+
+- Agentes customizados: `.github/agents/*.agent.md` — selecione o especialista no painel ou no Copilot CLI.
+- Comandos do Spec Kit: `.github/skills/speckit-*` (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`).
+- Fonte dos agentes: `.specify/agents/`. Não edite `.github/agents` à mão; rode `node scripts/sync-agents.mjs`.
+- Nenhum agente aplica Terraform, faz push em `main`/`dev` ou lê segredos.

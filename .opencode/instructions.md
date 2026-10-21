@@ -24,7 +24,15 @@ Leia o `README.md` da raiz. Ele é o índice e aponta para a documentação pert
 
 ## Skills
 
-Use a skill antes de agir quando a tarefa casar com a descrição: `dados-tse`, `mapa-eleitoral`, `animacao-cavalos`, `infra-gcp`, `testes-locais`, `revisao-de-codigo`, `prova-de-entrega`, `documentacao-ai-first`.
+Use a skill antes de agir quando a tarefa casar com a descrição: `dados-tse`, `mapa-eleitoral`, `animacao-cavalos`, `infra-gcp`, `testes-locais`, `react-typescript`, `node-fastify-api`, `firestore-snapshots`, `performance-web`, `seguranca-web`, `revisao-de-codigo`, `prova-de-entrega`, `documentacao-ai-first`.
+
+## Spec Kit e subagentes
+
+- Constituição: `.specify/memory/constitution.md` (bloqueante).
+- Feature corrente: `specs/001-apuracao-tempo-real/`.
+- Comandos: `/speckit.specify`, `/speckit.clarify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`, `/speckit.analyze`.
+- Subagentes em `.opencode/agents/` (gerados de `.specify/agents/`). Use `frontend-specialist`, `backend-specialist`, `data-ingestion-specialist`, `devops-engineer` etc. conforme o domínio.
+- Não edite `.opencode/agents` nem `.github/agents` à mão; edite `.specify/agents` e rode `node scripts/sync-agents.mjs`.
 
 ## Ferramentas
 

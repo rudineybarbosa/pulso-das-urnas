@@ -36,6 +36,9 @@ A apuração das eleições brasileiras em tempo real, estado por estado, cidade
 | [docs/requisitos/12-rastreabilidade.md](docs/requisitos/12-rastreabilidade.md) | Matriz RF ↔ RN ↔ AT ↔ código |
 | [docs/decisoes/](docs/decisoes/) | ADR-001 a ADR-005 |
 | [docs/agents/](docs/agents/) | Workflow, PRs, tickets e domínio |
+| [docs/agents/agent-tools.md](docs/agents/agent-tools.md) | Como OpenCode e Copilot encontram agentes e skills |
+| [SPECKIT-USAGE.md](SPECKIT-USAGE.md) | Spec Kit, agentes, skills e fluxo de feature |
+| [.specify/memory/constitution.md](.specify/memory/constitution.md) | Constituição bloqueante do projeto |
 | [docs/superpowers/specs/2026-10-20-pulso-das-urnas-design.md](docs/superpowers/specs/2026-10-20-pulso-das-urnas-design.md) | Spec canônica aprovada |
 
 ## Fontes de dados
@@ -50,3 +53,12 @@ O Pulso das Urnas **não é um serviço oficial do TSE**. Os dados são público
 ## Licença e uso
 
 Uso jornalístico e cívico. Sem coleta de dados pessoais, sem login, sem anúncios. Ver [docs/requisitos/05-requisitos-nao-funcionais.md](docs/requisitos/05-requisitos-nao-funcionais.md).
+
+## Spec Kit e agentes
+
+- **Constituição:** [.specify/memory/constitution.md](.specify/memory/constitution.md) — bloqueante.
+- **Spec corrente:** [specs/001-apuracao-tempo-real/spec.md](specs/001-apuracao-tempo-real/spec.md).
+- **Agentes:** fonte em [.specify/agents/](.specify/agents/), gerados para [.opencode/agents/](.opencode/agents/) e [.github/agents/](.github/agents/).
+- **Skills:** canônicas em [.opencode/skills/](.opencode/skills/), espelhadas em [.github/skills/](.github/skills/).
+- **Comandos:** `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` no OpenCode; `/speckit-specify` e equivalentes no Copilot.
+- **Guia:** [SPECKIT-USAGE.md](SPECKIT-USAGE.md).

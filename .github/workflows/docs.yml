@@ -33,5 +33,7 @@ jobs:
         with: { node-version: 22 }
       - name: Skills espelhadas
         run: node scripts/check-skills.mjs
+      - name: Agentes gerados
+        run: node scripts/sync-agents.mjs --check
       - name: Links e IDs
         run: node scripts/check-links.mjs

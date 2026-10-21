@@ -8,7 +8,8 @@ Este repositório é um painel público de acompanhamento da apuração eleitora
 2. [CONTEXT.md](CONTEXT.md) — vocabulário do domínio (não invente sinônimos).
 3. [docs/requisitos/](docs/requisitos/) — requisitos com IDs; a implementação referencia o ID que atende.
 4. [docs/decisoes/](docs/decisoes/) — ADRs. Um ADR `proposed` não autoriza implementar a decisão como se estivesse aprovada.
-5. O `AGENTS.md` da pasta que você vai alterar (`web/AGENTS.md`, `api/AGENTS.md`, ...), quando existir.
+5. [SPECKIT-USAGE.md](SPECKIT-USAGE.md) e [docs/agents/agent-tools.md](docs/agents/agent-tools.md) — Spec Kit, agentes e onde cada ferramenta os encontra.
+6. O `AGENTS.md` da pasta que você vai alterar (`web/AGENTS.md`, `api/AGENTS.md`, ...), quando existir.
 
 ## Regras invioláveis
 
@@ -31,10 +32,19 @@ Este repositório é um painel público de acompanhamento da apuração eleitora
 
 ## Agentes e skills
 
-- **OpenCode:** skills em [.opencode/skills/](.opencode/skills/), configuração em [.opencode/opencode.json](.opencode/opencode.json).
-- **GitHub Copilot:** instruções em [.github/copilot-instructions.md](.github/copilot-instructions.md) e skills em [.github/skills/](.github/skills/).
-- As duas árvores de skills são **espelhos**: `pnpm run skills:check` (ou `node scripts/check-skills.mjs`) falha se divergirem. Edite a versão de `.opencode/skills/` e rode o sincronizador.
-- Use a skill certa antes de agir: dados do TSE, mapa, animações, infra, testes locais. Se a tarefa não se encaixa em nenhuma, siga este guia.
+- **OpenCode:** agentes em [.opencode/agents/](.opencode/agents/), skills em [.opencode/skills/](.opencode/skills/), comandos do Spec Kit em [.opencode/commands/](.opencode/commands/).
+- **GitHub Copilot:** instruções em [.github/copilot-instructions.md](.github/copilot-instructions.md), agentes em [.github/agents/](.github/agents/) e skills em [.github/skills/](.github/skills/).
+- **Fonte única:** agentes são editados em `.specify/agents/` e gerados por `node scripts/sync-agents.mjs`; skills são editadas em `.opencode/skills/` e espelhadas por `node scripts/check-skills.mjs --sync`. Não edite os gerados.
+- O CI falha se os espelhos divergirem (`sync-agents --check`, `check-skills`).
+- Use a skill certa antes de agir: dados do TSE, mapa, cavalos, infra, testes locais, React, Fastify, Firestore, desempenho, segurança. Se a tarefa não se encaixa em nenhuma, siga este guia.
+
+## Spec Kit
+
+- Constituição bloqueante: [.specify/memory/constitution.md](.specify/memory/constitution.md).
+- Guia de uso: [SPECKIT-USAGE.md](SPECKIT-USAGE.md).
+- Feature corrente: `specs/001-apuracao-tempo-real/`.
+- Fluxo: `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`.
+- Nenhum comando do Spec Kit autoriza `terraform apply`, push em `main`/`dev` ou leitura de segredos.
 
 ## Comandos (a partir da implementação)
 
@@ -48,6 +58,9 @@ pnpm lint             # ESLint + Prettier check
 pnpm typecheck        # TypeScript strict
 pnpm build            # build de produção + checagem de orçamento
 pnpm infra:plan       # terraform plan (sem aplicar)
+node scripts/sync-agents.mjs --check   # agentes OpenCode/Copilot em sincronia
+node scripts/check-skills.mjs          # skills espelhadas
+node scripts/check-links.mjs           # links e IDs da documentação
 ```
 
 ## Convenções de código

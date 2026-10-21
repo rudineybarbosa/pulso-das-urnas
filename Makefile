@@ -51,6 +51,12 @@ skills-check:
 skills-sync:
 	node scripts/check-skills.mjs --sync
 
+agents-check:
+	node scripts/sync-agents.mjs --check
+
+agents-sync:
+	node scripts/sync-agents.mjs
+
 docs-check:
 	node scripts/check-links.mjs
 

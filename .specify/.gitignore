@@ -1,0 +1,12 @@
+# Machine-local Spec Kit state — not meant to be shared.
+# Managed by the Specify CLI; safe to edit (your changes are preserved on refresh).
+
+# Local pointer to the current feature directory. Kept in the repository so a
+# fresh clone (and any AI agent) already knows the active feature.
+# feature.json
+
+# Per-machine extension config overrides.
+extensions/*/local-config.yml
+
+# Cache local do catálogo de integrações (específico da máquina).
+integrations/.cache/
