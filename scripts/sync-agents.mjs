@@ -68,9 +68,22 @@ function opencodeAgent(name, meta, body) {
 }
 
 function copilotAgent(name, meta, body) {
-  const tools = toolSet(meta)
-  const map = { read: "read", grep: "search", glob: "search", bash: "execute", edit: "edit", write: "edit", agent: "agent" }
-  const mapped = [...new Set(list(meta.tools).map((t) => map[t.toLowerCase()]).filter(Boolean))]
+  const map = {
+    read: "read",
+    grep: "search",
+    glob: "search",
+    bash: "execute",
+    edit: "edit",
+    write: "edit",
+    agent: "agent",
+  }
+  const mapped = [
+    ...new Set(
+      list(meta.tools)
+        .map((t) => map[t.toLowerCase()])
+        .filter(Boolean),
+    ),
+  ]
   const skills = list(meta.skills)
   const header = [
     "---",
@@ -97,7 +110,9 @@ if (!existsSync(source)) {
   process.exit(1)
 }
 
-const files = readdirSync(source).filter((f) => f.endsWith(".md")).sort()
+const files = readdirSync(source)
+  .filter((f) => f.endsWith(".md"))
+  .sort()
 const expected = new Map()
 
 for (const file of files) {

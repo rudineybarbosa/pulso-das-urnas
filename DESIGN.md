@@ -158,7 +158,7 @@ Valores iniciais (revisar e completar na implementação, com fonte):
 ## 7. Acessibilidade
 
 - Alvo WCAG 2.2 AA.
-- Ordem de foco: cabeçalho → busca → chips → mapa (SVG com `role="img"`, `aria-labelledby` e instruções em região separada) → painel → rodapé.
+- Ordem de foco: cabeçalho → busca → chips → mapa (SVG com `role="group"`, `aria-labelledby` e instruções em região separada; `role="img"` só em versão estática) → painel → rodapé.
 - Atalhos: `Esc` sobe um nível; `+`/`-` zoom; setas navegam entre estados/municípios; `Home` volta ao Brasil.
 - Região `aria-live="polite"` única, agregada por ciclo de 10 s, com prioridade: (1) líder do escopo selecionado, (2) líder nacional, (3) fim da apuração. Máximo de um anúncio a cada 10 s; o excedente vai para a região "Resumo da apuração" (`aria-live="off"`) sem interromper (D-035).
 - Foco após navegação: zoom → título do mapa do estado (`tabindex="-1"`), com `Tab` no primeiro município; cidade aberta → título do painel; "Voltar" e `Esc` → polígono ativado. Polling nunca move o foco (D-037).

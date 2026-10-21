@@ -4,7 +4,15 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { dirname, join, relative, resolve, sep } from "node:path"
 
 const root = process.cwd()
-const skip = new Set(["node_modules", ".git", "dist", "build", "coverage", "playwright-report", ".terraform"])
+const skip = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  "coverage",
+  "playwright-report",
+  ".terraform",
+])
 const skipPaths = [join(".github", "skills"), join(".agents", "skills")]
 
 function walk(dir, out = []) {
@@ -82,7 +90,9 @@ for (const file of files) {
     if (m) {
       const id = m[1]
       if (definitions.has(id)) {
-        errors.push(`ID duplicado ${id}: ${relative(root, definitions.get(id))} e ${relative(root, file)}`)
+        errors.push(
+          `ID duplicado ${id}: ${relative(root, definitions.get(id))} e ${relative(root, file)}`,
+        )
       } else {
         definitions.set(id, file)
       }

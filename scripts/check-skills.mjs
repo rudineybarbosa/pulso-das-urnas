@@ -66,9 +66,7 @@ if (problems.length) {
 
 for (const source of sources) {
   const dirs = skillDirs(source.dir)
-  const sourceFiles = dirs
-    .flatMap((name) => walk(join(source.dir, name)))
-    .sort()
+  const sourceFiles = dirs.flatMap((name) => walk(join(source.dir, name))).sort()
   const mirrorFiles = walk(mirror).filter((file) =>
     dirs.includes(relative(mirror, file).split("/")[0]),
   )
