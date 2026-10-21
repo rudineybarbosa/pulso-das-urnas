@@ -1,0 +1,71 @@
+{
+  "name": "pulso-das-urnas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --stream --filter @pulso/api --filter @pulso/web dev",
+    "dev:real": "DATA_MODE=real pnpm dev",
+    "build": "pnpm --filter @pulso/web build",
+    "preview": "pnpm --filter @pulso/web preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test e2e/a11y.spec.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . && prettier --check \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.ts\" \"scripts/**/*.mjs\"",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.ts\" \"scripts/**/*.mjs\"",
+    "size": "size-limit",
+    "geo:build": "node scripts/geo/build.mjs",
+    "geo:budget": "node scripts/geo/budget.mjs",
+    "ingest": "pnpm --filter @pulso/ingest dev"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.49.1",
+    "@size-limit/file": "^11.1.6",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/d3-geo": "^3.1.0",
+    "@types/geojson": "^7946.0.15",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.3",
+    "@types/react-dom": "^19.0.2",
+    "@types/topojson-client": "^3.1.5",
+    "@vitest/coverage-v8": "^2.1.8",
+    "d3-geo": "^3.1.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.4.2",
+    "size-limit": "^11.1.6",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
+  },
+  "size-limit": [
+    {
+      "name": "JS inicial",
+      "path": "apps/web/dist/assets/*.js",
+      "limit": "200 kB",
+      "gzip": true
+    },
+    {
+      "name": "CSS",
+      "path": "apps/web/dist/assets/*.css",
+      "limit": "30 kB",
+      "gzip": true
+    }
+  ]
+}

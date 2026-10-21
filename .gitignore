@@ -49,3 +49,6 @@ pnpm-debug.log*
 # Temporários
 tmp/
 .cache/
+
+# Snapshots gerados pelo ingest
+data/snapshots/
