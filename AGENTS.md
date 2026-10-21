@@ -38,6 +38,17 @@ Este repositório é um painel público de acompanhamento da apuração eleitora
 - O CI falha se os espelhos divergirem (`sync-agents --check`, `check-skills`).
 - Use a skill certa antes de agir: dados do TSE, mapa, cavalos, infra, testes locais, React, Fastify, Firestore, desempenho, segurança. Se a tarefa não se encaixa em nenhuma, siga este guia.
 
+## Precedência de skills
+
+1. **Constituição e requisitos** vencem qualquer skill; um conflito com `.specify/memory/constitution.md` é bloqueante.
+2. **Skills de domínio do projeto** (`.opencode/skills`): `dados-tse`, `mapa-eleitoral`, `animacao-cavalos`, `react-typescript`, `node-fastify-api`, `firestore-snapshots`, `performance-web`, `seguranca-web`, `testes-locais`, `infra-gcp`, `revisao-de-codigo`, `prova-de-entrega`, `documentacao-ai-first`.
+3. **Spec Kit** para governança e artefatos: `speckit.specify`, `speckit.plan`, `speckit.tasks`, `speckit.implement`.
+4. **Matt Pocock** (`.agents/skills`) para discovery e síntese: `grilling`, `wayfinder`, `to-spec`, `to-tickets`, `triage`, `ask-matt`. Use para decidir **o quê** e **por quê**; não repita discovery já aprovado.
+5. **Superpowers** para execução: TDD, debugging, revisão, worktrees e execução de planos.
+6. **Skills genéricas** (`pr`, `code-review`, `tdd`, `implement`) só quando não houver equivalente do projeto.
+
+Regras: não execute dois rituais para a mesma etapa; skill de domínio vence skill genérica; toda skill continua subordinada à evidência e à neutralidade. As skills de terceiros são MIT (`mattpocock/skills`), instaladas em `.agents/skills`, espelhadas em `.github/skills` e travadas por `skills-lock.json`.
+
 ## Spec Kit
 
 - Constituição bloqueante: [.specify/memory/constitution.md](.specify/memory/constitution.md).

@@ -26,6 +26,17 @@ Leia o `README.md` da raiz. Ele é o índice e aponta para a documentação pert
 
 Use a skill antes de agir quando a tarefa casar com a descrição: `dados-tse`, `mapa-eleitoral`, `animacao-cavalos`, `infra-gcp`, `testes-locais`, `react-typescript`, `node-fastify-api`, `firestore-snapshots`, `performance-web`, `seguranca-web`, `revisao-de-codigo`, `prova-de-entrega`, `documentacao-ai-first`.
 
+### Precedência
+
+1. Constituição e requisitos.
+2. Skills de domínio do projeto (lista acima).
+3. Spec Kit para spec/plano/tarefas.
+4. Matt Pocock (`.agents/skills`) para discovery e síntese — `grilling`, `wayfinder`, `to-spec`, `to-tickets`, `triage`.
+5. Superpowers para execução e verificação.
+6. Genéricas (`pr`, `code-review`, `tdd`) só sem equivalente do projeto.
+
+Não repita discovery já aprovado nem rode dois rituais para a mesma etapa.
+
 ## Spec Kit e subagentes
 
 - Constituição: `.specify/memory/constitution.md` (bloqueante).

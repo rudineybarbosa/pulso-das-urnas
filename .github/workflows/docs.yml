@@ -6,8 +6,10 @@ on:
       - "**/*.md"
       - "docs/**"
       - ".opencode/**"
+      - ".agents/**"
       - ".github/skills/**"
       - ".github/copilot-instructions.md"
+      - "skills-lock.json"
       - "scripts/check-links.mjs"
       - "scripts/check-skills.mjs"
   push:
@@ -16,7 +18,9 @@ on:
       - "**/*.md"
       - "docs/**"
       - ".opencode/**"
+      - ".agents/**"
       - ".github/skills/**"
+      - "skills-lock.json"
       - "scripts/check-*.mjs"
   workflow_dispatch:
 

@@ -5,7 +5,7 @@ import { dirname, join, relative, resolve, sep } from "node:path"
 
 const root = process.cwd()
 const skip = new Set(["node_modules", ".git", "dist", "build", "coverage", "playwright-report", ".terraform"])
-const skipPaths = [join(".github", "skills")]
+const skipPaths = [join(".github", "skills"), join(".agents", "skills")]
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

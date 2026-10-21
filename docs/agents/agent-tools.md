@@ -8,10 +8,20 @@ O projeto funciona em **OpenCode** e **GitHub Copilot** com o mesmo conteúdo, g
 |---|---|---|
 | Agentes | `.specify/agents/*.md` | `.opencode/agents/*.md`, `.github/agents/*.agent.md` |
 | Skills do projeto | `.opencode/skills/*/SKILL.md` | `.github/skills/*/SKILL.md` |
+| Skills de terceiros | `.agents/skills/*/SKILL.md` | `.github/skills/*/SKILL.md` |
 | Comandos do Spec Kit | `.opencode/commands/speckit.*.md` | `.github/skills/speckit-*` (via instalação) |
 | Regras gerais | `AGENTS.md` | lido pelos dois |
 
 Verificação no CI: `node scripts/sync-agents.mjs --check` e `node scripts/check-skills.mjs`.
+
+## Skills de terceiros
+
+- Origem: `mattpocock/skills` (licença MIT), instaladas com `npx skills@latest add mattpocock/skills -a opencode`.
+- Local: `.agents/skills/` (fonte de compatibilidade do OpenCode) e espelho em `.github/skills/` para o Copilot.
+- Lock: `skills-lock.json` na raiz (fonte, caminho original e hash por skill).
+- 38 skills; 15 são auto-anunciadas e 23 têm `disable-model-invocation: true`, exigindo invocação explícita pelo ID.
+- Atualização: rode o comando de instalação de novo e depois `node scripts/check-skills.mjs --sync`.
+- Precedência: ver `AGENTS.md` § Precedência de skills; domínio do projeto vence skill genérica.
 
 ## OpenCode
 
