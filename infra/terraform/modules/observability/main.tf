@@ -1,0 +1,63 @@
+variable "project_id" { type = string }
+variable "env" { type = string }
+variable "public_host" {
+  type    = string
+  default = ""
+}
+variable "billing_account" {
+  type    = string
+  default = ""
+}
+variable "budget_usd" {
+  type    = string
+  default = "10"
+}
+
+resource "google_monitoring_uptime_check_config" "api" {
+  count        = var.public_host == "" ? 0 : 1
+  project      = var.project_id
+  display_name = "pulso-api-${var.env}"
+  timeout      = "10s"
+  period       = "60s"
+
+  http_check {
+    path         = "/healthz"
+    port         = 443
+    use_ssl      = true
+    validate_ssl = true
+  }
+
+  monitored_resource {
+    type = "uptime_url"
+    labels = {
+      host = var.public_host
+    }
+  }
+}
+
+resource "google_billing_budget" "monthly" {
+  count           = var.billing_account == "" ? 0 : 1
+  billing_account = var.billing_account
+  display_name    = "pulso-${var.env}"
+
+  budget_filter {
+    projects = ["projects/${var.project_id}"]
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "USD"
+      units         = var.budget_usd
+    }
+  }
+
+  threshold_rules {
+    threshold_percent = 0.5
+  }
+  threshold_rules {
+    threshold_percent = 0.8
+  }
+  threshold_rules {
+    threshold_percent = 1.0
+  }
+}
