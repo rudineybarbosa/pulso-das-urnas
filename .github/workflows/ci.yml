@@ -2,9 +2,29 @@ name: CI
 
 on:
   pull_request:
-    branches: [dev, main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig*.json"
+      - "e2e/**"
+      - "load/**"
+      - "scripts/**"
+      - ".github/workflows/ci.yml"
   push:
     branches: [dev, main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig*.json"
+      - "e2e/**"
+      - "load/**"
+      - "scripts/**"
 
 permissions:
   contents: read
@@ -14,23 +34,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  docs:
-    name: Documentação e skills
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - name: Skills espelhadas
-        run: node scripts/check-skills.mjs
-      - name: Links internos
-        run: |
-          if [ -f scripts/check-links.mjs ]; then node scripts/check-links.mjs; else echo "check-links ainda não implementado"; fi
-
-  app:
+  quality:
     name: Lint, tipos, testes e build
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -48,9 +54,8 @@ jobs:
         run: pnpm size
 
   e2e:
-    name: E2E (modo fake)
+    name: E2E e acessibilidade (modo fake)
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -69,19 +74,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
-
-  infra:
-    name: Terraform
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('infra/terraform/**/*.tf') != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        with: { terraform_version: 1.9.8 }
-      - name: fmt
-        run: terraform fmt -check -recursive infra/terraform
-      - name: validate
-        run: |
-          for dir in infra/terraform/envs/*; do
-            (cd "$dir" && terraform init -backend=false -input=false && terraform validate)
-          done

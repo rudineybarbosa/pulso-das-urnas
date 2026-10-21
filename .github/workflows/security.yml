@@ -11,16 +11,17 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
-      - run: pnpm install --frozen-lockfile
       - name: Auditoria de dependências
-        run: pnpm audit --audit-level high || true
+        run: |
+          if [ ! -f pnpm-lock.yaml ]; then echo "sem lockfile; nada a auditar"; exit 0; fi
+          pnpm install --frozen-lockfile
+          pnpm audit --audit-level high || true
 
   secrets:
     runs-on: ubuntu-latest

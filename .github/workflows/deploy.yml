@@ -3,6 +3,14 @@ name: Deploy
 on:
   push:
     branches: [dev]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "infra/terraform/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "firebase.json"
+      - ".github/workflows/deploy.yml"
     tags: ["v*"]
   workflow_dispatch:
     inputs:
@@ -28,7 +36,6 @@ jobs:
   plan:
     name: Terraform plan (${{ github.ref_name }})
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('infra/terraform/envs/dev/main.tf') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2

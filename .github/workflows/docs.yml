@@ -1,0 +1,36 @@
+name: Documentação
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "docs/**"
+      - ".opencode/**"
+      - ".github/skills/**"
+      - ".github/copilot-instructions.md"
+      - "scripts/check-links.mjs"
+      - "scripts/check-skills.mjs"
+  push:
+    branches: [dev, main]
+    paths:
+      - "**/*.md"
+      - "docs/**"
+      - ".opencode/**"
+      - ".github/skills/**"
+      - "scripts/check-*.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Links, IDs e skills
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Skills espelhadas
+        run: node scripts/check-skills.mjs
+      - name: Links e IDs
+        run: node scripts/check-links.mjs
