@@ -12,23 +12,23 @@ Leia `docs/requisitos/07-ux-mapa-e-animacoes.md` §7 e as regras RN-015, RN-016 
 ```
 p = percentualApurado / 100
 V = votos válidos do cargo no escopo nacional
-d = votosLíder − votosSegundo
+d = votos(A) − votos(B)   // com sinal
 g = sinal(d) × ln(1 + |d|) / ln(1 + V)        // (−1, 1)
 xBase = margem + p × L
 separação = 0,14 × L × |g|
-xLíder = xBase + separação/2
-xSegundo = xBase − separação/2
+xA = xBase + (separação/2) × sinal(d)
+xB = xBase − (separação/2) × sinal(d)
 ```
 
 - Suavize com mola (250 ms); atualize no máximo a 10 Hz.
 - `V = 0` → pista vazia, sem divisão por zero.
 - O cavalo à frente é sempre o de maior votação.
-- Ultrapassagem: sinal muda + |g| ≥ 0,01 em 2 snapshots + cooldown de 20 s.
+- Ultrapassagem: sinal muda + |g| ≥ 0,01 em 2 snapshots + cooldown de 30 s.
 
 ## Tom (bloqueante)
 
 - A corrida é esportiva e afetuosa. Nunca humilha, nunca insinua fraude, nunca usa ironia.
-- Textos: "venceu", "assume a liderança". Proibido: "derrotou", "arrasou", "humilhou", "perdeu feio".
+- Textos: "venceu", "assume a liderança". Proibido: "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude", "roubo".
 - Sem jóquei, sem chicote, sem violência.
 - Balão "Relincho!" por até 1,2 s; sem som.
 - Cena final: vencedor lambe, perdedor deita sem impacto, corações sobem, texto neutro.
@@ -46,7 +46,7 @@ xSegundo = xBase − separação/2
 - SVG inline com grupos nomeados (`horse-a`, `horse-b`).
 - Anime apenas `transform`/`opacity`; nada de `top/left` ou layout.
 - Estado da cena em máquina de estados (`idle → running → overtake → finished → final-scene`) para não repetir a cena.
-- Cena final roda uma vez por sessão/cargo; "Rever cena" disponível.
+- Cena final roda uma vez por **aba** (`sessionStorage` `pulso:final-scene:{pleito}:{cargo}`); "Rever cena" sempre disponível.
 
 ## Antes de concluir
 

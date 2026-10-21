@@ -17,7 +17,7 @@ open http://localhost:5173
 
 Variáveis:
 ```bash
-SCENARIO=sem-votos|parcial|virada|empate|fim|erro-fonte|dois-turnos
+SCENARIO=sem-votos|parcial|virada|empate|fim|erro-fonte|dois-turnos|dois-turnos-parcial|retificacao|suplementar|catalogo-alterado|candidato-removido|offline|geometria-ausente
 REPLAY_SPEED=1|60|600
 SEED=2026
 DATA_MODE=real           # consome o TSE de verdade

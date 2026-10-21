@@ -55,11 +55,14 @@ Oferecer uma leitura geográfica e imediata da apuração:
 
 ## 7. Perguntas em aberto
 
-| ID | Pergunta | Impacto | Responsável | Estado |
-|---|---|---|---|---|
-| Q-01 | Teremos domínio próprio (`pulsodasurnas.com.br`) no lançamento? | SEO, e-mail, TLS | Product owner | aberta |
-| Q-02 | O deploy em produção será feito na conta GCP pessoal do mantenedor? | Terraform, billing, orçamento | Product owner | aberta |
-| Q-03 | A tabela de cores partidárias será revisada por alguém de comunicação antes do lançamento? | Precisão visual | Product owner | aberta |
-| Q-04 | Queremos modo "telão" (tela cheia, sem interação) na v1? | Escopo, SSE | Product owner | decidir até o fim da fase 3 |
+Cada pergunta registra o que ela bloqueia, o padrão adotado enquanto não houver decisão e o prazo de encerramento. Um padrão não é a decisão: a resposta do responsável substitui o padrão e atualiza o documento que ele afeta.
 
-Nenhuma pergunta em aberto bloqueia a implementação das fases 1 e 2.
+| ID | Pergunta | Impacto (o que bloqueia) | Padrão até a decisão | Prazo | Responsável | Estado |
+|---|---|---|---|---|---|---|
+| Q-01 | Teremos domínio próprio (`pulsodasurnas.com.br`) no lançamento? | SEO, TLS, e-mail e links compartilhados | Publicar no host padrão do Firebase Hosting (`<projeto>.web.app`), que passa a ser a URL canônica de RF-043; a troca posterior exige redirect `301` do host antigo | Antes do lançamento público | Product owner | aberta |
+| Q-02 | O deploy em produção será feito na conta GCP pessoal do mantenedor? | Billing, orçamento de RNF-COST e estado do Terraform | Nada — bloqueia apenas `terraform apply` em produção; `terraform plan`, desenvolvimento e CI seguem liberados | Antes do primeiro apply de produção | Product owner | aberta |
+| Q-03 | A tabela de cores partidárias será revisada por alguém de comunicação antes do lançamento? | Precisão visual da paleta (RN-023) | Desenvolvimento e demonstração usam a paleta de rascunho; bloqueia apenas o lançamento público da paleta revisada | Antes do lançamento público | Product owner | aberta |
+| Q-04 | Queremos modo "telão" (tela cheia, sem interação) na v1? | Escopo de tela e de SSE | Fora da v1: não entra em requisito nem em critério de aceite | Encerrada — reavaliar após a v1 | Product owner | fora da v1 |
+
+- Q-01, Q-02 e Q-03 não bloqueiam a implementação das fases 1 e 2; Q-02 bloqueia só o apply de produção e Q-03 só o lançamento público da paleta.
+- Q-04 está encerrada como fora da v1. Reabrir exige requisito novo com RF e AT próprios.

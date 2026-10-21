@@ -122,7 +122,7 @@ a cada ciclo (RN-012):
   para cada eleicao ativa E:
     para cada cargo C de E:
       para cada escopo S (br + 27 UFs):
-        chave = (E.ciclo, E.codigo, S, C, )
+        chave = (E.ciclo, E.codigo, S, C, idg)
         corpo, etag = GET condicional(url(E,S,C))
         se 304: pular
         validar schema do TSE
@@ -142,11 +142,14 @@ a cada ciclo (RN-012):
 
 Base: `https://pulso-das-urnas.web.app/api/v1` (dev/prod). JSON, `charset=utf-8`.
 
+Toda resposta de resultado respeita o teto de staleness de RN-040: durante a apuração `s-maxage + stale-while-revalidate + stale-if-error ≤ 30 s`; após `finalizada`, ≤ 6 h.
+
 ### 3.1 Envelope comum
 ```json
 {
   "apiVersion": "1",
-  "versao": "6257:2837533",
+  "versao": "6257:br:1:2837533",
+  "catalogVersion": "9f3c1a0b7d21",
   "geradoEm": "2026-10-20T19:22:10-03:00",
   "fonte": {
     "nome": "Tribunal Superior Eleitoral",
@@ -155,26 +158,63 @@ Base: `https://pulso-das-urnas.web.app/api/v1` (dev/prod). JSON, `charset=utf-8`
     "generatedAt": "2026-10-05T12:51:59-03:00",
     "updatedAt": "2026-10-05T12:51:05-03:00",
     "collectedAt": "2026-10-20T19:22:08-03:00",
+    "sourceAgeSeconds": 45,
+    "collectedAgeSeconds": 2,
+    "snapshotAgeSeconds": 61,
     "status": "ao_vivo",
-    "parserVersion": "1.0.0"
+    "parserVersion": "1.2.0"
   }
 }
 ```
 
+Campos de envelope e semântica (RN-013/RN-039):
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `versao` | string | `{eleicao}:{escopo}:{cargo}:{idg}`; base do `ETag` |
+| `catalogVersion` | string | `sha256(JSON canônico do catálogo)[0:12]` (RN-037) |
+| `fonte.sourceAgeSeconds` | inteiro \| `null` | `agora − generatedAt` |
+| `fonte.collectedAgeSeconds` | inteiro \| `null` | `agora − collectedAt` |
+| `fonte.snapshotAgeSeconds` | inteiro \| `null` | `agora − gravadoEm` do snapshot servido |
+| `fonte.status` | enum | `ao_vivo`, `fonte_sem_atualizacao`, `desatualizado`, `fonte_indisponivel`, `finalizado` (RN-039) |
+| `fonte.parserVersion` | semver | versão do parser que gerou o snapshot (RN-042) |
+
+`origem` (presente em estado, escopo e município quando há fallback) é sempre:
+```json
+{ "pleito": "6257", "turno": 1, "generationId": "2837411", "generatedAt": "2026-10-05T12:48:02-03:00" }
+```
+`origem: null` significa dado do pleito/turno vigente.
+
+`status` (por escopo/cargo ou por estado do panorama) usa os estados de ausência de RN-035 — `retificado` é o quinto e vem como flag abaixo — mais `ok`:
+
+| `status` | HTTP | `dados` | Significado |
+|---|---|---|---|
+| `ok` | 200 | objeto | há informação; pode haver líder ou empate |
+| `sem_voto` | 200 | objeto com zeros | arquivo existe, nenhum voto válido |
+| `sem_dado` | 200 | `null` | cargo se aplica, nenhum arquivo coletado |
+| `nao_aplicavel` | 200 | `null` | cargo não existe no escopo/turno e não há fallback |
+| `sem_lider_elegivel` | 200 | objeto | há válidos, nenhum candidato com `dvt = "Válido"` |
+
+`retificado: true` é o quinto estado de RN-035, acumulável: não substitui `status` e exige badge "dados retificados pelo TSE" (RN-017).
+
+Quando `dados: null` não há snapshot: `versao` e `fonte` são `null`; o `ETag` deriva de `apiVersion + catalogVersion + rota` e a resposta continua cacheável (D-013).
+
 ### 3.2 `GET /pleitos`
 ```json
-{ "apiVersion":"1", "pleitos":[
+{ "apiVersion":"1", "catalogVersion":"9f3c1a0b7d21", "pleitos":[
   { "id":"3221", "nome":"Eleições Gerais 2026 — 2º turno", "data":"2026-10-25",
     "turnos":[{ "eleicao":"6258", "turno":2, "nome":"Eleição Geral Federal",
                 "estado":"nao_iniciada", "percentualApurado":0, "cargos":["1"] }] }
 ]}
 ```
-`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`
+`catalogVersion` muda quando o catálogo muda (RN-037); pleito `arquivado` não é listado. `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`
 
 ### 3.3 `GET /panorama?pleito=6257&cargo=1`
 ```json
 {
-  "apiVersion":"1","versao":"6257:1:2837531",
+  "apiVersion":"1","versao":"6257:br:1:2837531",
+  "catalogVersion":"9f3c1a0b7d21",
+  "status":"ok",
   "geradoEm":"2026-10-20T19:22:10-03:00",
   "fonte": { "...": "envelope comum do arquivo br" },
   "pleito": { "id":"6257","nome":"Eleição Geral Federal 2026 — 1º turno","turno":1 },
@@ -184,48 +224,96 @@ Base: `https://pulso-das-urnas.web.app/api/v1` (dev/prod). JSON, `charset=utf-8`
                 "finalizada":true,"status":"finalizada" },
   "resumo": { "votosValidos":119300788,"brancos":2300798,"nulos":3674249,
               "comparecimento":125275835,"abstencao":33469244,
-              "eleitorado":158745502,"basePercentual":"validos" },
+              "eleitorado":158745502,"percentualBase":"oficial_validos","calculado":false },
   "estados": [{
     "uf":"SP","nome":"São Paulo","ibge":35,
-    "cor": { "sigla":"PL","hex":"#0B4EA2","texto":"#FFFFFF","origem":"tabela" },
+    "status":"ok","finalizado":true,"retificado":false,
+    "cor": { "sigla":"PL","hex":"#0B4EA2","texto":"#FFFFFF","origem":"tabela","disputaAcirrada":false },
     "lider": { "candidatoId":"280002551544","nome":"Flavio Bolsonaro","partido":"PL",
-               "votos":56104503,"percentual":47.03 },
+               "votos":56104503,"percentual":47.03,
+               "percentualBase":"oficial_validos","calculado":false },
     "votosValidos":119300788,"percentualApurado":100.0,
-    "status":"finalizado","origem":null
+    "origem": null
+  }, {
+    "uf":"AC","nome":"Acre","ibge":12,
+    "status":"sem_dado","finalizado":false,"retificado":false,
+    "cor": null,"lider": null,
+    "votosValidos":null,"percentualApurado":null,
+    "origem": null
   }]
 }
 ```
-`Cache-Control: public, max-age=0, s-maxage=3, stale-while-revalidate=10, stale-if-error=600` + `ETag`.
+- `estados[].status` usa o domínio de RN-035; `ok` = há informação. `lider` é `null` em `sem_voto`, `sem_dado`, `nao_aplicavel` e `sem_lider_elegivel`.
+- `estados[].finalizado` é booleano por estado; `apuracao` é o agregado nacional.
+- `percentualBase` ∈ {`oficial_validos`, `calculado_validos`}; `calculado` ∈ {`true`, `false`} (RN-010/RN-020). Nunca misturar bases na mesma resposta. `calculado: false` sobre `pvap` do TSE é rotulado "percentual oficial do TSE".
+- `cor.disputaAcirrada` reflete a histerese de RN-038 (cor mantida abaixo do limiar).
+- `origem` preenchido quando o estado usa fallback de turno/pleito (RN-009); a tela mostra o selo "1º turno" e não esconde o horário do snapshot atual.
+- Escopo válido sem arquivo é **200** com `status:"sem_dado"`; `404` é só para pleito/cargo/escopo inexistente (RN-035, D-013).
+- Sem arquivo nacional para o cargo, o panorama responde **200** com `status:"sem_dado"`, `estados:[]` e sem `resumo`/`apuracao`; a resposta continua cacheável.
+
+`Cache-Control: public, max-age=0, s-maxage=3, stale-while-revalidate=5, stale-if-error=22` + `ETag` (total 30 s durante a apuração; após `finalizada`, `s-maxage=300, stale-while-revalidate=900, stale-if-error=20400`, total 6 h).
 
 ### 3.4 `GET /escopos/{uf}?pleito=6257&cargo=1`
-Retorna candidatos, resumo e status do estado; inclui `municipios` apenas com agregados (líder + votos) quando já coletados.
-`Cache-Control: public, max-age=0, s-maxage=5, stale-while-revalidate=15`
+Usa o mesmo envelope de §3.5 e o mesmo `dados`; `dados.municipios` traz apenas agregados (líder + votos) dos municípios já coletados.
+- `status` segue §3.1; UF sem arquivo para o cargo devolve **200** com `dados:null` e `status:"sem_dado"`.
+- `origem` é preenchido quando a UF usa fallback (RN-009).
+- `resumo.percentualBase` e `resumo.calculado` seguem RN-010.
+`Cache-Control: public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15`
 
 ### 3.5 `GET /municipios/{ibge}?pleito=6257&cargo=1`
 ```json
 {
   "apiVersion":"1","versao":"6257:3550308:1:2837536",
-  "fonte": { "...": "..." },
+  "catalogVersion":"9f3c1a0b7d21",
+  "status":"sem_voto",
+  "fonte": { "...": "envelope comum" },
   "escopo": { "tipo":"municipio","ibge":3550308,"tse":"71072","nome":"São Paulo","uf":"SP" },
   "cargo": { "id":"1","nome":"Presidente" },
-  "apuracao": { "percentual":100.0,"finalizada":true },
-  "resumo": { "votosValidos":0,"brancos":0,"nulos":0,"basePercentual":"validos" },
-  "candidatos": [{
-    "id":"280002551544","numero":"22","nome":"FLAVIO NANTES BOLSONARO",
-    "nomeUrna":"FLAVIO BOLSONARO","partido":"PL","votos":0,"percentual":0,
-    "situacao":"nao_eleito","destinacao":"Valido","eleito":false,
-    "vices":[{"nome":"ALFREDO GASPAR","partido":"PL"}]
-  }]
+  "origem": null,
+  "dados": {
+    "apuracao": { "percentual":0.0,"finalizada":false },
+    "resumo": { "votosValidos":0,"brancos":0,"nulos":0,
+                "percentualBase":"oficial_validos","calculado":false },
+    "candidatos": [{
+      "id":"280002551544","numero":"22","nome":"FLAVIO NANTES BOLSONARO",
+      "nomeUrna":"FLAVIO BOLSONARO","partido":"PL","votos":0,"percentual":0,
+      "percentualBase":"oficial_validos","calculado":false,
+      "situacao":"nao_eleito","destinacao":"Válido","eleito":false,
+      "vices":[{"nome":"ALFREDO GASPAR","partido":"PL"}]
+    }]
+  }
 }
 ```
-`Cache-Control: public, max-age=0, s-maxage=5, stale-while-revalidate=30, stale-if-error=600`
+Ausência de arquivo (escopo válido): **200**, cacheável, sem erro:
+```json
+{
+  "apiVersion":"1","versao":null,
+  "status":"sem_dado",
+  "fonte": null,
+  "escopo": { "tipo":"municipio","ibge":3550308,"tse":"71072","nome":"São Paulo","uf":"SP" },
+  "cargo": { "id":"1","nome":"Presidente" },
+  "origem": null,
+  "dados": null
+}
+```
+`status` pode ser `ok`, `sem_voto`, `sem_dado`, `nao_aplicavel` ou `sem_lider_elegivel` (§3.1); `dados` é `null` só em `sem_dado` e `nao_aplicavel`. No exemplo acima, `sem_voto`: arquivo existe e não há voto válido, então `dados` vem com zeros — nunca `null`. `404` é reservado a município, pleito, turno ou cargo inexistente no catálogo.
+
+#### 3.5.1 Painel por cargo (D-016)
+- Cada resposta traz **um cargo**; o tamanho de `dados` ≤ **12 KB gzip** por cargo.
+- A pré-busca carrega apenas o cargo em destaque (RN-005); as demais abas são consultas sob demanda.
+- Cada aba é uma consulta cacheável com `ETag`; trocar de aba NÃO refaz o mapa nem recarrega o panorama.
+- No máximo 5 abas de cargo por município; as abas são derivadas do catálogo (RN-004), não inventadas na tela.
+
+`Cache-Control: public, max-age=0, s-maxage=5, stale-while-revalidate=5, stale-if-error=20`
 
 ### 3.6 `GET /corrida?pleito=6257&cargo=1`
 ```json
 {
-  "apiVersion":"1","versao":"6257:1:2837531",
+  "apiVersion":"1","versao":"6257:br:1:2837531",
+  "catalogVersion":"9f3c1a0b7d21",
+  "status":"ok",
   "cargo": { "id":"1","nome":"Presidente","escopo":"br" },
-  "apuracao": { "percentual":100.0,"finalizada":true },
+  "apuracao": { "percentual":0.0,"finalizada":false },
   "cavalos": [
     { "posicao":1,"candidatoId":"...","nomeUrna":"FLAVIO BOLSONARO","partido":"PL",
       "cor":"#0B4EA2","votos":56104503,"percentual":47.03 },
@@ -236,7 +324,8 @@ Retorna candidatos, resumo e status do estado; inclui `municipios` apenas com ag
   "ultimaUltrapassagem": null
 }
 ```
-`Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=5` + `ETag`.
+`cavalos` é vazio quando o cargo está `sem_voto`, `sem_dado`, `nao_aplicavel` ou `sem_lider_elegivel` (RN-035); a corrida não inventa dupla. `ultimaUltrapassagem` só é preenchida com ultrapassagem válida (RN-016).
+`Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=3, stale-if-error=5` + `ETag`.
 
 ### 3.7 `GET /localidades?q=sao`
 ```json
@@ -256,6 +345,27 @@ Catálogo servido da base local (IBGE + TSE), não do TSE em tempo real.
 - `GET /healthz` → `200 {"status":"ok"}` (liveness).
 - `GET /readyz` → `200` se catálogo e último snapshot legíveis; `503` caso contrário.
 
+### 3.10 `GET /escopos/{uf}/cargos` e `GET /municipios/{ibge}/cargos`
+Lista os cargos em disputa no escopo, derivada do catálogo (RN-004), com o cargo em destaque marcado.
+```json
+{
+  "apiVersion":"1","catalogVersion":"9f3c1a0b7d21",
+  "escopo": { "tipo":"municipio","ibge":3550308,"nome":"São Paulo","uf":"SP" },
+  "pleito": "6257",
+  "cargos": [
+    { "id":"1","nome":"Presidente","tipo":"majoritario","emDisputa":true,"destaque":true },
+    { "id":"3","nome":"Governador","tipo":"majoritario","emDisputa":true,"destaque":false },
+    { "id":"5","nome":"Senador","tipo":"majoritario","emDisputa":true,"destaque":false },
+    { "id":"6","nome":"Deputado Federal","tipo":"proporcional","emDisputa":true,"destaque":false },
+    { "id":"7","nome":"Deputado Estadual","tipo":"proporcional","emDisputa":true,"destaque":false }
+  ]
+}
+```
+- `destaque=true` em exatamente um cargo, pelo menor peso de RN-005.
+- Cargo `tp=3` (consulta popular) não é listado.
+- `emDisputa=false` é omitido da lista; a ausência do cargo significa "não se aplica" (RN-035).
+`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`
+
 ## 4. Erros
 
 `Content-Type: application/problem+json`
@@ -274,16 +384,19 @@ Catálogo servido da base local (IBGE + TSE), não do TSE em tempo real.
 | Código | HTTP | Quando |
 |---|---|---|
 | `PARAMETRO_INVALIDO` | 400 | Query fora do schema |
-| `PLEITO_NAO_ENCONTRADO` | 404 | Pleito/cargo inexistente |
-| `ESCOPO_NAO_ENCONTRADO` | 404 | UF/município inexistente |
-| `SEM_DADOS` | 404 | Escopo válido, sem arquivo no TSE ainda (inclui `fonte` e `sugestao`) |
-| `FONTE_INDISPONIVEL` | 503 | Sem snapshot e fonte fora |
+| `PLEITO_NAO_ENCONTRADO` | 404 | Pleito, turno ou cargo inexistente no catálogo |
+| `ESCOPO_NAO_ENCONTRADO` | 404 | UF ou município inexistente no catálogo |
+| `FONTE_INDISPONIVEL` | 503 | Nenhum snapshot existe e a fonte está fora |
 | `RATE_LIMITED` | 429 | Limite por IP |
 | `ERRO_INTERNO` | 500 | Falha inesperada (nunca expõe stack) |
+
+Sem `SEM_DADOS`: escopo válido sem arquivo é **200** com `dados:null` e `status:"sem_dado"` (§3.1, §3.5). Quando existe snapshot anterior, erro de fonte também é 200 com o último snapshot e `fonte.status = "desatualizado" | "fonte_indisponivel"`; `503` só quando não há nada para servir.
 
 ## 5. Versionamento
 
 - `apiVersion` inteiro na URL (`/v1`), mudança incompatível cria `/v2` por 90 dias em paralelo.
-- `parserVersion` semântica; fixture nova por mudança de formato do TSE.
+- `parserVersion` semver (`MAJOR.MINOR.PATCH`), gravada em todo snapshot e no envelope; fixture nova por mudança de formato do TSE, com `url`, `capturedAt`, `sha256` e `parserVersion` no `manifest.json` (RN-042).
+- Falha de schema não grava nem avança `current`: mantém o último snapshot, alerta e permite fixar o parser anterior com `PARSER_VERSION_PIN=<versao>`; o rollback está no runbook (D-050).
+- `catalogVersion` identifica a versão do catálogo normalizado e muda quando muda o conjunto de pleitos, turnos, cargos ou abrangências (RN-037).
 - `versao` do snapshot = `{eleicao}:{escopo}:{cargo}:{idg}`; usada como `ETag` e para detectar mudança.
 - Campos novos são aditivos; campos removidos exigem nova `apiVersion`.

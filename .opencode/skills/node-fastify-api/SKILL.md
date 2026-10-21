@@ -22,7 +22,7 @@ apps/api/src/
 
 - Zod na entrada e na saída; OpenAPI gerado do schema.
 - Erro: `application/problem+json` com `type`, `title`, `status`, `detail`, `instance`, `code`, `requestId`.
-- Códigos estáveis: `PARAMETRO_INVALIDO`, `PLEITO_NAO_ENCONTRADO`, `ESCOPO_NAO_ENCONTRADO`, `SEM_DADOS`, `FONTE_INDISPONIVEL`, `RATE_LIMITED`, `ERRO_INTERNO`.
+- Códigos estáveis: `PARAMETRO_INVALIDO`, `PLEITO_NAO_ENCONTRADO`, `ESCOPO_NAO_ENCONTRADO`, `FONTE_INDISPONIVEL`, `RATE_LIMITED`, `ERRO_INTERNO`. Ausência de dado não é erro: `200` com `dados:null` e `status:"sem_dado"`.
 - Campo novo é aditivo; remoção exige `/v2`.
 
 ## Cache
@@ -30,10 +30,11 @@ apps/api/src/
 - `ETag` = versão do snapshot (`eleicao:escopo:cargo:idg`).
 - `If-None-Match` → `304` sem corpo.
 - Cabeçalhos por rota:
-  - panorama: `public, max-age=0, s-maxage=3, stale-while-revalidate=10, stale-if-error=600`
-  - município: `s-maxage=5, stale-while-revalidate=30`
-  - corrida: `s-maxage=2, stale-while-revalidate=5`
-  - localidades: `s-maxage=86400`
+  - panorama: `public, max-age=0, s-maxage=3, stale-while-revalidate=5, stale-if-error=22` (30 s)
+  - UF: `public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15` (30 s)
+  - município: `public, max-age=0, s-maxage=5, stale-while-revalidate=5, stale-if-error=20` (30 s)
+  - corrida: `public, max-age=0, s-maxage=2, stale-while-revalidate=3, stale-if-error=5` (10 s)
+  - localidades: `public, max-age=3600, s-maxage=86400`
 - Nunca cachear erro.
 - Sem `Vary` além de `Accept-Encoding`.
 
@@ -47,7 +48,7 @@ apps/api/src/
 
 ## Segurança
 
-- Rate limit 60 req/min/IP com `Retry-After`.
+- Rate limit no origin: 300 req/min/IP, burst 600, com `Retry-After`; a CDN absorve a leitura.
 - Query desconhecida → 400 (não polui cache).
 - Nenhum segredo em env do cliente.
 - Timeout e circuit breaker na leitura de storage.

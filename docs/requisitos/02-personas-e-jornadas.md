@@ -54,8 +54,8 @@ Projeta o mapa em sala. Quer ver a mancha de cores mudar, comparar pleitos e exp
 1. Deixa a página aberta durante a apuração.
 2. A cada ciclo, o mapa repinta os estados que viraram e o relógio avança.
 3. No rodapé, os cavalos avançam conforme as seções são apuradas; a distância entre eles acompanha a diferença de votos.
-4. Em uma ultrapassagem, o cavalo que assumiu a frente solta um balão "Relincho!" por menos de 1 s.
-5. Ao final, o vencedor dá uma lambida carinhosa; o perdedor se deita; um coração sobe. O leitor de tela anuncia o resultado.
+4. Em uma ultrapassagem, o cavalo que assumiu a frente solta um balão "Relincho!" por até 1,2 s.
+5. Ao final, o vencedor dá uma lambida carinhosa; o perdedor se deita; três corações sobem. O leitor de tela anuncia o resultado.
 
 **Sucesso:** a animação não atrapalha a leitura e reflete o dado; nada é ofensivo.
 **Falha:** cavalos que teleportam, balão que cobre números, animação que continua depois do fim.

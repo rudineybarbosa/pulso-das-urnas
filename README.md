@@ -57,7 +57,7 @@ Uso jornalístico e cívico. Sem coleta de dados pessoais, sem login, sem anúnc
 ## Spec Kit e agentes
 
 - **Constituição:** [.specify/memory/constitution.md](.specify/memory/constitution.md) — bloqueante.
-- **Spec corrente:** [specs/001-apuracao-tempo-real/spec.md](specs/001-apuracao-tempo-real/spec.md).
+- **Spec corrente:** [specs/001-apuracao-tempo-real/spec.md](specs/001-apuracao-tempo-real/spec.md), com [research.md](specs/001-apuracao-tempo-real/research.md) (decisões), [checklist de requisitos](specs/001-apuracao-tempo-real/checklists/requisitos-v1.md) e [resolução](specs/001-apuracao-tempo-real/checklists/resolucao-requisitos-v1.md).
 - **Agentes:** fonte em [.specify/agents/](.specify/agents/), gerados para [.opencode/agents/](.opencode/agents/) e [.github/agents/](.github/agents/).
 - **Skills:** canônicas em [.opencode/skills/](.opencode/skills/), espelhadas em [.github/skills/](.github/skills/).
 - **Comandos:** `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` no OpenCode; `/speckit-specify` e equivalentes no Copilot.

@@ -24,8 +24,12 @@ Cívica, calma e viva. A base é neutra (grafite e branco) para que **as cores d
 | `--success` | `#067647` | Apuração finalizada |
 | `--warning` | `#B54708` | Dado desatualizado |
 | `--danger` | `#B42318` | Erro de fonte |
-| `--map-empty` | `#FFFFFF` | Estado sem voto apurado |
-| `--map-nodata` | `#E5E7EB` | Estado sem dado disponível |
+| `--map-empty` | `#FFFFFF` | Estado sem voto apurado (branco) |
+| `--map-nodata` | `#E5E7EB` | Estado sem dado disponível (cinza médio) |
+| `--map-na` | `#F1F4F8` | Cargo não aplicável ao escopo (cinza claro, sempre com diagonal) |
+| `--map-no-leader` | `#6B7280` | Válidos sem candidato elegível (cinza escuro) |
+| `--map-hatch` | `#6B7280` | Traço da hachura de empate e da diagonal de "não aplicável" (≥ 3:1 sobre os preenchimentos) |
+| `--map-edge` | `#64748B` | Contorno de 1 px quando o preenchimento não atinge 3:1 contra o vizinho |
 | `--map-border` | `#94A3B8` | Contorno de estado/município |
 | `--map-hover` | `#0B1220` a 8% | Realce ao passar o mouse |
 
@@ -33,6 +37,7 @@ Regras:
 - Texto sobre cor de partido usa **preto ou branco**, escolhido por contraste calculado (mínimo 4,5:1); nunca um terceiro tom.
 - Nunca usar cor como único indicador: sempre acompanhar de sigla do partido, nome do candidato ou padrão (hachura para empate).
 - Contraste mínimo 4,5:1 para texto normal e 3:1 para texto grande e elementos gráficos.
+- **Contraste não textual (D-036):** todo par de preenchimentos vizinhos mantém ≥ 3:1 **ou** é separado por contorno de 1 px que atinja 3:1 contra os dois preenchimentos — escolhido entre `--map-edge` e `--surface` pelo contraste calculado (mesma lógica do texto sobre cor, RN-024); se nenhum atingir, contorno duplo de 1 px (`--map-edge` + `--surface`). A hachura de empate e a diagonal de "não aplicável" também mantêm ≥ 3:1 sobre o preenchimento que cobrem e sobre o vizinho. Medição no build; falha quebra o build.
 
 ### Tipografia
 
@@ -73,7 +78,7 @@ Regras:
 
 - Mobile: painel de votos vira *bottom sheet* com três alturas (fechado, metade, quase cheio), arrastável e com botão de fechar.
 - Desktop: painel lateral direito (360–420 px) quando há cidade selecionada; o mapa preserva o enquadramento.
-- O rodapé dos cavalinhos é fixo na parte inferior em desktop e colapsável em mobile (altura 96 px, expandindo para 160 px).
+- O rodapé dos cavalinhos é sticky no fim do conteúdo (nunca fixo sobre o mapa) em desktop e colapsável em mobile (altura 96 px, expandindo para 160 px).
 
 ## 4. Mapa
 
@@ -82,17 +87,24 @@ Regras:
 - **Estado:** municípios do estado, contorno de 0,5 px; o estado permanece visível com 12% de opacidade nas bordas para contexto.
 - **Zoom:** transição de 600 ms, `cubic-bezier(0.2, 0, 0, 1)`, com `transform: scale/translate` (não recalcula geometria); respeita `prefers-reduced-motion` (troca instantânea com fade de 120 ms).
 - **Clique:** estado → carrega municípios (com esqueleto de até 300 ms) → zoom; cidade → abre o painel e mantém o zoom.
-- **Foco:** cada estado/município é um elemento focável (`tabindex="0"`, `role="button"`), com `aria-label` completo ("São Paulo, 27 municípios, PL lidera com 48,2%"). Enter/Space ativa; Esc sobe um nível.
+- **Foco:** cada estado/município é um elemento focável (`tabindex="0"`, `role="button"`), com `aria-label` completo ("São Paulo, 27 municípios, PL lidera com 48,2%"). Enter/Space ativa; Esc sobe um nível. Quando não há líder, o rótulo diz o estado em palavras ("sem dado", "não se aplica a este pleito", "aguardando definição judicial", "empate").
 - **Fallback sem JS:** lista de estados em `<noscript>` com links para as páginas de estado (pré-renderizadas) — ver RNF-A11Y.
+- **Preenchimento (D-002, D-011):** "cor predominante do estado" é o **preenchimento** pela cor do partido do líder no cargo em destaque (RN-006). Não existe cor de identidade por estado, região ou UF. Branco = sem voto; cinza médio = sem dado; cinza claro com diagonal = não aplicável; cinza escuro = sem líder elegível; cor do partido = líder; cor + hachura = empate. Erro de fonte e dado desatualizado **não** trocam a cor: acrescentam faixa.
+- **Cadência da cor (D-008, D-012):** cada estado muda no máximo **1 vez a cada 10 s**, com snapshots coalescidos; transição de 400 ms. A histerese de liderança (≥ 0,5% dos válidos ou ≥ 500 votos, sustentada por 2 snapshots) é calculada no servidor; quando a cor é mantida, aparece o selo "Disputa acirrada". Detalhe em `07-ux-mapa-e-animacoes.md` §4.7.
+- **Foco (D-037):** após o zoom, o foco vai ao título do mapa do estado (`tabindex="-1"`) e `Tab` alcança o primeiro município; ao abrir cidade, vai ao título do painel; "Voltar" devolve ao polígono ativado.
+- **Sem geometria (D-028):** município sem malha aparece na tabela e na busca, não tem `path` e não é clicável; faixa discreta no recorte do estado. Nunca é tratado como "sem dado".
 
 ## 5. Cores partidárias
 
+- **"Cor predominante do estado" é preenchimento, não identidade (D-002).** O mapa pinta o polígono com a cor do partido do líder no cargo em destaque; nenhum estado tem cor fixa, gradiente próprio ou paleta regional.
 - Arquivo canônico: `data/party-colors.json`, com `sigla`, `nome`, `hex`, `fonte` (documento de identidade visual do partido) e `revisadoEm`.
 - Não existe cor oficial publicada pelo TSE; a tabela é curada pelo projeto e **versionada**. Toda cor tem origem registrada.
 - Fallback: hash estável da sigla em uma paleta de 12 matizes distintos, com saturação/luminosidade fixas; registra-se no log de build qual sigla caiu no fallback.
-- Colisão entre os dois líderes de um mesmo estado: aplica-se hachura diagonal de 45° na cor do segundo, para diferenciar sem inventar cor.
+- Colisão entre as cores dos dois líderes de um mesmo estado: aplica-se contorno de 1 px na cor de maior contraste (RN-024), sem inventar cor. A hachura é reservada ao empate (RN-008); quando usada, o traço mantém ≥ 3:1 (D-036).
 - Partido sem cor cadastrada aparece com a cor de fallback e a sigla visível; nunca com branco (que significa "sem voto").
 - A mesma sigla tem a mesma cor em todo o produto e em todos os pleitos.
+- Liderança só troca a cor com histerese (RN-038): ≥ 0,5% dos válidos ou ≥ 500 votos, por 2 snapshots. Abaixo disso, a cor fica e o detalhe mostra "Disputa acirrada".
+- Todo par de preenchimentos vizinhos precisa de 3:1 ou contorno de 1 px com 3:1 contra os dois lados (escolhido entre `--map-edge` e `--surface`); a verificação roda no build e falha o build.
 
 Valores iniciais (revisar e completar na implementação, com fonte):
 
@@ -138,15 +150,21 @@ Valores iniciais (revisar e completar na implementação, com fonte):
 - Toda animação tem versão sem movimento; `prefers-reduced-motion` desliga corrida, zoom animado e confete.
 - Nada pisca mais de 3 vezes por segundo; nada bloqueia interação.
 - A corrida é decorativa: os mesmos números estão sempre disponíveis em texto e na tabela.
+- **Cadência de cor (D-012):** no máximo 1 troca por estado a cada 10 s, com snapshots coalescidos; a primeira pintura não anima; com `prefers-reduced-motion` a transição é 0 ms, mas a cadência continua valendo.
+- **Reconexão (D-027):** a mola é reancorada no alvo com velocidade 0 e 400 ms `ease-out`, sem oscilação; ultrapassagens ocorridas durante o offline não são reproduzidas.
+- **Corrida (D-025, D-030):** dupla fixa na sessão, reinício na posição atual quando o conjunto muda por 2 snapshots (≥ 10 s) e cavalo "indisponível" para no lugar.
+- **Cena final (D-032):** uma vez por aba, com a chave `pulso:final-scene:{pleito}:{cargo}` em `sessionStorage`; "Rever cena" sempre disponível; `localStorage` guarda só a pausa.
 
 ## 7. Acessibilidade
 
 - Alvo WCAG 2.2 AA.
-- Ordem de foco: cabeçalho → busca → chips → mapa (região com `role="application"` e instruções) → painel → rodapé.
+- Ordem de foco: cabeçalho → busca → chips → mapa (SVG com `role="img"`, `aria-labelledby` e instruções em região separada) → painel → rodapé.
 - Atalhos: `Esc` sobe um nível; `+`/`-` zoom; setas navegam entre estados/municípios; `Home` volta ao Brasil.
-- Região `aria-live="polite"` anuncia: mudança de líder do estado selecionado, fim da apuração e resultado final. Máximo de um anúncio a cada 10 s para não inundar o leitor de tela.
-- Alternativa em tabela (`<details>` "Ver dados em tabela") com estado, líder, votos, percentual e apurado.
-- Contraste de todas as cores de partido validado em build; falha quebra o build.
+- Região `aria-live="polite"` única, agregada por ciclo de 10 s, com prioridade: (1) líder do escopo selecionado, (2) líder nacional, (3) fim da apuração. Máximo de um anúncio a cada 10 s; o excedente vai para a região "Resumo da apuração" (`aria-live="off"`) sem interromper (D-035).
+- Foco após navegação: zoom → título do mapa do estado (`tabindex="-1"`), com `Tab` no primeiro município; cidade aberta → título do painel; "Voltar" e `Esc` → polígono ativado. Polling nunca move o foco (D-037).
+- Alternativa em tabela (`<details>` "Ver dados em tabela") com estado, líder, votos, percentual e apurado; 100 linhas por página e busca no escopo, sem CSV na v1 (D-026).
+- Contraste de todas as cores de partido validado em build — 4,5:1 para texto sobre cor, 3:1 entre preenchimentos adjacentes (ou contorno equivalente) e para a hachura; falha quebra o build (D-036).
+- Atribuição ("Fonte: Tribunal Superior Eleitoral") e aviso "Este site não é um serviço oficial do TSE." no HTML estático inicial de toda rota, visíveis sem JavaScript (D-039).
 - Vídeo/animação não é o único meio de informação.
 
 ## 8. Conteúdo
@@ -154,6 +172,13 @@ Valores iniciais (revisar e completar na implementação, com fonte):
 - Rótulo da busca, literal: **"digite o nome do estado ou da cidade:"**
 - Botão de retorno, literal: **"Voltar"**
 - Estados vazios: "Aguardando o primeiro boletim de urna."
+- Não aplicável: "Este cargo não existe em <escopo>. Nada a apurar aqui."
+- Sem líder elegível: "Aguardando definição judicial."
 - Dado atrasado: "Dados de 20/10/2026, 18h42. A fonte não respondeu na última tentativa."
 - Fim: "Apuração encerrada em 20/10/2026, 21h15. PL venceu em São Paulo."
-- Rodapé legal: "Fonte: Tribunal Superior Eleitoral. Este site não é um serviço oficial do TSE."
+- Município fora do pleito: "Município não participa deste pleito."
+- Geometria indisponível: "Geometria indisponível para este município. Os votos estão na tabela."
+- Corrida reiniciada: "A corrida recomeçou: <A> e <B>."
+- Rodapé legal: "Fonte: Tribunal Superior Eleitoral. Este site não é um serviço oficial do TSE." — presente no HTML estático inicial de toda rota, fora do React (D-039).
+
+> A tabela completa de microcopy, com todas as chaves, está em [07 §8](docs/requisitos/07-ux-mapa-e-animacoes.md); este documento repete apenas o que aparece em layout fixo. Palavras proibidas e tratamento simétrico: 07 §8.1 (RN-033).

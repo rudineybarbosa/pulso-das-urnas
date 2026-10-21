@@ -54,7 +54,8 @@ Nenhuma dependência entra sem medir o delta.
 
 ```bash
 pnpm build && pnpm size
-pnpm exec lighthouse http://localhost:4173 --preset=desktop
+pnpm exec lighthouse http://localhost:4173 --preset=mobile   # Moto G4, 4G 1,6 Mbps / RTT 150 ms
+# p75 de 5 execuções em /br, /br/sp e /br/sp/sao-paulo
 pnpm test:e2e -- --grep performance
 k6 run load/panorama.js      # contra ambiente com CDN
 ```

@@ -60,9 +60,9 @@
 | Fase | Entrega | Critério de saída |
 |---|---|---|
 | **F1 — Fundação** | Repositório, docs, agents/skills, CI, contratos, fixtures, simulador mínimo | `pnpm test` e `pnpm build` verdes; contrato documentado |
-| **F2 — Dados** | Ingestão real, normalização, snapshots, API de leitura | AT-001 a AT-008 verdes contra o TSE real |
-| **F3 — Mapa** | Brasil, estado, município, busca, cores, voltar, tabela | AT-009 a AT-020 verdes em modo fake e real |
-| **F4 — Cavalinhos** | Corrida, ultrapassagem, relincho, cena final, reduced motion | AT-021 a AT-027 verdes |
+| **F2 — Dados** | Ingestão real, normalização, snapshots, API de leitura | ATs da coluna F2 de [12.1](12-rastreabilidade.md) verdes contra o TSE real |
+| **F3 — Mapa** | Brasil, estado, município, busca, cores, voltar, tabela | ATs da coluna F3 de [12.1](12-rastreabilidade.md) verdes em modo fake e real |
+| **F4 — Cavalinhos** | Corrida, ultrapassagem, relincho, cena final, reduced motion | ATs da coluna F4 de [12.1](12-rastreabilidade.md) verdes |
 | **F5 — Escala** | CDN, cache, SSE opcional, k6, observabilidade | RNF-ESC medido e registrado |
 | **F6 — Infra** | Terraform dev/prod, deploy, runbook | `terraform validate` + plan revisado; deploy manual documentado |
 
@@ -81,6 +81,6 @@ Cada fase termina com demonstração na URL de dev (ou localhost, nas fases inic
 ## 5. Premissas de operação
 
 - A janela crítica é de 17h às 23h (horário de Brasília) nos dias de votação.
-- Fora da janela, a coleta pode rodar a cada 30 minutos.
+- Fora da janela eleitoral, a coleta segue RN-012: 30 min com apuração em andamento e 6 h sem pleito ativo.
 - O produto pode exibir dados de pleitos passados (replay) sem custo adicional.
 - A equipe é pequena: automação vale mais que processo manual.

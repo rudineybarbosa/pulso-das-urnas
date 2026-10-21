@@ -104,20 +104,22 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 
 ### Functional Requirements
 
-- **FR-001**: O sistema DEVE descobrir pleitos, turnos e cargos a partir do catálogo oficial, sem lista fixa (RF-001..RF-004).
+- **FR-001**: O sistema DEVE descobrir pleitos, turnos e cargos a partir do catálogo oficial, sem lista fixa, incluindo os cargos de cada escopo — país, UF e município (RF-001..RF-004, RN-001, RN-004).
 - **FR-002**: O sistema DEVE determinar o maior cargo em disputa por escopo e usá-lo para a cor do estado (RF-007, RN-005).
-- **FR-003**: O sistema DEVE pintar cada estado com a cor do partido do líder em votos válidos, branco sem votos e cinza sem dado (RF-013..RF-017).
-- **FR-004**: O usuário DEVE poder dar zoom do Brasil para o estado e do estado para o município, com botão "Voltar" por nível (RF-009..RF-012).
-- **FR-005**: O painel DEVE listar candidatos por votos, com partido, percentual sobre válidos, situação e resumo do cargo (RF-020..RF-024).
+- **FR-003**: "Cor do estado" significa o **preenchimento** com a cor do partido do líder em votos válidos; não existe cor de identidade por estado. Branco é ausência de voto, cinza é ausência de dado (RF-013..RF-017, RN-006).
+- **FR-004**: O usuário DEVE poder dar zoom do Brasil para o estado e do estado para o município, com botão "Voltar" por nível; cada nível DEVE oferecer apenas os cargos em disputa naquele escopo (RF-004, RF-009..RF-012, RN-004).
+- **FR-005**: O painel DEVE listar candidatos por votos, com partido, percentual sobre válidos, situação e resumo do cargo; o cargo selecionado persiste ao trocar de pleito ou escopo quando existe no novo escopo e, quando não existe, a tela volta ao cargo em destaque com aviso não bloqueante (RF-005, RF-006, RF-020..RF-024, RN-036).
 - **FR-006**: A busca DEVE aceitar nome de estado, sigla e nome de município, ignorando caixa e acento, com desambiguação por UF (RF-026..RF-029).
-- **FR-007**: A página DEVE se atualizar automaticamente e mostrar fonte, horário, percentual apurado e estado do dado (RF-030..RF-034).
+- **FR-007**: A página DEVE se atualizar automaticamente e mostrar fonte, horário, percentual apurado e estado do dado, distinguindo as três idades de frescor — geração no TSE, coleta própria e idade do snapshot (RF-030..RF-034, RN-013, RN-039).
 - **FR-008**: A corrida DEVE usar dois candidatos do maior cargo nacional, avanço pela apuração e distância pela diferença de votos, com relincho na ultrapassagem e cena final afetuosa (RF-035..RF-038).
 - **FR-009**: O usuário DEVE poder pausar a animação, e `prefers-reduced-motion` DEVE substituí-la por uma barra estática (RF-039, RF-040).
-- **FR-010**: Todo o fluxo DEVE ser operável por teclado e ter alternativa em tabela (RF-041, RF-042).
-- **FR-011**: O estado da tela DEVE ser reproduzível por URL e as metatags OG DEVEM refletir o recorte (RF-043).
-- **FR-012**: Toda tela com dado DEVE atribuir a fonte, informar o horário e declarar não oficialidade (RF-044).
-- **FR-013**: O sistema DEVE degradar com mensagem e ação quando a fonte falhar ou o escopo não existir (RF-045).
-- **FR-014**: O produto NÃO DEVE coletar dados pessoais, usar cookies de rastreio ou exigir login.
+- **FR-010**: Todo o fluxo DEVE ser operável por teclado, com foco gerenciado após cada mudança de nível, e ter alternativa em tabela; anúncios de mudança DEVEM ir para `aria-live` agregado (no máximo 1 anúncio/10 s, prioridade: líder do escopo selecionado, líder nacional, fim da apuração), com o restante em uma região de resumo sem interrupção (RF-041, RF-042, RNF-A11Y-06).
+- **FR-011**: O estado da tela DEVE ser reproduzível por URL canônica, e as metatags OG/Twitter DEVEM refletir o recorte nos escopos pré-renderizados (RF-043, RN-018, RN-041).
+- **FR-012**: Toda tela com dado DEVE atribuir a fonte, informar o horário e declarar não oficialidade, inclusive no HTML estático inicial (RF-044).
+- **FR-013**: O sistema DEVE degradar com mensagem e ação quando a fonte falhar ou o escopo não existir, e DEVE distinguir `sem_dado`, `nao_aplicavel` e `sem_lider_elegivel` de erro de fonte (RF-017, RF-045, RN-021, RN-028).
+- **FR-014**: O produto NÃO DEVE coletar dados pessoais, usar cookies de rastreio ou exigir login; nenhuma requisição a domínio de terceiro e `localStorage` só com chaves `pulso:*` (AT-033).
+- **FR-015**: O produto DEVE exibir pleitos passados e arquivados, agrupados no seletor e sinalizados como "Resultado final", sem polling de 5 s e sem se apresentar como apuração ao vivo (RF-002, RF-046, RN-012, RN-037).
+- **FR-016**: A URL canônica de município DEVE usar UF em minúsculas e slug ASCII, aceitar código IBGE com redirect `301` e responder `404` com busca para escopo desconhecido (RF-043, RN-018, RN-041).
 
 ### Key Entities
 
@@ -138,7 +140,7 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 - **SC-004**: O mapa interativo aparece em até 2,5 s no percentil 75 em conexão 4G.
 - **SC-005**: 10.000 pessoas conseguem acompanhar simultaneamente, com menos de 0,1% de erro.
 - **SC-006**: O custo na semana eleitoral fica abaixo de US$ 10.
-- **SC-007**: Uma pessoa que não distingue cor ou não quer movimento conclui a mesma tarefa que as demais.
+- **SC-007**: 5 de 5 participantes que usam apenas teclado e `prefers-reduced-motion` completam a tarefa "abrir `/br`, identificar o partido que lidera o próprio estado e abrir os votos da própria cidade" em ≤ 3 ações e ≤ 60 s, com os mesmos números que a versão com mouse e animação.
 - **SC-008**: Nenhum número exibido diverge do arquivo oficial da geração informada em auditoria por amostragem.
 
 ## Assumptions
@@ -148,4 +150,6 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 - O pico de acesso ocorre nas primeiras horas e no encerramento.
 - O produto é somente leitura e não há dado pessoal.
 - A v1 cobre granularidade de município, não de zona/seção.
-- A arte dos cavalos é original e não usa personagens de terceiros.
+- A arte dos cavalos é original, criada dentro do projeto, licenciada junto com o repositório e sem marca de terceiro; autoria e ausência de marca registrada ficam em `assets/race/README.md` e passam por revisão de marca antes do lançamento.
+- OG/Twitter são pré-renderizados apenas para `/br`, as 27 UFs e os 100 municípios de maior eleitorado; os demais municípios usam metadado genérico com o nome no `<title>`. Esse limite é aceito e documentado em `08-arquitetura-e-stack.md`.
+- Dados de pleitos passados são exibidos como resultado final, nunca como apuração ao vivo.

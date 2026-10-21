@@ -14,8 +14,26 @@ Metas verificáveis. Cada uma tem como ser medida e um gate no CI ou no runbook.
 | RNF-PERF-06 | Resposta do panorama ≤ 8 KB gz; painel de município ≤ 12 KB gz; 304 ≤ 400 B | teste de contrato |
 | RNF-PERF-07 | Zoom e troca de cor a 60 fps em aparelho intermediário (≥ 50 fps p95) | Playwright trace + DevTools |
 | RNF-PERF-08 | Troca de aba de cargo no painel ≤ 100 ms (sem refazer download) | teste de componente |
+| RNF-PERF-09 | Latência **fim a fim** da geração do TSE ao pixel ≤ **30 s p95** e ≤ **15 s mediana**, durante apuração ativa | medição por ciclo no ambiente publicado, com o orçamento abaixo; AT-034 |
 
-**Orçamento de latência (p95), do clique ao número na tela:**
+**Rotas e dispositivo de medição (RNF-PERF-01..03):** `/br`, `/br/sp` e `/br/sp/sao-paulo`, no build de produção. O perfil **primário é mobile Moto G4 em 4G (1,6 Mbps, RTT 150 ms)**; desktop é perfil secundário e não substitui a aprovação. O número reportado é o **p75 de 5 execuções** do Lighthouse CI por rota — nenhuma execução isolada aprova ou reprova.
+
+**Orçamento de latência fim a fim (RNF-PERF-09, p95), da geração do TSE ao pixel:**
+
+| Etapa | Orçamento |
+|---|---|
+| Ingestão (espera pelo próximo ciclo de 10 s) | 10 s |
+| Processamento e publicação do snapshot | 2 s |
+| Propagação na CDN até o edge | 3 s |
+| Polling do cliente | 5 s |
+| Render | 2 s |
+| **Total** | **≈ 22 s** (margem de 8 s para o teto de 30 s) |
+
+O orçamento acima é o pior caso aceitável (p95); a mediana é medida na mesma série. Medição: registrar `generatedAt`, `collectAt` e horário do render por ciclo e reportar p50/p95 por escopo.
+
+**Teto de cache nas rotas de leitura (D-017):** durante a apuração, `s-maxage + stale-while-revalidate + stale-if-error` ≤ **30 s no total** por rota; após o pleito finalizar, até **6 h**. Nenhuma etapa do orçamento acima pode ser compensada aumentando o cache além desse teto.
+
+**Orçamento de latência de interação (p95), do clique ao número na tela:**
 
 | Etapa | Orçamento |
 |---|---|
@@ -29,13 +47,33 @@ Metas verificáveis. Cada uma tem como ser medida e um gate no CI ou no runbook.
 
 | ID | Requisito |
 |---|---|
-| RNF-ESC-01 | Suportar **10.000 usuários simultâneos ativos** e **500 req/s** no pico, sem erro e com p95 ≤ 150 ms na CDN. |
+| RNF-ESC-01 | Suportar **10.000 usuários simultâneos ativos** e **500 req/s** no pico, sem erro e com p95 ≤ 150 ms na CDN. Definição executável e critérios de aprovação abaixo. |
 | RNF-ESC-02 | Suportar **1 milhão de visualizações/dia** no dia da eleição. |
 | RNF-ESC-03 | Disponibilidade ≥ 99,9% na janela eleitoral (17h–23h59). |
 | RNF-ESC-04 | Origin (Cloud Run) absorvendo ≤ 5% das requisições de leitura em regime de pico, graças a cache de CDN e `ETag`. |
-| RNF-ESC-05 | Degradação graciosa: se a API cair, a CDN continua servindo o último snapshot público por até 10 min (`stale-if-error`). |
+| RNF-ESC-05 | Degradação graciosa: se a API cair, a CDN continua servindo o último snapshot público por até **30 s durante a apuração** e até **6 h após finalizada** (RN-040). |
 | RNF-ESC-06 | Auto-scaling: Cloud Run `min-instances=0` fora da janela e `min-instances=1` nas 4 h ao redor da votação; máximo configurado por orçamento. |
 | RNF-ESC-07 | Nenhum estado/arquivo é buscado por cliente individual: toda leitura passa pela API cacheada; o navegador nunca chama o TSE. |
+
+**Definição do teste de carga (RNF-ESC-01, D-041):**
+
+| Parâmetro | Valor |
+|---|---|
+| Ferramenta | k6, **3 runners**: São Paulo, Virgínia (us-east) e Frankfurt (eu-west) |
+| Ambiente | **dev com CDN real** (Firebase Hosting + rewrite) e `s-maxage` de produção; teste sem CDN não é evidência |
+| Carga | 5 min de **platô com 10.000 VUs** (além de rampa de subida e descida) |
+| Mix | **70% panorama (`/api/v1/panorama`) · 20% município · 10% estático** |
+| Execução | manual, agendada fora da janela eleitoral; disparo e resultado no runbook (09 §7.8) |
+
+Critérios de aprovação (todos, simultaneamente):
+
+1. `http_req_failed` **< 0,1%** no total e em cada runner.
+2. **p95 na borda (CDN) < 150 ms**.
+3. Origin (Cloud Run) absorvendo **≤ 5%** das requisições no platô.
+4. CPU do `pulso-api` **< 80%** durante o platô.
+5. **Nenhum 5xx** no origin no período do teste.
+
+Falhou qualquer critério, o relatório é anexado com o diagnóstico e o teste não aprova a release. Relatório em `docs/operacao/carga-YYYY-MM-DD.md` (data, commit, runners, mix, números e conclusão).
 
 **Conta de capacidade (justificativa):**
 
@@ -64,10 +102,10 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 
 | ID | Requisito |
 |---|---|
-| RNF-SEC-01 | CSP restritiva: `default-src 'self'`; sem scripts de terceiros; `frame-ancestors 'none'`. |
+| RNF-SEC-01 | CSP restritiva: `default-src 'self'`, **sem `unsafe-inline`** (estilos em arquivos; dinamismo por CSSOM/variáveis CSS), sem scripts de terceiros; `frame-ancestors 'none'`. |
 | RNF-SEC-02 | Cabeçalhos: HSTS (1 ano, preload), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` mínima. |
 | RNF-SEC-03 | Toda entrada validada por schema (Zod) na borda; parâmetros desconhecidos rejeitados com 400. |
-| RNF-SEC-04 | Rate limit de 60 req/min por IP nas rotas dinâmicas; 429 com `Retry-After`. |
+| RNF-SEC-04 | Rate limit no **origin** (Cloud Run): **300 req/min por IP, burst 600**, contado **por instância** e sem estado compartilhado — o teto agregado é `instâncias × 300` (máx. 6 instâncias, 08 §8); excedente recebe 429 com `Retry-After`. Cliente normal faz ≤ 12 req/min; a CDN absorve o restante, então NAT compartilhado (escola, empresa, operadora) **não é penalizado no caminho cacheado** — só o tráfego que chega ao origin conta. |
 | RNF-SEC-05 | Nenhum segredo no repositório; secret scanning no CI; dependências auditadas (Dependabot + `pnpm audit`). |
 | RNF-SEC-06 | Imagens de container com usuário não-root, base distroless, SBOM gerado no build. |
 | RNF-SEC-07 | Saída sempre escapada; nenhum `dangerouslySetInnerHTML` com dado de fonte externa. |
@@ -81,6 +119,7 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | RNF-OBS-03 | Alertas: lag > 5 min em janela eleitoral; 5xx > 1% por 5 min; falha de fonte > 10% em 5 min; orçamento em 80%. |
 | RNF-OBS-04 | Dashboard com: lag, versão atual por pleito, erros por código, hit ratio e custo estimado do dia. |
 | RNF-OBS-05 | Rastreamento distribuído amostrado em 1% (ou 100% em erro) entre API e ingestão. |
+| RNF-OBS-06 | **SLO de 99,9%** de disponibilidade, medido em **janela móvel de 30 dias** — **error budget de 43 min/mês** (0,1% de 43 200 min). A janela eleitoral (17h–23h59) é o período crítico: ali 99,9% equivale a **~25 s**. O alerta de queima de budget tem **dono nominal** (plantão do dia) e **escalonamento em 15 min** sem reconhecimento (09 §7.6). |
 
 ## Custo — RNF-COST
 
@@ -88,8 +127,10 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 |---|---|
 | RNF-COST-01 | Regime normal: R$ 0/mês, dentro das cotas gratuitas. |
 | RNF-COST-02 | Semana eleitoral: ≤ US$ 10 no total (banda do Hosting + Cloud Run + Storage). |
-| RNF-COST-03 | Orçamento GCP com alertas em 50%, 80% e 100% de US$ 10; hard stop manual documentado no runbook. |
+| RNF-COST-03 | Orçamento GCP com alertas em 50%, 80% e 100% do orçamento de cada ambiente (RNF-COST-05); hard stop manual documentado no runbook. |
 | RNF-COST-04 | Proibido introduzir recurso com custo fixo mensal (LB global, NAT, Cloud SQL, Memorystore) sem ADR e aprovação. |
+| RNF-COST-05 | **Tetos por ambiente**: dev ≤ **US$ 1/mês**; prod ≤ **US$ 2/mês** fora da eleição e ≤ **US$ 10 na semana eleitoral**. Orçamento GCP por ambiente com alertas em 50/80/100% e, em prod, limiar extra de 20% (US$ 2) para o teto fora da eleição (09 §6.1). |
+| RNF-COST-06 | **Kill switch** documentado e testado: API com `max-instances=0` e Scheduler pausado; comando, responsável e critério de acionamento no runbook (09 §7.5). Acionar é decisão do plantão, não requer deploy. |
 
 ## Compatibilidade — RNF-COMPAT
 
@@ -104,9 +145,10 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | ID | Requisito |
 |---|---|
 | RNF-LGPD-01 | Nenhum dado pessoal coletado, armazenado ou compartilhado. |
-| RNF-LGPD-02 | Sem cookies de rastreio; `localStorage` apenas para preferências (pausa da corrida, último escopo) e com aviso. |
+| RNF-LGPD-02 | Sem cookies de rastreio; `localStorage` apenas para a preferência de pausa da corrida, com aviso; o escopo vive na URL (RN-036). |
 | RNF-LGPD-03 | Métricas agregadas e anônimas; IP não persistido (truncado ou descartado). |
 | RNF-LGPD-04 | Página de privacidade em linguagem simples, linkada no rodapé. |
+| RNF-LGPD-05 | Logs do provedor/CDN retidos por **30 dias**, **sem exportação**; logs da aplicação **sem IP completo** (truncado ou descartado). A página de privacidade cita provedores e retenção. |
 
 ## Legal e editorial — RNF-LEGAL
 
@@ -125,3 +167,4 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | RNF-MAINT-03 | Nenhum arquivo de regra com I/O; regras puras e testáveis. |
 | RNF-MAINT-04 | Toda mudança de comportamento atualiza o RF/RN correspondente e a matriz de rastreabilidade. |
 | RNF-MAINT-05 | ADR para decisões que afetam contrato, custo ou arquitetura; ADR `proposed` não vira código sem aprovação. |
+| RNF-MAINT-06 | `parserVersion` em **semver**, fixada por fixture e registrada em cada snapshot. Falha de schema mantém o último snapshot válido, alerta e permite **fixar a versão anterior do parser por flag**; procedimento de pin e rollback no runbook (09 §7.7). |

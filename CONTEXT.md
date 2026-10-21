@@ -45,12 +45,23 @@ Vocabulário único do projeto. Se um termo não estiver aqui, consulte o TSE an
 
 | Termo | Definição | Código |
 |---|---|---|
-| **Snapshot** | Retrato normalizado e imutável de um escopo/cargo em uma geração do TSE. Tem `versao`, `geradoEm`, `fonte`. | `snapshot` |
+| **Snapshot** | Retrato normalizado e imutável de um escopo/cargo em uma geração do TSE. Tem `versao`, `geradoEm`, `fonte` e `parserVersion`. | `snapshot` |
+| **Origem de fallback** | Objeto `{ pleito, turno, generationId, generatedAt }` que identifica de onde veio o snapshot quando o turno/pleito vigente não tem o cargo. `null` = dado vigente. | `origem` |
+| **catalogVersion** | Hash do catálogo normalizado; muda quando muda o conjunto de pleitos, turnos, cargos ou abrangências. Governa a vida útil (24 h → `arquivado`) de pleito/cargo que desaparece. | `catalogVersion` |
+| **parserVersion** | Versão semver do parser que produziu o snapshot; permite fixar a versão anterior por flag e fazer rollback. | `parserVersion` |
 | **Panorama** | Snapshot nacional com todos os estados e a cor calculada de cada um. | `panorama` |
-| **Líder** | Candidato com mais votos válidos no escopo/cargo, após as regras RN-005 a RN-009. | `leader` |
-| **Cargo em destaque** | Maior cargo em disputa no escopo, pela hierarquia de RN-001. Define a cor do estado. | `featuredOffice` |
-| **Cor do estado** | Cor do partido do líder do cargo em destaque; branco se não há voto válido. | `stateColor` |
-| **Frescor** | Idade do snapshot em relação ao horário de geração do TSE e ao horário da última coleta bem-sucedida. | `freshness` |
+| **Líder** | Candidato com mais votos válidos no escopo/cargo, após as regras RN-005 a RN-009 e RN-021. | `leader` |
+| **Cargo em destaque** | Maior cargo em disputa no escopo, pela hierarquia de RN-005. Define a cor do estado. | `featuredOffice` |
+| **Cor do estado** | Preenchimento do polígono com a cor do partido do líder do cargo em destaque; não existe cor de identidade por UF. Sem líder, segue RN-035; a troca obedece à histerese de RN-038. | `stateColor` |
+| **Sem voto** (`sem_voto`) | O arquivo existe e não há voto válido. Preenchimento branco, rótulo "Aguardando o primeiro boletim". Diferente de `0` sem arquivo. | `status: "sem_voto"` |
+| **Sem dado** (`sem_dado`) | O cargo se aplica ao escopo/turno, mas nenhum arquivo foi coletado. Cinza médio, "Sem dados"; API devolve `dados: null`. | `status: "sem_dado"` |
+| **Não aplicável** (`nao_aplicavel`) | O cargo não existe naquele escopo/turno e não há fallback. Cinza claro com diagonal, "Não se aplica". | `status: "nao_aplicavel"` |
+| **Sem líder elegível** (`sem_lider_elegivel`) | Há votos válidos, mas nenhum candidato com `dvt = "Válido"`. Cinza escuro, "Aguardando definição judicial". | `status: "sem_lider_elegivel"` |
+| **Retificado** (`retificado`) | Geração do TSE com diminuição de votos aceita como oficial. Flag acumulável, badge "dados retificados pelo TSE" por 60 min ou 3 gerações sem regressão. | `retificado` |
+| **Frescor** | Três idades independentes: geração do TSE (`sourceAge`), nossa coleta (`collectedAge`) e snapshot servido (`snapshotAge`); o estado é derivado de RN-039. | `freshness` |
+| **sourceAge** | `agora − fonte.generatedAt`: há quanto tempo o TSE gerou o arquivo. | `sourceAge` |
+| **collectedAge** | `agora − fonte.collectedAt`: há quanto tempo coletamos com sucesso. | `collectedAge` |
+| **snapshotAge** | `agora − snapshot.gravadoEm`: idade do objeto imutável servido. | `snapshotAge` |
 | **Modo real** | Coleta dos arquivos oficiais do TSE. | `DATA_MODE=real` |
 | **Modo fake** | Simulador local com replay ou dados sintéticos; mesmo contrato da API. | `DATA_MODE=fake` |
 | **Replay** | Reprodução acelerada de uma apuração real gravada em fixtures. | `replay` |

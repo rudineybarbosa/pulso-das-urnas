@@ -10,14 +10,14 @@ O sistema é público, somente leitura e sem login. A superfície é pequena; os
 ## Cabeçalhos obrigatórios
 
 ```
-Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), camera=(), microphone=()
 ```
 
-- `unsafe-inline` em estilo só se inevitável, com justificativa.
+- Sem `unsafe-inline`: estilos vivem em arquivos CSS; dinamismo de mapa/corrida usa CSSOM (`element.style`) e variáveis CSS, nunca `style="..."` no HTML.
 - Sem script de terceiro, pixel, analytics externo ou fonte remota.
 
 ## Entrada e saída
@@ -30,7 +30,7 @@ Permissions-Policy: geolocation=(), camera=(), microphone=()
 
 ## Abuso e custo
 
-- Rate limit 60 req/min/IP; 429 com `Retry-After`.
+- Rate limit no origin: 300 req/min/IP, burst 600; 429 com `Retry-After`. A CDN absorve a leitura e NAT compartilhado não é penalizado no caminho cacheado.
 - Limite de instâncias do Cloud Run e orçamento com alerta.
 - CDN absorve leitura; origin não é amplificado.
 - Sem endpoint de escrita.

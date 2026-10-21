@@ -11,8 +11,10 @@ O sistema DEVE obter o catálogo oficial de pleitos do TSE e apresentar apenas o
 - Regras: RN-001, RN-002. Aceite: AT-001.
 
 ### RF-002 — Descobrir turnos
-Para cada pleito, o sistema DEVE listar os turnos e o estado de cada um: `nao_iniciada`, `em_apuracao` ou `finalizada`.
+Para cada pleito, o sistema DEVE listar os turnos e o estado de cada um: `nao_iniciada`, `em_apuracao`, `finalizada` ou `arquivado`.
 - Fonte do estado: `tf` e `s.pst` dos arquivos do turno (RN-003).
+- Ciclo do catálogo: o catálogo DEVE carregar `catalogVersion`. Se um pleito ou cargo desaparecer do catálogo, o sistema DEVE manter o último snapshot por 24 h com o selo "catálogo atualizado"; passadas as 24 h, DEVE marcar o turno como `arquivado` e removê-lo do seletor (RN-037).
+- Um turno novo no catálogo DEVE entrar automaticamente e ser marcado como o mais recente.
 - Aceite: AT-001, AT-031.
 
 ### RF-003 — Descobrir cargos do pleito
@@ -20,20 +22,26 @@ O sistema DEVE listar os cargos de cada eleição a partir de `e[].abr[].cp[]`, 
 - Aceite: AT-002.
 
 ### RF-004 — Cargos por escopo
-O sistema DEVE informar quais cargos estão em disputa em um escopo:
+O sistema DEVE informar quais cargos estão em disputa em um escopo, inclusive por município, derivados do catálogo:
 - país: cargos com abrangência `br`;
-- UF: cargos da eleição estadual aplicáveis à UF + cargos nacionais;
-- município: os mesmos da UF (eleições gerais) ou Prefeito/Vereador (eleições municipais).
-- Regra: RN-004. Aceite: AT-002.
+- UF: cargos da eleição estadual aplicáveis à UF + cargos nacionais; `Deputado Distrital` só no DF, `Deputado Estadual` nos demais;
+- município: os cargos da UF (eleições gerais) ou `Prefeito`/`Vereador` (eleições municipais).
+- Saída: `GET /escopos/{uf}/cargos?pleito=` e `GET /municipios/{ibge}/cargos?pleito=` devolvem, na ordem de RN-005, `{id, nome, tipo, emDisputa}` — a lista é sempre derivada do catálogo, nunca de lista fixa no código.
+- Cargo `tp = 3` (consulta popular) NÃO aparece nos endpoints de escopo.
+- Regra: RN-004, RN-005. Aceite: AT-002.
 
 ### RF-005 — Selecionar pleito
 O usuário DEVE poder escolher o pleito e o turno. A escolha altera cargos, mapa e votos, e é refletida na URL (`?pleito=`).
 - Padrão: pleito mais recente com apuração iniciada; se nenhum, o mais recente do catálogo.
-- Aceite: AT-003.
+- Persistência do cargo: ao trocar pleito ou escopo, o cargo selecionado DEVE ser mantido se existir no novo escopo; se não existir, o sistema DEVE voltar ao cargo em destaque com o aviso não bloqueante "Cargo X não está em disputa aqui; exibindo Y" (RN-036).
+- Com um município aberto: se ele participar do novo pleito, o painel é mantido e recarregado; se não participar, o painel fecha, o estado permanece, o município sai da URL e aparece o toast "Município não participa deste pleito".
+- A URL só muda por ação explícita do usuário.
+- Aceite: AT-003, AT-026.
 
 ### RF-006 — Selecionar cargo
 O usuário DEVE poder escolher o cargo exibido por chips. O chip padrão é o maior cargo em disputa (RN-005). A escolha é refletida na URL (`?cargo=`).
 - O mapa, a legenda, o painel e a corrida reagem à troca.
+- Deep link com `?cargo=` inválido para o escopo ou pleito DEVE redirecionar para o cargo em destaque, com o mesmo aviso não bloqueante de RF-005, sem erro de página e sem alterar o restante da URL (RN-036).
 - Aceite: AT-003.
 
 ### RF-007 — Identificar o maior cargo em disputa
@@ -55,6 +63,7 @@ Ao clicar/tocar em um estado, o mapa DEVE aplicar zoom animado e exibir os munic
 
 ### RF-010 — Municípios clicáveis
 Cada município DEVE ser um alvo focável e clicável, com nome, partido líder e votos no tooltip/aria.
+- Município sem geometria disponível DEVE aparecer na tabela e na busca, mas NÃO DEVE ser clicável no mapa; tooltip "geometria indisponível" (RN-028). Isso é distinto de `sem_dado`.
 - Estados com muitos municípios DEVEM permanecer fluidos (orçamento: render ≤ 300 ms).
 - Aceite: AT-007, AT-018.
 
@@ -87,7 +96,13 @@ Em empate exato de votos válidos, o estado DEVE usar hachura neutra e tooltip "
 
 ### RF-017 — Estado sem dado
 Se não existir arquivo para um estado/cargo, o estado DEVE aparecer em `--map-nodata`, com rótulo "Sem dados para este cargo" e sem inventar número.
-- Aceite: AT-010.
+- A tela DEVE distinguir os estados de ausência e nunca confundi-los com erro de fonte (RN-028, RN-035), usando os mesmos nomes de `status` da API:
+  - `sem_voto`: arquivo existe com 0 voto válido — branco (`--map-empty`);
+  - `sem_dado`: o cargo se aplica ao escopo, mas o arquivo está ausente — cinza médio (`--map-nodata`);
+  - `nao_aplicavel`: o cargo não existe naquele escopo/turno e não há fallback de RN-009 — cinza claro com diagonal, rótulo "Não se aplica";
+  - `sem_lider_elegivel`: há votos válidos e nenhum candidato elegível (RN-021) — cinza escuro, rótulo "Aguardando definição judicial";
+  - `retificado`: geração com correção oficial — mantém a cor do líder com a marca "dados retificados pelo TSE" (RN-017).
+- Aceite: AT-010, AT-012.
 
 ### RF-018 — Fallback entre turnos
 Quando o turno vigente não tiver disputa em um estado (ex.: governador decidido no 1º turno), o sistema DEVE usar o último resultado final disponível daquele cargo no estado e sinalizar "1º turno" no detalhe (RN-009).
@@ -108,6 +123,8 @@ No painel de município (e de estado/país, quando aplicável), o sistema DEVE l
 ### RF-021 — Abas por cargo
 O painel DEVE ter uma aba por cargo em disputa no escopo, com o maior cargo aberto por padrão.
 - A troca de aba NÃO DEVE refazer o download do mapa.
+- O painel DEVE carregar um cargo por vez, com no máximo 12 KB gz por resposta (RNF-PERF-06); a pré-busca é feita apenas para o cargo em destaque.
+- Cada aba é uma consulta cacheável; no máximo cinco abas por município (RNF-PERF-06).
 - Aceite: AT-008.
 
 ### RF-022 — Resumo do cargo
@@ -152,7 +169,7 @@ Sem correspondência, o sistema DEVE exibir "Nenhum estado ou cidade encontrado 
 ## E. Atualização e estado do dado
 
 ### RF-030 — Atualização automática
-Com a página aberta, o sistema DEVE atualizar os dados automaticamente a cada 5 s durante a apuração e a cada 60 s após o fim, usando requisições condicionais (ETag) e pausando quando a aba estiver oculta (RN-012).
+Com a página aberta, o sistema DEVE atualizar os dados automaticamente conforme a cadência de RN-012 (5 s na janela eleitoral, 15 s em apuração fora da janela, 60 s após o fim e 5 min sem pleito ativo), usando requisições condicionais (ETag) e pausando quando a aba estiver oculta.
 - Aceite: AT-017, AT-028.
 
 ### RF-031 — Indicador de frescor
@@ -162,6 +179,8 @@ O sistema DEVE exibir, de forma persistente: horário de geração do TSE, horá
 
 ### RF-032 — Degradação por falha da fonte
 Se o TSE falhar, o sistema DEVE continuar servindo o último snapshot, com selo de advertência e horário; NÃO DEVE zerar números nem trocar cores para "sem voto".
+- Sem conexão (`navigator.onLine = false`), a tela DEVE entrar em estado `offline`: mantém o último snapshot já carregado com o horário dele e impede ações que dependam de rede.
+- Ao reconectar, o sistema DEVE fazer uma única atualização condicional e retomar a cadência de RN-012; o estado atual é aplicado de uma vez, sem reproduzir ultrapassagens, balões ou anúncios dos ciclos perdidos e sem salto na animação. Texto, faixa e reancoragem da corrida estão em [07](07-ux-mapa-e-animacoes.md) §7.7.
 - Aceite: AT-018.
 
 ### RF-033 — Fim da apuração
@@ -188,7 +207,9 @@ Quando a liderança inverter de forma sustentada (RN-016), o cavalo que assumiu 
 - Aceite: AT-022.
 
 ### RF-038 — Cena final
-Quando a apuração do cargo terminar, o cavalo vencedor DEVE dar uma lambida carinhosa no perdedor, que se deita no chão; corações sobem; um texto neutro anuncia o resultado. A cena ocorre uma única vez por sessão/cargo.
+Quando a apuração do cargo terminar, o cavalo vencedor DEVE dar uma lambida carinhosa no perdedor, que se deita no chão; corações sobem; um texto neutro anuncia o resultado.
+- A cena ocorre uma única vez por **aba** e por par (pleito, cargo), registrada em `sessionStorage` na chave `pulso:final-scene:{pleito}:{cargo}`: recarregar a página NÃO repete a cena, uma nova aba repete. `localStorage` guarda apenas a preferência de pausa (RF-039).
+- O botão "Rever cena" DEVE estar sempre disponível no rodapé depois do encerramento.
 - Aceite: AT-023.
 
 ### RF-039 — Controle de animação
@@ -196,7 +217,7 @@ O usuário DEVE poder pausar/retomar a corrida; a preferência é lembrada no ar
 - Aceite: AT-024.
 
 ### RF-040 — Movimento reduzido
-Com `prefers-reduced-motion: reduce`, a corrida DEVE ser substituída por uma barra estática com os dois candidatos e os números; zoom e cena final ficam instantâneos/fade curto.
+Com `prefers-reduced-motion: reduce`, a corrida DEVE ser substituída por uma barra estática com os dois candidatos e os números; zoom vira troca instantânea com fade de 120 ms e a cena final NÃO é executada — o resultado aparece em texto (AT-024).
 - Aceite: AT-024.
 
 ## G. Acessibilidade, compartilhamento e transparência
@@ -207,19 +228,38 @@ Todo o fluxo DEVE ser operável por teclado: busca, chips, mapa (setas + Enter),
 
 ### RF-042 — Tabela alternativa
 Cada tela com mapa DEVE oferecer "Ver dados em tabela" com as mesmas informações (escopo, líder, votos, %, apurado), em `<table>` semântica.
+- A tabela DEVE ser paginada em 100 linhas por página e ter busca própria pelo nome do escopo; a paginação é anunciada em `aria-live` e navegável por teclado.
+- Municípios sem geometria DEVEM constar da tabela, marcados com "geometria indisponível" (RF-010, RN-028).
+- A v1 NÃO exporta CSV nem outro formato de arquivo.
 - Aceite: AT-025.
 
 ### RF-043 — URLs compartilháveis
 O estado da tela DEVE ser reproduzível por URL: `/br`, `/br/{uf}`, `/br/{uf}/{municipio}`, com `?pleito=` e `?cargo=` quando diferentes do padrão. Metadados OG/Twitter DEVEM refletir o escopo.
+- Forma canônica: UF em minúsculas e município em slug ASCII (NFD, sem acento, minúsculas, hífens, sem pontuação, ≤ 80 caracteres). Código IBGE e alias antigo redirecionam com `301` para o slug; escopo desconhecido responde `404` com a busca aberta (RN-018, RN-041).
+- Os metadados OG/Twitter DEVEM ser pré-renderizados no build para `/br`, as 27 UFs e os 100 municípios de maior eleitorado; os demais municípios usam metadado genérico, com o nome do município no `<title>` do HTML estático. Esse limite DEVE ser documentado em [08](08-arquitetura-e-stack.md).
 - Aceite: AT-026.
 
 ### RF-044 — Transparência e não oficialidade
 Toda página DEVE exibir: "Fonte: Tribunal Superior Eleitoral", link para a fonte, horário do dado e o aviso "Este site não é um serviço oficial do TSE." NÃO DEVE haver qualquer marca do TSE que sugira endosso.
+- A atribuição e o aviso de não oficialidade DEVEM estar no HTML estático inicial, fora do JavaScript da aplicação, visíveis sem JS e para crawlers, em todas as rotas, inclusive nos deep links.
 - Aceite: AT-027.
 
 ### RF-045 — Tratamento de erro
 Falhas de rede, 404 de escopo inexistente e erros 5xx DEVEM produzir mensagens em pt-BR, sem tela branca, com ação de tentar novamente; 404 de município inexistente DEVE sugerir a busca.
-- Aceite: AT-018.
+- Os estados especiais também DEVEM ter texto próprio, sem tela branca e sem ação de "tentar novamente" quando não houver falha de fonte: `sem_voto`, `sem_dado`, `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, `arquivado`, `fonte_sem_atualizacao`, `municipio_fora_do_pleito`, `geometria_indisponivel` e `corrida_reiniciada`. Os rótulos são os de RN-035 e os textos finais estão em [07](07-ux-mapa-e-animacoes.md) §1.2 e §8.
+- Trocar de pleito com um município aberto que não participa do novo pleito DEVE produzir o toast não bloqueante "Município não participa deste pleito", além do comportamento de RF-005.
+- Aceite: AT-018, AT-026.
+
+## H. Pleitos passados e arquivados
+
+### RF-046 — Pleitos passados e arquivados
+O seletor DEVE agrupar os pleitos em "Em apuração", "Finalizados" e "Arquivados".
+- Pleito finalizado ou passado DEVE exibir o selo "Resultado final" e nunca se apresentar como apuração ao vivo.
+- Pleito finalizado NÃO DEVE usar a cadência de 5 s: a coleta no servidor passa a 30 min e a atualização no cliente a 60 s (RN-012).
+- A cena final (RF-038) roda uma única vez por aba também em pleito passado, e o botão "Rever cena" continua disponível.
+- A URL DEVE sempre incluir `pleito=`, inclusive quando o pleito exibido é o padrão de RN-002.
+- Turno ou pleito `arquivado` (RF-002) aparece somente no grupo "Arquivados" e NUNCA é escolhido como pleito padrão.
+- Aceite: AT-001, AT-023.
 
 ## Matriz resumida
 
@@ -232,3 +272,4 @@ Falhas de rede, 404 de escopo inexistente e erros 5xx DEVEM produzir mensagens e
 | Atualização e estado | RF-030 a RF-034 |
 | Animação | RF-035 a RF-040 |
 | Acessibilidade e transparência | RF-041 a RF-045 |
+| Pleitos passados e arquivados | RF-046 |
