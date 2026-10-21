@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import type { ScopeSnapshot } from "@pulso/contracts"
 import { formatPercent, formatVotes } from "@pulso/domain"
 
@@ -10,6 +11,10 @@ interface Props {
 }
 
 export function ScopePanel({ snapshot, cargos, activeCargo, onCargo, onClose }: Props) {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    heading.current?.focus()
+  }, [snapshot.escopo.id, snapshot.cargo.id])
   const candidates = snapshot.dados?.candidatos ?? []
   const max = Math.max(1, ...candidates.map((candidate) => candidate.votos))
   const status = snapshot.status
@@ -19,7 +24,9 @@ export function ScopePanel({ snapshot, cargos, activeCargo, onCargo, onClose }: 
       <header className="panel__head">
         <div>
           <p className="panel__eyebrow">Município</p>
-          <h2 id="panel-title">{snapshot.escopo.nome}</h2>
+          <h2 id="panel-title" ref={heading} tabIndex={-1}>
+            {snapshot.escopo.nome}
+          </h2>
           <p className="panel__meta">
             {snapshot.escopo.uf} · {snapshot.dados?.apuracao.percentual.toFixed(1) ?? "0"}% apurado
             {snapshot.retificado ? " · retificado" : ""}

@@ -26,6 +26,7 @@ function featureCode(properties: Record<string, unknown> | null | undefined): st
 
 function stateFill(state: StateSummary | undefined): string {
   if (!state) return "var(--map-nodata)"
+  if (state.empate) return "url(#hatch)"
   if (state.cor) return state.cor.hex
   if (state.status === "sem_voto") return "var(--map-empty)"
   if (state.status === "nao_aplicavel") return "var(--map-na)"
@@ -89,6 +90,18 @@ export function BrazilMap({ panorama, onSelect }: Props) {
         role="group"
         aria-labelledby="map-title map-desc"
       >
+        <defs>
+          <pattern
+            id="hatch"
+            width="8"
+            height="8"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="8" height="8" fill="#FFFFFF" />
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#64748B" strokeWidth="3" />
+          </pattern>
+        </defs>
         <title id="map-title">Mapa do Brasil por estado</title>
         <desc id="map-desc">
           Cada estado é preenchido com a cor do partido que lidera o maior cargo em disputa. Use as
@@ -141,7 +154,11 @@ export function BrazilMap({ panorama, onSelect }: Props) {
                 {hover.status === "sem_voto" ? "Aguardando o primeiro boletim" : "Sem dados"}
               </span>
             )}
-            <span>{hover.percentualApurado.toFixed(1)}% apurado</span>
+            <span>
+              {hover.percentualApurado == null
+                ? "—"
+                : `${hover.percentualApurado.toFixed(1)}% apurado`}
+            </span>
           </>
         ) : (
           <span>Passe o mouse ou use o teclado para ver o líder de cada estado.</span>

@@ -62,9 +62,9 @@ export function StateMap({ uf, ibge, snapshot, onSelect }: Props) {
         className="map map-enter"
         viewBox="0 0 800 620"
         role="group"
-        aria-labelledby="state-title"
+        aria-labelledby="state-map-title"
       >
-        <title id="state-title">Municípios de {uf}</title>
+        <title id="state-map-title">Municípios de {uf}</title>
         {collection.features.map((item) => {
           const code = cityCode(item.properties)
           const city = cities.get(code)?.[0]

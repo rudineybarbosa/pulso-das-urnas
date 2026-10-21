@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Link,
   Navigate,
@@ -49,8 +49,8 @@ function panoramaRows(panorama: Panorama): TableRow[] {
     escopo: state.nome,
     lider: state.lider?.nome ?? "—",
     partido: state.lider?.partido ?? "—",
-    votos: state.lider?.votos ?? 0,
-    percentual: state.lider?.percentual ?? 0,
+    votos: state.lider?.votos ?? null,
+    percentual: state.lider?.percentual ?? null,
     status: statusLabel(state.status),
   }))
 }
@@ -60,8 +60,8 @@ function scopeRows(snapshot: ScopeSnapshot): TableRow[] {
     escopo: city.nome,
     lider: city.lider?.nome ?? "—",
     partido: city.lider?.partido ?? "—",
-    votos: city.lider?.votos ?? 0,
-    percentual: 0,
+    votos: city.lider?.votos ?? null,
+    percentual: city.percentual,
     status: city.lider ? "ok" : "sem dado",
   }))
 }
@@ -131,6 +131,11 @@ export function App() {
       </header>
 
       <main id="conteudo" className="main">
+        {panorama.data?.modo === "fake" ? (
+          <p className="demo-banner" role="status">
+            Modo de demonstração: votos simulados. Fonte e horário são do simulador local.
+          </p>
+        ) : null}
         <Routes>
           <Route path="/" element={<Navigate to="/br" replace />} />
           <Route
@@ -184,11 +189,27 @@ function StatePage({ cargo }: { cargo: string }) {
   const navigate = useNavigate()
   const upper = uf.toUpperCase()
   const ibge = city ? Number.parseInt(city, 10) : 0
-  const scope = useScope(upper, cargo, Boolean(upper))
+  const scope = useScope(upper, "1", Boolean(upper))
   const municipality = useMunicipality(ibge, cargo, Boolean(ibge))
   const cargos = useCargos(ibge)
   const [localCargo, setLocalCargo] = useState(cargo)
   const activeCargo = localCargo
+  const heading = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    setLocalCargo(cargo)
+  }, [cargo])
+
+  useEffect(() => {
+    heading.current?.focus()
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        navigate(city ? `/br/${uf.toLowerCase()}` : "/br")
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [city, navigate, uf])
 
   if (!scope.data) return <Loading error={scope.error} />
 
@@ -205,7 +226,9 @@ function StatePage({ cargo }: { cargo: string }) {
         >
           ← Voltar
         </button>
-        <h1 id="state-title">{scope.data.escopo.nome}</h1>
+        <h1 id="state-title" ref={heading} tabIndex={-1}>
+          {scope.data.escopo.nome}
+        </h1>
         <p>
           {scope.data.cargo.nome} · {scope.data.dados?.apuracao.percentual.toFixed(1) ?? "0"}%
           apurado

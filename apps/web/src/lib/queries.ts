@@ -16,7 +16,7 @@ export function usePanorama(cargo: string, active = true) {
   return useQuery({
     queryKey: ["panorama", cargo],
     queryFn: () => getJson<Panorama>(`/panorama?cargo=${cargo}`),
-    refetchInterval: live(active),
+    refetchInterval: (query) => (query.state.data?.apuracao.finalizada ? 60_000 : live(active)),
   })
 }
 
@@ -25,7 +25,8 @@ export function useScope(uf: string, cargo: string, active = true) {
     queryKey: ["scope", uf, cargo],
     queryFn: () => getJson<ScopeSnapshot>(`/escopos/${uf}?cargo=${cargo}`),
     enabled: Boolean(uf),
-    refetchInterval: live(active),
+    refetchInterval: (query) =>
+      query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
   })
 }
 
@@ -34,7 +35,8 @@ export function useMunicipality(ibge: number, cargo: string, active = true) {
     queryKey: ["municipio", ibge, cargo],
     queryFn: () => getJson<ScopeSnapshot>(`/municipios/${ibge}?cargo=${cargo}`),
     enabled: Number.isFinite(ibge) && ibge > 0,
-    refetchInterval: live(active),
+    refetchInterval: (query) =>
+      query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
   })
 }
 
@@ -54,7 +56,8 @@ export function useRace(active = true) {
   return useQuery({
     queryKey: ["race"],
     queryFn: () => getJson<Race>("/corrida"),
-    refetchInterval: active ? 1_000 : 60_000,
+    refetchInterval: (query) =>
+      query.state.data?.interesses === "finalizado" ? 60_000 : active ? 5_000 : 60_000,
   })
 }
 
