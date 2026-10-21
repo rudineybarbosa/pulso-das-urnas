@@ -66,7 +66,7 @@ node scripts/check-links.mjs           # links e IDs da documentação
 ## Convenções de código
 
 - TypeScript `strict`, sem `any` implícito. `unknown` + validação por schema (Zod) na borda.
-- Regras de negócio puras em `packages/rules` — sem I/O, sem React, testáveis isoladamente.
+- Regras de negócio puras em `packages/domain` — sem I/O, sem React, testáveis isoladamente.
 - Nenhum componente de tela chama o TSE; só a API normalizada.
 - Datas: sempre ISO 8601 com fuso `America/Sao_Paulo` na API; formatação `pt-BR` na tela.
 - Dinheiro/votos: inteiros (`number` seguro até 2^53); percentuais com 2 casas, calculados no servidor.

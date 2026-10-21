@@ -121,7 +121,7 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | ID | Requisito |
 |---|---|
 | RNF-MAINT-01 | TypeScript `strict`; `pnpm typecheck` sem erros. |
-| RNF-MAINT-02 | Cobertura ≥ 90% em `packages/rules` e parsers; ≥ 80% global. |
+| RNF-MAINT-02 | Cobertura ≥ 90% em `packages/domain` e parsers; ≥ 80% global. |
 | RNF-MAINT-03 | Nenhum arquivo de regra com I/O; regras puras e testáveis. |
 | RNF-MAINT-04 | Toda mudança de comportamento atualiza o RF/RN correspondente e a matriz de rastreabilidade. |
 | RNF-MAINT-05 | ADR para decisões que afetam contrato, custo ou arquitetura; ADR `proposed` não vira código sem aprovação. |
