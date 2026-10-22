@@ -1,6 +1,6 @@
 # Convergência — fatia vertical v1
 
-**Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real` · **Base**: [spec](../specs/001-apuracao-tempo-real/spec.md), [plan](../specs/001-apuracao-tempo-real/plan.md), [tasks](../specs/001-apuracao-tempo-real/tasks.md) e [grilling](../specs/001-apuracao-tempo-real/grilling.md)
+**Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real` · **Base**: [spec](../../specs/001-apuracao-tempo-real/spec.md), [plan](../../specs/001-apuracao-tempo-real/plan.md), [tasks](../../specs/001-apuracao-tempo-real/tasks.md) e [grilling](../../specs/001-apuracao-tempo-real/grilling.md)
 
 ## Escopo avaliado
 
