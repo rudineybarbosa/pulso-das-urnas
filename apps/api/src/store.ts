@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { fetchTseJson } from "@pulso/tse"
 import { join } from "node:path"
 import type {
   Apuracao,
@@ -29,6 +30,7 @@ import {
   loadMunicipalities,
   loadResult,
   loadResultFile,
+  parseResult,
   presidentFixture,
   stateFixture,
   UF_CODES,
@@ -93,6 +95,8 @@ export class DataStore {
   private readonly municipalities = loadMunicipalities()
   private readonly partyTable = readPartyTable()
   private readonly byUf = new Map<string, Map<string, ParsedScope>>()
+  private readonly cityCache = new Map<string, { at: number; parsed: ParsedScope; etag?: string }>()
+  private readonly cityInflight = new Map<string, Promise<ParsedScope | null>>()
   private readonly leaderState = new Map<
     string,
     { leader: { id: string; votos: number } | null; streak: number; lastAt: number }
@@ -141,9 +145,30 @@ export class DataStore {
     }
   }
 
-  private tryLoadCity(uf: string, tse: string, code: string): ParsedScope | null {
-    if (code !== PRESIDENT) return null
-    return this.tryLoad(`2026/6257/${uf.toLowerCase()}${tse}-c0001-e006257-u.json`)
+  private async loadCity(uf: string, tse: string, code: string): Promise<ParsedScope | null> {
+    const local = this.tryLoad(
+      `2026/${code === PRESIDENT ? "6257" : "6259"}/${uf.toLowerCase()}${tse}-c000${code}-e00${code === PRESIDENT ? "6257" : "6259"}-u.json`,
+    )
+    if (local) return local
+    if (this.mode !== "real") return null
+    const key = `${uf}:${tse}:${code}`
+    const cached = this.cityCache.get(key)
+    if (cached && this.now() - cached.at < 30_000) return cached.parsed
+    const inflight = this.cityInflight.get(key)
+    if (inflight) return inflight
+    const election = code === PRESIDENT ? "6257" : "6259"
+    const url = `https://resultados.tse.jus.br/oficial/ele2026/${election}/dados/${uf.toLowerCase()}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`
+    const task = fetchTseJson(url, { etag: cached?.etag })
+      .then((result) => {
+        if (result.notModified || !result.body) return cached?.parsed ?? null
+        const parsed = parseResult(result.body as never)
+        this.cityCache.set(key, { at: this.now(), parsed, etag: result.etag ?? undefined })
+        return parsed
+      })
+      .catch(() => null)
+      .finally(() => this.cityInflight.delete(key))
+    this.cityInflight.set(key, task)
+    return task
   }
 
   progress(): number {
@@ -457,7 +482,7 @@ export class DataStore {
     }))
   }
 
-  municipality(ibge: number, cargoId = PRESIDENT): ScopeSnapshot | null {
+  async municipality(ibge: number, cargoId = PRESIDENT): Promise<ScopeSnapshot | null> {
     const code = cargoId || PRESIDENT
     const ufEntry = Object.entries(this.municipalities.ufs).find(([, cities]) =>
       cities.some((city) => city.ibge === ibge),
@@ -474,7 +499,7 @@ export class DataStore {
       ibge: city.ibge,
     }
     if (this.mode === "real") {
-      const cityParsed = this.tryLoadCity(uf, city.tse, code)
+      const cityParsed = await this.loadCity(uf, city.tse, code)
       if (!cityParsed) return this.snapshotEnvelope(escopo, code, null, [], "sem_dado")
       const cityCandidates = this.candidates(cityParsed, code)
       const cityOffice = this.office(cityParsed, code)

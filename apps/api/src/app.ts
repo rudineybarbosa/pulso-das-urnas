@@ -217,7 +217,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const ibge = numberParam(params.ibge, 0)
     const validated = validScope(request, reply, query)
     if (typeof validated !== "string") return validated
-    const snapshot = store.municipality(ibge, validated)
+    const snapshot = await store.municipality(ibge, validated)
     if (!snapshot) {
       return problem(
         reply,
@@ -240,7 +240,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
   app.get("/api/v1/municipios/:ibge/cargos", async (request, reply) => {
     const params = request.params as { ibge: string }
     const ibge = numberParam(params.ibge, 0)
-    const snapshot = store.municipality(ibge, "1")
+    const snapshot = await store.municipality(ibge, "1")
     if (!snapshot) {
       return problem(
         reply,
@@ -268,6 +268,28 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
       "public, max-age=0, s-maxage=2, stale-while-revalidate=3, stale-if-error=5",
     ),
   )
+
+  app.get("/api/v1/stream", (request, reply) => {
+    reply.hijack()
+    reply.raw.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    })
+    const send = () => {
+      if (reply.raw.writableEnded) return
+      const panorama = store.panorama("1")
+      reply.raw.write(`id: ${panorama.versao}\ndata: ${JSON.stringify(panorama)}\n\n`)
+    }
+    send()
+    const timer = setInterval(send, 5_000)
+    const heartbeat = setInterval(() => reply.raw.write(": keep-alive\n\n"), 15_000)
+    request.raw.on("close", () => {
+      clearInterval(timer)
+      clearInterval(heartbeat)
+    })
+  })
 
   app.get("/api/v1/localidades", async (request, reply) => {
     const query = request.query as Record<string, string | undefined>

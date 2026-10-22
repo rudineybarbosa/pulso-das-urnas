@@ -4,6 +4,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
   useSearchParams,
@@ -18,7 +19,8 @@ import { SearchCombobox } from "./features/search/SearchCombobox"
 import { ScopePanel } from "./features/panel/ScopePanel"
 import { Freshness } from "./features/freshness/Freshness"
 import { RaceTrack } from "./features/race/RaceTrack"
-import { useCargos, useMunicipality, usePanorama, useScope } from "./lib/queries"
+import { useCargos, useLocalidades, useMunicipality, usePanorama, useScope } from "./lib/queries"
+import { slugify } from "@pulso/domain"
 
 const CARGO_FALLBACK = [
   { id: "1", nome: "Presidente" },
@@ -70,6 +72,8 @@ export function App() {
   const [params, setParams] = useSearchParams()
   const cargo = params.get("cargo") ?? "1"
   const navigate = useNavigate()
+  const location = useLocation()
+  const telao = location.pathname === "/telao"
   const queryClient = useQueryClient()
   const panorama = usePanorama(cargo)
   const [refreshing, setRefreshing] = useState(false)
@@ -90,47 +94,49 @@ export function App() {
       <a className="skip-link" href="#conteudo">
         Pular para o conteúdo
       </a>
-      <header className="header">
-        <div className="header__top">
-          <Link to="/br" className="brand" aria-label="Pulso das Urnas, ir para o mapa do Brasil">
-            <span className="brand__pulse" aria-hidden="true" />
-            Pulso das Urnas
-          </Link>
-          <div className="header__meta">
-            <span>Eleições 2026 · 1º turno</span>
-            {panorama.data ? (
-              <Freshness
-                source={panorama.data.fonte}
-                percent={panorama.data.apuracao.percentual}
-                onRefresh={refresh}
-                refreshing={refreshing}
-              />
-            ) : null}
+      {telao ? null : (
+        <header className="header">
+          <div className="header__top">
+            <Link to="/br" className="brand" aria-label="Pulso das Urnas, ir para o mapa do Brasil">
+              <span className="brand__pulse" aria-hidden="true" />
+              Pulso das Urnas
+            </Link>
+            <div className="header__meta">
+              <span>Eleições 2026 · 1º turno</span>
+              {panorama.data ? (
+                <Freshness
+                  source={panorama.data.fonte}
+                  percent={panorama.data.apuracao.percentual}
+                  onRefresh={refresh}
+                  refreshing={refreshing}
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
-        <div className="header__controls">
-          <nav className="chips" aria-label="Cargo">
-            {CARGO_FALLBACK.map((office) => (
-              <button
-                key={office.id}
-                type="button"
-                className={`chip ${cargo === office.id ? "is-active" : ""}`}
-                aria-pressed={cargo === office.id}
-                onClick={() => {
-                  const next = new URLSearchParams(params)
-                  next.set("cargo", office.id)
-                  setParams(next, { replace: true })
-                }}
-              >
-                {office.nome}
-              </button>
-            ))}
-          </nav>
-          <SearchCombobox onSelect={chooseLocalidade} />
-        </div>
-      </header>
+          <div className="header__controls">
+            <nav className="chips" aria-label="Cargo">
+              {CARGO_FALLBACK.map((office) => (
+                <button
+                  key={office.id}
+                  type="button"
+                  className={`chip ${cargo === office.id ? "is-active" : ""}`}
+                  aria-pressed={cargo === office.id}
+                  onClick={() => {
+                    const next = new URLSearchParams(params)
+                    next.set("cargo", office.id)
+                    setParams(next, { replace: true })
+                  }}
+                >
+                  {office.nome}
+                </button>
+              ))}
+            </nav>
+            <SearchCombobox onSelect={chooseLocalidade} />
+          </div>
+        </header>
+      )}
 
-      <main id="conteudo" className="main">
+      <main id="conteudo" className={`main ${telao ? "main--telao" : ""}`}>
         {panorama.data?.modo === "fake" ? (
           <p className="demo-banner" role="status">
             Modo de demonstração: votos simulados. Fonte e horário são do simulador local.
@@ -165,30 +171,55 @@ export function App() {
               )
             }
           />
+          <Route path="/telao" element={<TelaoPage />} />
           <Route path="/br/:uf" element={<StatePage cargo={cargo} />} />
           <Route path="/br/:uf/:city" element={<StatePage cargo={cargo} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
-      <RaceTrack active={!refreshing} />
+      {telao ? null : <RaceTrack active={!refreshing} />}
 
-      <footer className="footer">
-        <p>
-          Fonte: Tribunal Superior Eleitoral. Dados públicos, exibidos com o horário de geração.
-        </p>
-        <p>Este site não é um serviço oficial do TSE.</p>
-        <p>Sem cookies de rastreio · acessibilidade WCAG 2.2 AA · arte original</p>
-      </footer>
+      {telao ? null : (
+        <footer className="footer">
+          <p>
+            Fonte: Tribunal Superior Eleitoral. Dados públicos, exibidos com o horário de geração.
+          </p>
+          <p>Este site não é um serviço oficial do TSE.</p>
+          <p>Sem cookies de rastreio · acessibilidade WCAG 2.2 AA · arte original</p>
+        </footer>
+      )}
     </div>
+  )
+}
+
+function TelaoPage() {
+  const panorama = usePanorama("1")
+  const navigate = useNavigate()
+  if (!panorama.data) return <Loading error={panorama.error} />
+  return (
+    <section className="view view--telao" aria-labelledby="telao-title">
+      <h1 id="telao-title">Pulso das Urnas — telão</h1>
+      <BrazilMap panorama={panorama.data} onSelect={(uf) => navigate(`/br/${uf.toLowerCase()}`)} />
+      <Legend panorama={panorama.data} />
+      <p className="view__head">
+        Atualização automática · {panorama.data.apuracao.percentual.toFixed(1)}% apurado
+      </p>
+    </section>
   )
 }
 
 function StatePage({ cargo }: { cargo: string }) {
   const { uf = "", city } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const upper = uf.toUpperCase()
-  const ibge = city ? Number.parseInt(city, 10) : 0
+  const parsedIbge = city && /^\d+$/.test(city) ? Number.parseInt(city, 10) : 0
+  const search = useLocalidades(city && !parsedIbge ? city.replace(/-/g, " ") : "")
+  const slugMatch = search.data?.resultados.find(
+    (item) => item.tipo === "municipio" && item.slug === city && item.uf === upper,
+  )
+  const ibge = parsedIbge || slugMatch?.ibge || 0
   const scope = useScope(upper, "1", Boolean(upper))
   const municipality = useMunicipality(ibge, cargo, Boolean(ibge))
   const cargos = useCargos(ibge)
@@ -199,6 +230,14 @@ function StatePage({ cargo }: { cargo: string }) {
   useEffect(() => {
     setLocalCargo(cargo)
   }, [cargo])
+
+  useEffect(() => {
+    if (!parsedIbge || !municipality.data) return
+    const slug = slugify(municipality.data.escopo.nome)
+    if (slug && slug !== city) {
+      navigate(`/br/${uf.toLowerCase()}/${slug}${location.search}`, { replace: true })
+    }
+  }, [city, location.search, municipality.data, navigate, parsedIbge, uf])
 
   useEffect(() => {
     heading.current?.focus()

@@ -256,6 +256,14 @@ a {
   color: #7a4b00;
   font-size: 13px;
 }
+.main--telao {
+  width: calc(100% - 16px);
+  margin: 8px auto 24px;
+}
+.view--telao h1 {
+  font-size: clamp(20px, 2.5vw, 32px);
+  margin: 0 0 8px;
+}
 .view__head h1 {
   margin: 0 0 4px;
   font-size: clamp(22px, 3vw, 32px);
@@ -780,6 +788,12 @@ a {
     transform: scale(1);
     opacity: 1;
   }
+}
+.race__result {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success);
 }
 .race__numbers {
   display: flex;

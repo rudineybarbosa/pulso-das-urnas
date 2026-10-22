@@ -100,6 +100,11 @@ export function RaceTrack({ active = true }: { active?: boolean }) {
           </div>
         ))}
       </div>
+      {data?.interesses === "finalizado" ? (
+        <p className="race__result">
+          Apuração encerrada. {horses[0]?.nomeUrna ?? "O líder"} venceu.
+        </p>
+      ) : null}
       <p className="sr-only" aria-live="polite">
         {bubble ? `Virada: ${bubble} assume a liderança.` : ""}
         {scene ? "Apuração encerrada. O vencedor comemora com o segundo colocado." : ""}

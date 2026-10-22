@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "predev": "node ../../scripts/geo/copy.mjs",
-    "prebuild": "node ../../scripts/geo/copy.mjs"
+    "prebuild": "node ../../scripts/geo/copy.mjs",
+    "postbuild": "node ../../scripts/web/prerender.mjs"
   },
   "dependencies": {
     "@pulso/contracts": "workspace:*",
