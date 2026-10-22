@@ -87,7 +87,7 @@ O serviço Cloud Run é invocado publicamente (`roles/run.invoker` para `allUser
 ```
 O rewrite para Cloud Run preserva os cabeçalhos `Cache-Control` da API, permitindo cache de CDN nas rotas de leitura. Esse comportamento é validado pelo AT-030.
 
-O bloco `**` acima é a superfície onde RNF-SEC-01/02 viram configuração: CSP, HSTS, `nosniff`, `Referrer-Policy` e `Permissions-Policy` para o HTML e os assets. Como o serviço Cloud Run também responde no URL direto (§3.1), a API repete os mesmos cabeçalhos no Fastify — nenhuma resposta protegida depende só da borda. A CSP não admite `unsafe-inline` nem `unsafe-hashes`: o CSS sai do build em arquivo e o mapa/corrida animam por CSSOM e variáveis CSS (08 §8).
+O bloco `**` acima é a superfície onde RNF-SEC-01/02 viram configuração: CSP, HSTS, `nosniff`, `Referrer-Policy` e `Permissions-Policy` para o HTML e os assets. Como o serviço Cloud Run também responde no URL direto (§3.1), a API repete os mesmos cabeçalhos no Fastify — nenhuma resposta protegida depende só da borda. A CSP não admite `unsafe-inline` nem `unsafe-hashes`: o CSS sai do build em arquivo e o mapa/monitor animam por CSSOM e variáveis CSS (08 §8).
 
 ## 4. Pipeline
 

@@ -40,12 +40,12 @@ Cada requisito funcional tem regra, critério de aceite e artefato de teste. "St
 | RF-032 | RN-013, RN-039 | AT-018, AT-039 | `e2e/erros.spec.ts`, `e2e/offline.spec.ts` | F3 | planejado |
 | RF-033 | RN-014 | AT-019 | `e2e/fim.spec.ts` | F3 | planejado |
 | RF-034 | RN-012 | AT-017 | `apps/web/Freshness.test.tsx` | F3 | planejado |
-| RF-035 | RN-005 | AT-020 | `apps/web/race/RaceTrack.test.tsx` | F4 | planejado |
-| RF-036 | RN-015 | AT-021 | `packages/domain/race-math.test.ts` | F4 | planejado |
-| RF-037 | RN-015, RN-016, RN-021, RN-033 | AT-022 | `packages/domain/overtake.test.ts` | F4 | planejado |
-| RF-038 | RN-014, RN-033 | AT-023, AT-024 | `e2e/fim.spec.ts`, `apps/web/race/final-scene.test.tsx` | F4 | planejado |
-| RF-039 | — | AT-024 | `apps/web/race/Pause.test.tsx` | F4 | planejado |
-| RF-040 | RNF-A11Y-05 | AT-024 | `e2e/reduced-motion.spec.ts` | F4 | planejado |
+| RF-035 | RN-005 | AT-020 | `apps/web/src/features/race/PulseMonitor.tsx`, `e2e/jornadas.spec.ts` | F4 | implementado |
+| RF-036 | RN-015 | AT-021 | `packages/domain/src/domain.test.ts` | F4 | implementado |
+| RF-037 | RN-015, RN-016, RN-021, RN-033 | AT-022 | `packages/domain/src/domain.test.ts` | F4 | implementado |
+| RF-038 | RN-014, RN-033 | AT-023, AT-024 | `e2e/fim.spec.ts`, `PulseMonitor.tsx` | F4 | implementado |
+| RF-039 | — | AT-024 | `PulseMonitor.tsx` | F4 | implementado |
+| RF-040 | RNF-A11Y-05 | AT-024 | `e2e/jornadas.spec.ts` | F4 | implementado |
 | RF-041 | RNF-A11Y-02, RNF-A11Y-03 | AT-025 | `e2e/j05-teclado.spec.ts` | F3 | planejado |
 | RF-042 | RN-028, RN-035, RNF-A11Y-06 | AT-025, AT-037 | `e2e/a11y/table.spec.ts` | F3 | planejado |
 | RF-043 | RN-018, RN-041 | AT-026 | `e2e/deep-link.spec.ts` | F3 | planejado |

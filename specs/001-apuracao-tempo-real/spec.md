@@ -6,7 +6,7 @@
 
 **Status**: Approved
 
-**Input**: Acompanhar a apuração das eleições brasileiras em tempo real, com mapa do Brasil clicável, votos por cidade, cores por partido e animação de corrida de cavalinhos.
+**Input**: Acompanhar a apuração das eleições brasileiras em tempo real, com mapa do Brasil clicável, votos por cidade, cores por partido e um monitor de pulso animado.
 
 > Esta é a spec canônica do Spec Kit para a v1. Os detalhes normativos por requisito estão em [docs/requisitos](../../docs/requisitos/), e o design aprovado em [docs/superpowers/specs](../../docs/superpowers/specs/2026-10-20-pulso-das-urnas-design.md).
 
@@ -14,7 +14,7 @@
 
 Decidido no [grill-me](grilling.md):
 
-- **Entrega vertical end-to-end**: contratos, domínio, parser do TSE, API, mapa, painel, busca, corrida e testes, com infraestrutura pronta para aplicar.
+- **Entrega vertical end-to-end**: contratos, domínio, parser do TSE, API, mapa, painel, busca, monitor de pulso e testes, com infraestrutura pronta para aplicar.
 - **Dois modos de dados**: `fake` (replay e cenários, padrão local) e `real` (TSE apenas no servidor).
 - **Sem deploy em nuvem nesta execução**: Terraform é validado com `fmt`/`validate`/`plan`; o apply é humano (Q-02).
 - **Fora**: login, admin, fotos, áudio, SSE/telão, CSV, push, outros idiomas e dados por zona/seção.
@@ -24,7 +24,7 @@ Decidido no [grill-me](grilling.md):
 
 1. A primeira tela útil é o mapa do Brasil com os 27 estados e a cor do líder do maior cargo (US1).
 2. O drill-down completo (estado → município → painel) é obrigatório na entrega, não opcional (US2).
-3. A corrida e a cena final são parte da entrega, não "fase futura" (US3).
+3. O monitor de pulso e a cena final são parte da entrega, não "fase futura" (US3).
 4. Acessibilidade e modo fake são critérios de aceite, não polish (US4).
 5. Nenhum número exibido pode existir fora do snapshot com fonte e horário (US5).
 
@@ -62,19 +62,19 @@ Como eleitor, quero buscar minha cidade, dar zoom no estado e ver os votos de ca
 
 ---
 
-### User Story 3 — Acompanhar a virada e a corrida (Priority: P2)
+### User Story 3 — Acompanhar a virada no monitor de pulso (Priority: P2)
 
-Como espectador, quero deixar a página aberta e ver as cores mudarem e os cavalinhos disputarem, para sentir a apuração acontecendo.
+Como espectador, quero deixar a página aberta e ver as cores mudarem e as linhas de pulso disputarem, para sentir a apuração acontecendo.
 
 **Why this priority**: diferencia o produto e torna a espera compreensível, mas depende do mapa e dos dados.
 
-**Independent Test**: rodar o cenário de virada, observar a mudança de cor, a ultrapassagem e o balão de relincho; ao final, a cena de encerramento.
+**Independent Test**: rodar o cenário de virada, observar a mudança de cor, a inversão de liderança e o selo "PULSO!"; ao final, a cena de encerramento.
 
 **Acceptance Scenarios**:
 
-1. **Given** dois candidatos no maior cargo nacional, **When** a apuração avança, **Then** os cavalos avançam e a distância reflete a diferença de votos.
-2. **Given** que a liderança inverte de forma sustentada, **When** o snapshot chega, **Then** o cavalo que assumiu a frente solta o balão "Relincho!" por até 1,2 s.
-3. **Given** que a apuração terminou, **When** a última geração é recebida, **Then** o vencedor dá uma lambida carinhosa, o perdedor deita e o texto anuncia o resultado sem ofensa.
+1. **Given** dois candidatos no maior cargo nacional, **When** a apuração avança, **Then** as linhas de pulso rolam e a linha do líder fica mais alta, com distância proporcional à diferença de votos.
+2. **Given** que a liderança inverte de forma sustentada, **When** o snapshot chega, **Then** as linhas trocam de altura e o selo "PULSO!" aparece por até 1,6 s.
+3. **Given** que a apuração terminou, **When** a última geração é recebida, **Then** um coração na cor do vencedor é desenhado e o texto anuncia o resultado sem ofensa.
 
 ---
 
@@ -89,7 +89,7 @@ Como pessoa com baixa visão ou sensibilidade a movimento, quero navegar por tec
 **Acceptance Scenarios**:
 
 1. **Given** o teclado, **When** navego pelo mapa, **Then** cada estado/município recebe foco visível e anuncia nome, líder e percentual.
-2. **Given** `prefers-reduced-motion: reduce`, **When** a página abre, **Then** não há corrida nem zoom animado, e os números continuam disponíveis.
+2. **Given** `prefers-reduced-motion: reduce`, **When** a página abre, **Then** não há rolagem de pulso nem zoom animado, e os números continuam disponíveis.
 3. **Given** a tabela alternativa, **When** a abro, **Then** encontro os mesmos dados do mapa com fonte e horário.
 
 ---
@@ -115,7 +115,7 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 - Todos os candidatos anulados/sub judice: "Aguardando definição judicial", sem líder.
 - 2º turno sem disputa em um estado: usa o resultado final do 1º turno, sinalizado.
 - Municípios homônimos: sempre acompanhados da UF.
-- Mudança de pleito/cargo com a página aberta: URL, mapa, painel e corrida se atualizam juntos.
+- Mudança de pleito/cargo com a página aberta: URL, mapa, painel e monitor se atualizam juntos.
 - Voto diminuindo entre gerações: aceitar retificação oficial, marcar e nunca exibir negativo.
 
 ## Requirements
@@ -129,7 +129,7 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 - **FR-005**: O painel DEVE listar candidatos por votos, com partido, percentual sobre válidos, situação e resumo do cargo; o cargo selecionado persiste ao trocar de pleito ou escopo quando existe no novo escopo e, quando não existe, a tela volta ao cargo em destaque com aviso não bloqueante (RF-005, RF-006, RF-020..RF-024, RN-036).
 - **FR-006**: A busca DEVE aceitar nome de estado, sigla e nome de município, ignorando caixa e acento, com desambiguação por UF (RF-026..RF-029).
 - **FR-007**: A página DEVE se atualizar automaticamente e mostrar fonte, horário, percentual apurado e estado do dado, distinguindo as três idades de frescor — geração no TSE, coleta própria e idade do snapshot (RF-030..RF-034, RN-013, RN-039).
-- **FR-008**: A corrida DEVE usar dois candidatos do maior cargo nacional, avanço pela apuração e distância pela diferença de votos, com relincho na ultrapassagem e cena final afetuosa (RF-035..RF-038).
+- **FR-008**: O monitor de pulso DEVE usar dois candidatos do maior cargo nacional, duas linhas de ECG com a do líder mais alta, distância derivada da diferença de votos, selo "PULSO!" na inversão e coração no encerramento (RF-035..RF-038).
 - **FR-009**: O usuário DEVE poder pausar a animação, e `prefers-reduced-motion` DEVE substituí-la por uma barra estática (RF-039, RF-040).
 - **FR-010**: Todo o fluxo DEVE ser operável por teclado, com foco gerenciado após cada mudança de nível, e ter alternativa em tabela; anúncios de mudança DEVEM ir para `aria-live` agregado (no máximo 1 anúncio/10 s, prioridade: líder do escopo selecionado, líder nacional, fim da apuração), com o restante em uma região de resumo sem interrupção (RF-041, RF-042, RNF-A11Y-06).
 - **FR-011**: O estado da tela DEVE ser reproduzível por URL canônica, e as metatags OG/Twitter DEVEM refletir o recorte nos escopos pré-renderizados (RF-043, RN-018, RN-041).
@@ -168,6 +168,6 @@ Como jornalista, quero conferir a fonte, o horário e o percentual apurado, e co
 - O pico de acesso ocorre nas primeiras horas e no encerramento.
 - O produto é somente leitura e não há dado pessoal.
 - A v1 cobre granularidade de município, não de zona/seção.
-- A arte dos cavalos é original, criada dentro do projeto, licenciada junto com o repositório e sem marca de terceiro; autoria e ausência de marca registrada ficam em `assets/race/README.md` e passam por revisão de marca antes do lançamento.
+- O monitor de pulso é uma ilustração original do projeto, sem marca de terceiro; a arte anterior de cavalos foi retirada em 22/10/2026 (ADR-006).
 - OG/Twitter são pré-renderizados apenas para `/br`, as 27 UFs e os 100 municípios de maior eleitorado; os demais municípios usam metadado genérico com o nome no `<title>`. Esse limite é aceito e documentado em `08-arquitetura-e-stack.md`.
 - Dados de pleitos passados são exibidos como resultado final, nunca como apuração ao vivo.

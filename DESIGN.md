@@ -70,7 +70,7 @@ Regras:
 ├──────────────────────────────────────────────────────────────┤
 │ painel do estado/cidade (quando houver seleção)              │
 ├──────────────────────────────────────────────────────────────┤
-│ pista dos cavalinhos                                         │
+│ monitor de pulso                                             │
 ├──────────────────────────────────────────────────────────────┤
 │ fonte, horário, aviso de não oficialidade, acessibilidade    │
 └──────────────────────────────────────────────────────────────┘
@@ -78,7 +78,7 @@ Regras:
 
 - Mobile: painel de votos vira *bottom sheet* com três alturas (fechado, metade, quase cheio), arrastável e com botão de fechar.
 - Desktop: painel lateral direito (360–420 px) quando há cidade selecionada; o mapa preserva o enquadramento.
-- O rodapé dos cavalinhos é sticky no fim do conteúdo (nunca fixo sobre o mapa) em desktop e colapsável em mobile (altura 96 px, expandindo para 160 px).
+- O rodapé é o monitor de pulso: sticky no fim do conteúdo (nunca fixo sobre o mapa) em desktop e colapsável em mobile (altura 160 px, expandindo para 200 px).
 
 ## 4. Mapa
 
@@ -143,16 +143,16 @@ Valores iniciais (revisar e completar na implementação, com fonte):
 | Zoom do mapa | 600 ms | `cubic-bezier(0.2,0,0,1)` |
 | Troca de cor do estado | 400 ms | `ease-in-out` |
 | Entrada de painel | 240 ms | `cubic-bezier(0.2,0,0,1)` |
-| Balão de relincho | 320 ms (entrada) / 900 ms (permanência) / 200 ms (saída) | mola suave |
-| Corrida dos cavalos | contínua, mola `stiffness 90 / damping 18` | — |
+| Selo "PULSO!" | 320 ms (entrada) / 1,6 s (permanência) / 200 ms (saída) | mola suave |
+| Monitor de pulso | rolagem de 1,4 s por ciclo + transição de altura de 600 ms | — |
 | Cena final | 2,4 s | sequência coreografada |
 
-- Toda animação tem versão sem movimento; `prefers-reduced-motion` desliga corrida, zoom animado e confete.
+- Toda animação tem versão sem movimento; `prefers-reduced-motion` desliga a rolagem do pulso, o zoom animado e o coração.
 - Nada pisca mais de 3 vezes por segundo; nada bloqueia interação.
-- A corrida é decorativa: os mesmos números estão sempre disponíveis em texto e na tabela.
+- O monitor é decorativo: os mesmos números estão sempre disponíveis em texto e na tabela.
 - **Cadência de cor (D-012):** no máximo 1 troca por estado a cada 10 s, com snapshots coalescidos; a primeira pintura não anima; com `prefers-reduced-motion` a transição é 0 ms, mas a cadência continua valendo.
-- **Reconexão (D-027):** a mola é reancorada no alvo com velocidade 0 e 400 ms `ease-out`, sem oscilação; ultrapassagens ocorridas durante o offline não são reproduzidas.
-- **Corrida (D-025, D-030):** dupla fixa na sessão, reinício na posição atual quando o conjunto muda por 2 snapshots (≥ 10 s) e cavalo "indisponível" para no lugar.
+- **Reconexão (D-027):** as linhas são reancoradas no alvo com transição de 400 ms, sem oscilação; inversões ocorridas durante o offline não são reproduzidas.
+- **Monitor (D-025, D-030):** dupla fixa na sessão; quando o conjunto muda por 2 snapshots (≥ 10 s), as linhas são reancoradas e o anúncio explica a troca.
 - **Cena final (D-032):** uma vez por aba, com a chave `pulso:final-scene:{pleito}:{cargo}` em `sessionStorage`; "Rever cena" sempre disponível; `localStorage` guarda só a pausa.
 
 ## 7. Acessibilidade
@@ -178,7 +178,7 @@ Valores iniciais (revisar e completar na implementação, com fonte):
 - Fim: "Apuração encerrada em 20/10/2026, 21h15. PL venceu em São Paulo."
 - Município fora do pleito: "Município não participa deste pleito."
 - Geometria indisponível: "Geometria indisponível para este município. Os votos estão na tabela."
-- Corrida reiniciada: "A corrida recomeçou: <A> e <B>."
+- Monitor reiniciado: "A leitura recomeçou: <A> e <B>."
 - Rodapé legal: "Fonte: Tribunal Superior Eleitoral. Este site não é um serviço oficial do TSE." — presente no HTML estático inicial de toda rota, fora do React (D-039).
 
 > A tabela completa de microcopy, com todas as chaves, está em [07 §8](docs/requisitos/07-ux-mapa-e-animacoes.md); este documento repete apenas o que aparece em layout fixo. Palavras proibidas e tratamento simétrico: 07 §8.1 (RN-033).

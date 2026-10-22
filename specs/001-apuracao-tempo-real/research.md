@@ -14,13 +14,13 @@ Cada decisão fecha um item do checklist `checklists/requisitos-v1.md` (CHK001�
 | **D-004** (CHK004) | Ao trocar pleito/estado, manter o cargo se ele existir no novo escopo; senão voltar ao cargo em destaque com aviso não bloqueante "Cargo X não está em disputa aqui; exibindo Y". A URL só muda por ação explícita do usuário. Deep link com cargo inválido → redireciona para o destaque com aviso. | RN-036, RF-005, RF-006 |
 | **D-005** (CHK005) | Catálogo tem `catalogVersion`. Se um pleito/cargo desaparecer: manter o último snapshot por 24 h com selo "catálogo atualizado"; depois marcar `arquivado` e remover do seletor. Turno novo entra automaticamente e é marcado como mais recente. | RN-037, RF-001, RF-002 |
 | **D-006** (CHK006) | Seletor agrupa "Em apuração", "Finalizados" e "Arquivados". Pleito passado exibe selo "Resultado final", não faz polling de 5 s (usa 30 min) e a cena final roda uma vez. URL sempre inclui `pleito=`. | RF-046, UX §1, RN-012 |
-| **D-007** (CHK007) | Hierarquia de cargos exaustiva: Presidente 10, Governador 20, Senador 30, Dep. Federal 40, Dep. Estadual 50, Dep. Distrital 51, Prefeito 60, Vereador 70, Conselheiro Distrital 80, desconhecido 90 (nome asc). Cargo `tp=3` (consulta popular) fica fora do mapa e da corrida. | RN-005, AT-004 |
+| **D-007** (CHK007) | Hierarquia de cargos exaustiva: Presidente 10, Governador 20, Senador 30, Dep. Federal 40, Dep. Estadual 50, Dep. Distrital 51, Prefeito 60, Vereador 70, Conselheiro Distrital 80, desconhecido 90 (nome asc). Cargo `tp=3` (consulta popular) fica fora do mapa e do monitor. | RN-005, AT-004 |
 | **D-008** (CHK008) | Cor com histerese: a liderança só muda se o novo líder superar o anterior por ≥ 0,5% dos válidos **ou** ≥ 500 votos, sustentado por 2 snapshots consecutivos (≥ 10 s). Abaixo disso, mantém a cor e marca "disputa acirrada" no detalhe; empate exato usa hachura. | RN-006, RN-038, AT-011 |
 | **D-009** (CHK009) | Se há votos válidos e nenhum candidato elegível, o estado é `sem_lider_elegivel`: cinza com rótulo "Aguardando definição judicial". Voto de legenda conta no total válido, mas nunca elege líder sozinho. | RN-021, RN-028, AT-010 |
 | **D-010** (CHK010) | Base do percentual é única por tela: `v.vv` oficial quando existir; senão soma dos `vap` válidos + legenda, rotulada "calculado". A API expõe `percentualBase: "oficial_validos" \| "calculado_validos"`. `pvap` oficial prevalece e é rotulado "percentual oficial do TSE". Nunca misturar bases. | RN-010, Contrato §3, AT-014 |
 | **D-021** (CHK021) | Matriz de estados da tela inclui: carregando, `sem_voto`, parcial, finalizado, empate, `sem_dado`, `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, desatualizado, fonte indisponível, 2º turno não iniciado, erro de escopo, offline e arquivado. | UX §1, RF-045 |
-| **D-022** (CHK022) | 2º turno parcial: estados com disputa usam o arquivo do turno; estados sem disputa usam o resultado final do turno anterior com selo "1º turno". A corrida nacional usa apenas presidente do turno vigente. | RN-030, RN-009, AT-013 |
-| **D-023** (CHK023) | Eleição suplementar aparece só no seletor e no escopo do próprio município; não altera cor nacional, ranking nacional nem corrida. | RN-031, RF-005 |
+| **D-022** (CHK022) | 2º turno parcial: estados com disputa usam o arquivo do turno; estados sem disputa usam o resultado final do turno anterior com selo "1º turno". O monitor nacional usa apenas presidente do turno vigente. | RN-030, RN-009, AT-013 |
+| **D-023** (CHK023) | Eleição suplementar aparece só no seletor e no escopo do próprio município; não altera cor nacional, ranking nacional nem monitor. | RN-031, RF-005 |
 | **D-024** (CHK024) | Trocar pleito com cidade aberta: se o município participa, mantém e recarrega; se não, fecha o painel, mantém o estado, remove a cidade da URL e mostra toast "Município não participa deste pleito". | RN-036, RF-011, AT-026 |
 
 ## Clareza de dados, cor e frescor
@@ -44,16 +44,16 @@ Cada decisão fecha um item do checklist `checklists/requisitos-v1.md` (CHK001�
 
 | ID | Decisão | Aplica em |
 |---|---|---|
-| **D-025** (CHK025) | Candidato anulado/removido no meio: recalcular líder; o cavalo afetado é marcado "indisponível" e para; se o conjunto dos dois primeiros mudar por 2 snapshots, a corrida reinicia com a nova dupla e anuncia "A corrida recomeçou: A e B". | RN-015, RN-021, AT-022 |
+| **D-025** (CHK025) | Candidato anulado/removido no meio: recalcular líder; a linha afetada é marcada "indisponível" e não disputa altura; se o conjunto dos dois primeiros mudar por 2 snapshots, o monitor reancora e anuncia "A leitura recomeçou: A e B". | RN-015, RN-021, AT-022 |
 | **D-026** (CHK026) | Tabela alternativa paginada em 100 linhas com busca no escopo atual; sem exportação CSV na v1; impressão ignora a paginação. | RF-042, UX §6 |
 | **D-027** (CHK027) | Offline congela os dados e mostra faixa; ao reconectar, uma única atualização condicional, sem reproduzir ultrapassagens perdidas e com reset suave da mola (velocidade 0 em 400 ms). | RF-032, UX §7.7 |
-| **D-029** (CHK029) | Desempate para escolher os dois cavalos: votos desc → nome de urna (`pt-BR`) → número. Determinístico e documentado. | RN-015 |
+| **D-029** (CHK029) | Desempate para escolher as duas linhas: votos desc → nome de urna (`pt-BR`) → número. Determinístico e documentado. | RN-015 |
 | **D-030** (CHK030) | Dupla fixa na sessão; troca só quando o conjunto muda por 2 snapshots (≥ 10 s), com reinício na posição atual e anúncio acessível. | RN-015, RF-035 |
 | **D-031** (CHK031) | Fim por estabilidade exige: `p = 100` em todos os escopos ativos, 6 ciclos sem novo `idg` (≥ 60 s) **e** ≥ 10 min desde a última mudança de `idg`. Antes disso, "aguardando confirmação"; a cena não roda. | RN-014, AT-019 |
 | **D-032** (CHK032) | Cena final roda uma vez por **aba** (`sessionStorage` `pulso:final-scene:{pleito}:{cargo}`); recarregar não repete; nova aba repete; botão "Rever cena" sempre disponível. `localStorage` guarda só a pausa. | RF-038, UX §7.4 |
 | **D-033** (CHK033) | Ultrapassagem: `|g| ≥ 0,01`, sinal invertido em 2 snapshots consecutivos (≥ 5 s), cooldown 30 s por par. Oscilação abaixo de 0,01 não dispara. | RN-016, AT-022 |
 | **D-034** (CHK034) | Lista de palavras proibidas: "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude", "roubo". Tratamento simétrico: mesmo tamanho, mesma saturação e mesma posição de destaque; perdedor não é dessaturado. Revisão editorial assina o checklist no PR. | RN-033, UX §8, AT-023 |
-| **D-051** (CHK051) | Arte dos cavalos é original, criada no projeto, licenciada com o repositório; registrar autoria e ausência de marca de terceiro em `assets/race/README.md`. Revisão de marca antes do lançamento. | UX §7, Spec Assumptions |
+| **D-051** (CHK051) | O monitor de pulso é arte original do projeto, sem marca de terceiro (ADR-006); a arte de cavalos foi retirada. | UX §7, Spec Assumptions |
 
 ## Acessibilidade e conteúdo
 
@@ -62,7 +62,7 @@ Cada decisão fecha um item do checklist `checklists/requisitos-v1.md` (CHK001�
 | **D-035** (CHK035) | `aria-live` agrega por ciclo com prioridade: (1) líder do escopo selecionado, (2) líder nacional, (3) fim da apuração. Máximo 1 anúncio/10 s; o restante vai para uma região "resumo" sem interrupção. | RNF-A11Y-06, RF-041, UX §7 |
 | **D-036** (CHK036) | Contraste não textual ≥ 3:1 entre preenchimentos adjacentes; se a cor do partido não atingir, aplicar contorno de 1 px com 3:1. Hachura de empate também ≥ 3:1. Texto sobre cor mantém 4,5:1. | RN-024, DESIGN §5 |
 | **D-037** (CHK037) | Após zoom para estado, foco vai ao título do mapa do estado (`tabindex="-1"`); Tab alcança o primeiro município. Ao abrir cidade, foco vai ao título do painel. "Voltar" devolve o foco ao polígono que foi ativado. | RF-041, UX §4 |
-| **D-038** (CHK038) | Microcopy completa para `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, `arquivado`, `fonte_sem_atualizacao`, `municipio_fora_do_pleito`, `geometria_indisponivel`, `corrida_reiniciada`. | UX §8 |
+| **D-038** (CHK038) | Microcopy completa para `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, `arquivado`, `fonte_sem_atualizacao`, `municipio_fora_do_pleito`, `geometria_indisponivel`, `monitor_reiniciado`. | UX §8 |
 | **D-039** (CHK039) | Atribuição e aviso de não oficialidade também no HTML estático inicial (fora do React), visíveis sem JS e para crawlers. | RF-044, AT-027 |
 | **D-042** (CHK042) | CWV medido em `/br`, `/br/sp` e `/br/sp/sao-paulo`, mobile Moto G4 (4G 1,6 Mbps, RTT 150 ms) e desktop como secundário; p75 de 5 execuções no Lighthouse CI. | RNF-PERF-01..03, 10 §7 |
 | **D-048** (CHK048) | Criar AT-033 para FR-014: nenhuma requisição a domínio de terceiro, nenhum cookie, `localStorage` só com chaves `pulso:*`, sem PII na API. Mapear na matriz. | Spec FR-014, AT-033, 12 |

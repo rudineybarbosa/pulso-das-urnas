@@ -2,9 +2,9 @@
 
 ## Visão
 
-Durante a apuração, a informação existe — mas chega espalhada em arquivos, tabelas e telas oficiais densas. O Pulso das Urnas transforma esses dados públicos em uma leitura imediata: **um mapa que muda de cor conforme o país conta os votos**, com a possibilidade de descer até a cidade e ver candidato por candidato, e uma corrida de cavalinhos que traduz a diferença de votos em movimento.
+Durante a apuração, a informação existe — mas chega espalhada em arquivos, tabelas e telas oficiais densas. O Pulso das Urnas transforma esses dados públicos em uma leitura imediata: **um mapa que muda de cor conforme o país conta os votos**, com a possibilidade de descer até a cidade e ver candidato por candidato, e um monitor de pulso que traduz a diferença de votos em batimentos.
 
-Uma frase: **"o país inteiro em um mapa, a disputa inteira em uma corrida."**
+Uma frase: **"o país inteiro em um mapa, a disputa inteira em um pulso."**
 
 ## Público
 
@@ -20,9 +20,9 @@ Uma frase: **"o país inteiro em um mapa, a disputa inteira em uma corrida."**
 
 1. **Neutro por construção.** O sistema não opina, não projeta e não ranqueia por preferência. Ordena por votos, nomeia empates, mostra todos os candidatos relevantes e nunca destaca um campo político.
 2. **A fonte manda.** Todo número tem origem, horário e percentual apurado. Se o dado atrasou, diz que atrasou.
-3. **Simples na superfície, rigoroso por baixo.** O usuário vê um mapa e uma corrida; por baixo há contrato de dados, cache, filas e testes.
+3. **Simples na superfície, rigoroso por baixo.** O usuário vê um mapa e um monitor de pulso; por baixo há contrato de dados, cache, filas e testes.
 4. **Rápido é requisito, não bônus.** Orçamento de bytes e de tempo por tela; nada de biblioteca pesada sem justificativa medida.
-5. **Alegria sem deboche.** A corrida é esportiva e afetuosa; nunca humilha candidato, eleitor ou adversário.
+5. **Alegria sem deboche.** O monitor é lúdico e afetuoso; nunca humilha candidato, eleitor ou adversário, e nunca usa linha reta/flatline.
 6. **Acessível desde o primeiro commit.** Cor nunca é o único canal; movimento nunca é obrigatório.
 7. **Custo previsível.** O pico de acesso não pode virar uma fatura surpresa.
 

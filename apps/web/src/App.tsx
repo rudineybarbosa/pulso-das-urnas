@@ -18,7 +18,7 @@ import { DataTable, type TableRow } from "./features/map/DataTable"
 import { SearchCombobox } from "./features/search/SearchCombobox"
 import { ScopePanel } from "./features/panel/ScopePanel"
 import { Freshness } from "./features/freshness/Freshness"
-import { RaceTrack } from "./features/race/RaceTrack"
+import { PulseMonitor } from "./features/race/PulseMonitor"
 import { useCargos, useLocalidades, useMunicipality, usePanorama, useScope } from "./lib/queries"
 import { slugify } from "@pulso/domain"
 
@@ -178,7 +178,7 @@ export function App() {
         </Routes>
       </main>
 
-      {telao ? null : <RaceTrack active={!refreshing} />}
+      {telao ? null : <PulseMonitor active={!refreshing} />}
 
       {telao ? null : (
         <footer className="footer">
