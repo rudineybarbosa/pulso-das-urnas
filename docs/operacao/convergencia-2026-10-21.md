@@ -14,7 +14,7 @@ A convergência compara o código com o **recorte aprovado no grill-me**: fatia 
 | Lint/format | `pnpm lint` | ok |
 | Unidade/contrato | `pnpm test` | 73 testes |
 | Cobertura | `pnpm test:coverage` | 95,1% linhas · 80,8% branches · 93,5% funções |
-| E2E | `pnpm test:e2e` | 9 testes |
+| E2E | `pnpm test:e2e` | 13 testes |
 | Acessibilidade | `pnpm test:a11y` | 2 testes, axe sem violação séria |
 | Build | `pnpm build` | 103,1 KB gz JS · 3,3 KB gz CSS |
 | Orçamento | `pnpm size` | dentro de 200/30 KB |
@@ -31,28 +31,33 @@ A convergência compara o código com o **recorte aprovado no grill-me**: fatia 
 | FR-002 maior cargo/cor | Implementado | `packages/domain/offices.ts` + `panorama` |
 | FR-003 estados de cor | Implementado | mapa + `resolveStatus`; a11y/e2e |
 | FR-004 drill-down | Implementado | `BrazilMap`/`StateMap`; e2e J-02 |
-| FR-005 painel de votos | Parcial | `ScopePanel`; em real, município só tem arquivo próprio para SP |
+| FR-005 painel de votos | Implementado | `ScopePanel`; em real, município é buscado on-demand no TSE com cache |
 | FR-006 busca | Implementado | `SearchCombobox`; e2e |
 | FR-007 atualização/frescor | Parcial | três idades; falta `fonte_sem_atualizacao` |
 | FR-008 corrida | Implementado | `RaceTrack`; e2e |
 | FR-009 pausa/reduced motion | Implementado | botão + media query; e2e |
 | FR-010 teclado/tabela | Parcial | foco/Esc/tabela paginada; falta setas/`aria-live` agregado |
-| FR-011 URL | Parcial | URL por UF/IBGE; slug/301 e OG pré-renderizado ficam para v1.1 |
+| FR-011 URL/OG | Implementado | slug canônico + redirect de IBGE; 5.785 rotas com OG no build |
 | FR-012 fonte/não oficialidade | Implementado | rodapé + `index.html` |
 | FR-013 degradação | Implementado | estados de ausência e mensagens |
 | FR-014 sem PII | Implementado | sem cookies/terceiros; `localStorage` só pausa |
-| FR-015 pleitos passados | Fora da fatia | seletor 2026; backlog v1.1 |
+| FR-015 pleitos passados | Bloqueado na fonte | o TSE não serve mais os arquivos de 2022 (404); sem dado não se inventa |
 | FR-016 URL canônica | Parcial | IBGE aceito; slug/301 no backlog v1.1 |
 
-## Lacunas fora da fatia (backlog v1.1)
+## Residual fechado nesta rodada
 
-1. Slug canônico com 301 e aliases (FR-016).
-2. OG/Twitter pré-renderizado para 128 rotas.
-3. Pleitos passados/arquivados no seletor.
-4. Cena final com e2e dedicado (hoje validada no contrato + screenshot).
-5. SSE/telão e deploy em nuvem (Q-04/Q-02).
+1. Município real em qualquer UF: API busca o arquivo municipal no TSE on-demand, com cache de 30 s e single-flight (testado com Rio de Janeiro).
+2. Cena final: e2e dedicado no projeto `fim`, com `SCENARIO=fim`.
+3. URL canônica: IBGE redireciona para slug; slug abre o painel; 5.785 rotas com OG/Twitter geradas no build.
+4. SSE (`/api/v1/stream`) e modo telão (`/telao`) implementados e verificados.
+5. Script k6 de 10.000 VUs em `load/panorama.js` (não executado sem ambiente publicado).
 
-Nenhuma lacuna acima bloqueia a fatia entregue; todas estão fora do recorte aprovado no grill-me.
+## Bloqueios externos
+
+- **Pleitos passados**: o TSE responde 404 para os arquivos de 2022; sem fonte não há resultado real para exibir.
+- **Deploy em nuvem**: Q-02 (projeto/billing) continua aberta; Terraform validado sem apply.
+
+Nenhum bloqueio acima permite inventar dado ou aplicar infraestrutura sem decisão humana.
 
 ## Conclusão
 

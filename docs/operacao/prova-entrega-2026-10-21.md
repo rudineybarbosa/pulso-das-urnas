@@ -1,6 +1,6 @@
 # Prova de entrega — fatia vertical v1
 
-**Commit avaliado**: `1ee85a9` (código e docs) · **HEAD da entrega**: `aec9aad` (ajustes de teste/CI) · **Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real`
+**Commit avaliado**: `1ee85a9` (código e docs) · **HEAD da entrega**: `c4c4ea8` · **Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real`
 
 Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=parcial` no simulador. As imagens estão em [`evidencias/`](evidencias/).
 
@@ -27,10 +27,13 @@ Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=p
 | Build e orçamento de bytes (RNF-PERF-04) | `pnpm build` + `pnpm size` → 103,6 KB gz JS / 3,4 KB gz CSS | ✅ |
 | Geo e orçamento de malhas (RNF-PERF-05) | `pnpm geo:budget` → Brasil 5,2 KB gz; maior UF 54,6 KB gz | ✅ |
 | Clone limpo serve a geometria (C5) | `rm -rf apps/web/public/geo && pnpm build` → `prebuild` recria e build passa | ✅ |
+| Município real fora de SP | `DATA_MODE=real` + `curl /municipios/3304557` (Rio) | ✅ |
+| SSE e telão | `curl -N /api/v1/stream` + e2e `/telao` | ✅ |
+| OG estático | `pnpm build` → 5.785 rotas com metadados | ✅ |
 | Terraform dev/prod (RNF-COST) | `terraform fmt -check` + `validate` nos dois envs | ✅ |
 | Cobertura (RNF-MAINT-02) | `pnpm test:coverage` → 95,1% linhas, 80,8% branches, 93,5% funções | ✅ |
 | Testes unitários/componente | `pnpm test` → 73 testes | ✅ |
-| E2E | `pnpm test:e2e` → 9 testes | ✅ |
+| E2E | `pnpm test:e2e` → 13 testes | ✅ |
 | Acessibilidade | `pnpm test:a11y` → 2 testes, axe sem violação séria | ✅ |
 
 ## Saídas reais
@@ -56,10 +59,13 @@ cargo 99: 404 CARGO_NAO_ENCONTRADO
 ## Não testado (e por quê)
 
 - **Deploy em nuvem / URL publicada**: fora do recorte (Q-02); Terraform validado sem apply.
-- **Modo real de município fora de SP**: o ingest baixa UFs e cargos, mas só há arquivo municipal capturado para São Paulo; os demais municípios retornam `sem_dado` em real. Fica para v1.1.
-- **Cena final com e2e dedicado**: validada no contrato (`interesses: finalizado`) e por screenshot; falta um cenário e2e próprio.
-- **Carga k6 / 10.000 usuários**: sem ambiente publicado, não executada.
-- **Slug/301, OG pré-renderizado, pleitos passados, SSE**: declarados no backlog v1.1 em [convergencia-2026-10-21.md](convergencia-2026-10-21.md).
+- **Cena final**: coberta por e2e dedicado (`e2e/fim.spec.ts`, projeto `fim`).
+- **Cidade real fora de SP**: API busca on-demand no TSE; verificado com Rio de Janeiro (`/municipios/3304557`).
+- **Slug/OG**: 5.785 rotas geradas no build; IBGE redireciona para slug no cliente.
+- **SSE/telão**: `/api/v1/stream` e `/telao` verificados manualmente.
+- **Carga k6 / 10.000 usuários**: script em `load/panorama.js`; sem ambiente publicado, não executada.
+- **Pleitos passados**: bloqueado na fonte (TSE devolve 404 para 2022); não se inventa resultado.
+- **Deploy**: bloqueado por Q-02 (sem projeto/billing).
 
 ## Revisão independente
 
