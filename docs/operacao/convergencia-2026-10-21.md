@@ -4,7 +4,7 @@
 
 ## Escopo avaliado
 
-A convergência compara o código com o **recorte aprovado no grill-me**: fatia vertical end-to-end com contratos, domínio, parser do TSE, API, mapa, busca, painel, corrida, testes e Terraform validado, em modo fake e real (snapshots do ingest).
+A convergência compara o código com o **recorte aprovado no grill-me**: fatia vertical end-to-end com contratos, domínio, parser do TSE, API, mapa, busca, painel, monitor de pulso, testes e Terraform validado, em modo fake e real (snapshots do ingest).
 
 ## Evidências executadas
 
@@ -34,7 +34,7 @@ A convergência compara o código com o **recorte aprovado no grill-me**: fatia 
 | FR-005 painel de votos | Implementado | `ScopePanel`; em real, município é buscado on-demand no TSE com cache |
 | FR-006 busca | Implementado | `SearchCombobox`; e2e |
 | FR-007 atualização/frescor | Parcial | três idades; falta `fonte_sem_atualizacao` |
-| FR-008 corrida | Implementado | `RaceTrack`; e2e |
+| FR-008 monitor | Implementado | `PulseMonitor`; e2e |
 | FR-009 pausa/reduced motion | Implementado | botão + media query; e2e |
 | FR-010 teclado/tabela | Parcial | foco/Esc/tabela paginada; falta setas/`aria-live` agregado |
 | FR-011 URL/OG | Implementado | slug canônico + redirect de IBGE; 5.785 rotas com OG no build |

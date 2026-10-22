@@ -40,7 +40,7 @@ O usuário DEVE poder escolher o pleito e o turno. A escolha altera cargos, mapa
 
 ### RF-006 — Selecionar cargo
 O usuário DEVE poder escolher o cargo exibido por chips. O chip padrão é o maior cargo em disputa (RN-005). A escolha é refletida na URL (`?cargo=`).
-- O cabeçalho, o painel, a tabela e a legenda reagem à troca. O mapa permanece colorido pelo cargo em destaque (RN-006); a corrida continua no maior cargo nacional.
+- O cabeçalho, o painel, a tabela e a legenda reagem à troca. O mapa permanece colorido pelo cargo em destaque (RN-006); o monitor continua no maior cargo nacional.
 - Deep link com `?cargo=` inválido para o escopo ou pleito DEVE redirecionar para o cargo em destaque, com o mesmo aviso não bloqueante de RF-005, sem erro de página e sem alterar o restante da URL (RN-036).
 - Aceite: AT-003.
 
@@ -180,7 +180,7 @@ O sistema DEVE exibir, de forma persistente: horário de geração do TSE, horá
 ### RF-032 — Degradação por falha da fonte
 Se o TSE falhar, o sistema DEVE continuar servindo o último snapshot, com selo de advertência e horário; NÃO DEVE zerar números nem trocar cores para "sem voto".
 - Sem conexão (`navigator.onLine = false`), a tela DEVE entrar em estado `offline`: mantém o último snapshot já carregado com o horário dele e impede ações que dependam de rede.
-- Ao reconectar, o sistema DEVE fazer uma única atualização condicional e retomar a cadência de RN-012; o estado atual é aplicado de uma vez, sem reproduzir ultrapassagens, balões ou anúncios dos ciclos perdidos e sem salto na animação. Texto, faixa e reancoragem da corrida estão em [07](07-ux-mapa-e-animacoes.md) §7.7.
+- Ao reconectar, o sistema DEVE fazer uma única atualização condicional e retomar a cadência de RN-012; o estado atual é aplicado de uma vez, sem reproduzir inversões, selos ou anúncios dos ciclos perdidos e sem salto na animação. Texto, faixa e reancoragem do monitor estão em [07](07-ux-mapa-e-animacoes.md) §7.7.
 - Aceite: AT-018.
 
 ### RF-033 — Fim da apuração
@@ -193,31 +193,31 @@ O usuário DEVE poder forçar uma atualização; o botão mostra o estado de car
 
 ## F. Animação
 
-### RF-035 — Corrida de cavalinhos
-O rodapé DEVE exibir uma pista com dois cavalinhos representando os dois candidatos mais votados do maior cargo nacional em disputa (presidente, quando houver; senão, o maior cargo do pleito).
-- Cada cavalo usa a cor do partido, o número e a sigla; nomes acessíveis.
+### RF-035 — Monitor de pulso
+O rodapé DEVE exibir um monitor com duas linhas de ECG representando os dois candidatos mais votados do maior cargo nacional em disputa (presidente, quando houver; senão, o maior cargo do pleito).
+- Cada linha usa a cor do partido; os readouts mostram nome, partido, votos e percentual, com nomes acessíveis.
 - Aceite: AT-020.
 
-### RF-036 — Posição derivada dos votos
-A posição DEVE ser derivada de: avanço na pista = % de seções apuradas; afastamento = diferença normalizada de votos (RN-015). O cavalo à frente NUNCA DEVE ser o de menor votação.
+### RF-036 — Altura e distância derivadas dos votos
+A linha do líder DEVE ficar acima da linha do segundo colocado; a distância vertical DEVE derivar da diferença normalizada de votos (RN-015). A linha mais alta NUNCA DEVE ser a de menor votação.
 - Aceite: AT-021.
 
-### RF-037 — Ultrapassagem e relincho
-Quando a liderança inverter de forma sustentada (RN-016), o cavalo que assumiu a frente DEVE emitir um balão de quadrinho com "Relincho!" por até 1,2 s, sem cobrir números e sem texto ofensivo.
+### RF-037 — Inversão de liderança e alarme
+Quando a liderança inverter de forma sustentada (RN-016), as linhas DEVEM trocar de altura e o selo "PULSO!" DEVE aparecer por até 1,6 s, sem cobrir os readouts e sem texto ofensivo.
 - Aceite: AT-022.
 
-### RF-038 — Cena final
-Quando a apuração do cargo terminar, o cavalo vencedor DEVE dar uma lambida carinhosa no perdedor, que se deita no chão; corações sobem; um texto neutro anuncia o resultado.
+### RF-038 — Encerramento
+Quando a apuração do cargo terminar, as linhas DEVEM desacelerar e um coração na cor do vencedor DEVE ser desenhado no centro, com texto neutro "Apuração encerrada. <Candidato> venceu."; não há linha reta/flatline.
 - A cena ocorre uma única vez por **aba** e por par (pleito, cargo), registrada em `sessionStorage` na chave `pulso:final-scene:{pleito}:{cargo}`: recarregar a página NÃO repete a cena, uma nova aba repete. `localStorage` guarda apenas a preferência de pausa (RF-039).
-- O botão "Rever cena" DEVE estar sempre disponível no rodapé depois do encerramento.
+- O botão "Rever cena" DEVE estar sempre disponível no monitor depois do encerramento.
 - Aceite: AT-023.
 
 ### RF-039 — Controle de animação
-O usuário DEVE poder pausar/retomar a corrida; a preferência é lembrada no armazenamento local (sem cookie).
+O usuário DEVE poder pausar/retomar a rolagem do monitor; a preferência é lembrada no armazenamento local (sem cookie).
 - Aceite: AT-024.
 
 ### RF-040 — Movimento reduzido
-Com `prefers-reduced-motion: reduce`, a corrida DEVE ser substituída por uma barra estática com os dois candidatos e os números; zoom vira troca instantânea com fade de 120 ms e a cena final NÃO é executada — o resultado aparece em texto (AT-024).
+Com `prefers-reduced-motion: reduce`, a rolagem e o coração DEVEM ficar estáticos, com as duas linhas e os números visíveis; zoom vira troca instantânea com fade de 120 ms e a cena final NÃO é executada — o resultado aparece em texto (AT-024).
 - Aceite: AT-024.
 
 ## G. Acessibilidade, compartilhamento e transparência
@@ -246,7 +246,7 @@ Toda página DEVE exibir: "Fonte: Tribunal Superior Eleitoral", link para a font
 
 ### RF-045 — Tratamento de erro
 Falhas de rede, 404 de escopo inexistente e erros 5xx DEVEM produzir mensagens em pt-BR, sem tela branca, com ação de tentar novamente; 404 de município inexistente DEVE sugerir a busca.
-- Os estados especiais também DEVEM ter texto próprio, sem tela branca e sem ação de "tentar novamente" quando não houver falha de fonte: `sem_voto`, `sem_dado`, `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, `arquivado`, `fonte_sem_atualizacao`, `municipio_fora_do_pleito`, `geometria_indisponivel` e `corrida_reiniciada`. Os rótulos são os de RN-035 e os textos finais estão em [07](07-ux-mapa-e-animacoes.md) §1.2 e §8.
+- Os estados especiais também DEVEM ter texto próprio, sem tela branca e sem ação de "tentar novamente" quando não houver falha de fonte: `sem_voto`, `sem_dado`, `nao_aplicavel`, `sem_lider_elegivel`, `retificado`, `arquivado`, `fonte_sem_atualizacao`, `municipio_fora_do_pleito`, `geometria_indisponivel` e `monitor_reiniciado`. Os rótulos são os de RN-035 e os textos finais estão em [07](07-ux-mapa-e-animacoes.md) §1.2 e §8.
 - Trocar de pleito com um município aberto que não participa do novo pleito DEVE produzir o toast não bloqueante "Município não participa deste pleito", além do comportamento de RF-005.
 - Aceite: AT-018, AT-026.
 

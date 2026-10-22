@@ -162,6 +162,7 @@ export interface Race {
   modo?: "fake" | "real"
   versao: string
   cargo: Office & { escopo: "br" }
+  pleito: { id: string; turno: number }
   apuracao: Apuracao
   cavalos: RaceHorse[]
   diferenca: { votos: number; normalizada: number; lider: string | null }

@@ -20,7 +20,7 @@ description: "Task list for the Pulso das Urnas v1 vertical slice"
 
 ## Fase 1 — Contratos e domínio
 
-- [X] T004 [P] `packages/contracts`: schemas Zod do envelope, pleito, escopo, cargo, candidato, snapshot, corrida e erros. Verificar: teste de parse dos exemplos do contrato.
+- [X] T004 [P] `packages/contracts`: schemas Zod do envelope, pleito, escopo, cargo, candidato, snapshot, pulso e erros. Verificar: teste de parse dos exemplos do contrato.
 - [X] T005 [P] `packages/domain/offices.ts`: hierarquia RN-005, destaque e cargos por escopo (RN-004). Verificar: tabela de casos.
 - [X] T006 [P] `packages/domain/leader.ts`: elegibilidade (RN-021), líder, empate e ordenação (RN-026). Verificar: casos com fixture.
 - [X] T007 [P] `packages/domain/color.ts`: cor do estado, histerese (RN-038), contraste (RN-024) e fallback de partido (RN-023). Verificar: 0 voto branco, sem dado cinza, empate hachura.
@@ -47,7 +47,7 @@ description: "Task list for the Pulso das Urnas v1 vertical slice"
 - [X] T022 `apps/api`: Fastify, plugins de erro (Problem Details), requestId, cache e rate limit. Verificar: `/healthz`.
 - [X] T023 [P] Rotas `/pleitos` e `/panorama` com ETag e cache. Verificar: 200 e 304.
 - [X] T024 [P] Rotas `/escopos/{uf}`, `/municipios/{ibge}` e `/cargos`. Verificar: 200 com `dados:null` para ausência.
-- [X] T025 [P] Rota `/corrida` e `/localidades`. Verificar: payload e cache.
+- [X] T025 [P] Rota `/corrida` (legada do monitor) e `/localidades`. Verificar: payload e cache.
 - [X] T026 Fonte injetável `real|fake` por `DATA_MODE`; bootstrap do catálogo e snapshots. Verificar: `pnpm dev` sobe sem TSE.
 - [X] T027 Testes de API (contrato, 304, 404, ausência, rate limit). Verificar: verdes.
 
@@ -74,11 +74,11 @@ description: "Task list for the Pulso das Urnas v1 vertical slice"
 
 ## Fase 7 — Corrida (US3)
 
-- [X] T040 [US3] `RaceTrack` com dois cavalos, cores, números e `aria-label`. Verificar: AT-020.
+- [X] T040 [US3] `PulseMonitor` com duas linhas, cores, números e `aria-label`. Verificar: AT-020.
 - [X] T041 [US3] Posição por apuração e diferença assinada, mola e 10 Hz. Verificar: AT-021.
 - [X] T042 [US3] Ultrapassagem, balão "Relincho!" e anúncio. Verificar: AT-022.
 - [X] T043 [US3] Cena final, `sessionStorage`, "Rever cena", pausa e reduced motion. Verificar: AT-023/AT-024.
-- [X] T044 Testes de componente e e2e da corrida. Verificar: `e2e/j04`, `e2e/fim`, `reduced-motion`.
+- [X] T044 Testes de componente e e2e do monitor. Verificar: `e2e/j04`, `e2e/fim`, `reduced-motion`.
 
 ## Fase 8 — Qualidade
 
@@ -103,5 +103,5 @@ description: "Task list for the Pulso das Urnas v1 vertical slice"
 
 - `pnpm dev` sobe API + web; `DATA_MODE=fake` é o padrão e `real` lê `data/snapshots/raw` quando o ingest já rodou.
 - Cinco cargos de 2026 suportados na demo: Presidente, Governador, Senador, Dep. Federal e Dep. Estadual/Distrital.
-- A cena final é validada no contrato da corrida (`interesses: finalizado`); a animação visual é coberta por screenshot, não por e2e dedicado.
+- A cena final é validada no contrato do monitor (`interesses: finalizado`); a animação visual é coberta por screenshot, não por e2e dedicado.
 - Deploy em nuvem fora do recorte (Q-02): Terraform validado em dev e prod, sem apply.

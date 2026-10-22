@@ -24,8 +24,8 @@
 
 ### 1.3 Animação
 
-- Corrida de dois cavalinhos no rodapé, derivada da diferença de votos.
-- Ultrapassagem com balão de relincho.
+- Monitor de pulso com duas linhas no rodapé, derivado da diferença de votos.
+- Inversão de liderança com selo "PULSO!".
 - Cena final de encerramento (lambida carinhosa; perdedor deita).
 - Controles de pausa e respeito a `prefers-reduced-motion`.
 
@@ -62,7 +62,7 @@
 | **F1 — Fundação** | Repositório, docs, agents/skills, CI, contratos, fixtures, simulador mínimo | `pnpm test` e `pnpm build` verdes; contrato documentado |
 | **F2 — Dados** | Ingestão real, normalização, snapshots, API de leitura | ATs da coluna F2 de [12.1](12-rastreabilidade.md) verdes contra o TSE real |
 | **F3 — Mapa** | Brasil, estado, município, busca, cores, voltar, tabela | ATs da coluna F3 de [12.1](12-rastreabilidade.md) verdes em modo fake e real |
-| **F4 — Cavalinhos** | Corrida, ultrapassagem, relincho, cena final, reduced motion | ATs da coluna F4 de [12.1](12-rastreabilidade.md) verdes |
+| **F4 — Monitor de pulso** | Linhas, inversão, selo "PULSO!", coração final, reduced motion | ATs da coluna F4 de [12.1](12-rastreabilidade.md) verdes |
 | **F5 — Escala** | CDN, cache, SSE opcional, k6, observabilidade | RNF-ESC medido e registrado |
 | **F6 — Infra** | Terraform dev/prod, deploy, runbook | `terraform validate` + plan revisado; deploy manual documentado |
 

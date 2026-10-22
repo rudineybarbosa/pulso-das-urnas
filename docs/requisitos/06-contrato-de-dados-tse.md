@@ -306,7 +306,7 @@ Ausência de arquivo (escopo válido): **200**, cacheável, sem erro:
 
 `Cache-Control: public, max-age=0, s-maxage=5, stale-while-revalidate=5, stale-if-error=20`
 
-### 3.6 `GET /corrida?pleito=6257&cargo=1`
+### 3.6 `GET /corrida?pleito=6257&cargo=1` (rota legada do monitor)
 ```json
 {
   "apiVersion":"1","versao":"6257:br:1:2837531",
@@ -324,7 +324,7 @@ Ausência de arquivo (escopo válido): **200**, cacheável, sem erro:
   "ultimaUltrapassagem": null
 }
 ```
-`cavalos` é vazio quando o cargo está `sem_voto`, `sem_dado`, `nao_aplicavel` ou `sem_lider_elegivel` (RN-035); a corrida não inventa dupla. `ultimaUltrapassagem` só é preenchida com ultrapassagem válida (RN-016).
+`cavalos` (nome legado do contrato; representa as duas linhas do monitor) é vazio quando o cargo está `sem_voto`, `sem_dado`, `nao_aplicavel` ou `sem_lider_elegivel` (RN-035); o monitor não inventa dupla. `ultimaUltrapassagem` só é preenchida com ultrapassagem válida (RN-016).
 `Cache-Control: public, max-age=0, s-maxage=2, stale-while-revalidate=3, stale-if-error=5` + `ETag`.
 
 ### 3.7 `GET /localidades?q=sao`

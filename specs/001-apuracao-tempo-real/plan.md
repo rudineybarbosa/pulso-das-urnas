@@ -6,7 +6,7 @@
 
 ## Summary
 
-Entregar a v1 vertical do Pulso das Urnas: um monorepo TypeScript com regras puras, parser dos arquivos oficiais do TSE, API cacheável, job de ingestão, SPA com mapa SVG do Brasil, drill-down até município, painel de votos, busca e corrida de cavalinhos, com modo fake local e testes automatizados. Infraestrutura em Terraform fica pronta e validada, sem apply.
+Entregar a v1 vertical do Pulso das Urnas: um monorepo TypeScript com regras puras, parser dos arquivos oficiais do TSE, API cacheável, job de ingestão, SPA com mapa SVG do Brasil, drill-down até município, painel de votos, busca e monitor de pulso, com modo fake local e testes automatizados. Infraestrutura em Terraform fica pronta e validada, sem apply.
 
 ## Technical Context
 
@@ -22,7 +22,7 @@ Entregar a v1 vertical do Pulso das Urnas: um monorepo TypeScript com regras pur
 
 **Project Type**: monorepo web (SPA + API + ingestão + pacotes)
 
-**Performance Goals**: LCP ≤ 2,5 s p75; INP ≤ 200 ms; JS inicial ≤ 200 KB gz; panorama ≤ 8 KB gz; 60 fps no mapa/corrida
+**Performance Goals**: LCP ≤ 2,5 s p75; INP ≤ 200 ms; JS inicial ≤ 200 KB gz; panorama ≤ 8 KB gz; 60 fps no mapa/monitor
 
 **Constraints**: 10.000 usuários simultâneos; staleness ≤ 30 s; custo ≤ US$ 10 na semana; sem banco relacional
 
@@ -95,13 +95,13 @@ infra/terraform/
 Workspace pnpm, TypeScript, Vitest, ESLint/Prettier, scripts raiz, `.gitignore`, `size-limit`.
 
 ### Fase 1 — Contratos e domínio
-Tipos e schemas do envelope, snapshot, escopo e cargo. Regras: hierarquia, líder, cor, histerese, percentual, estados de ausência, busca normalizada, matemática da corrida, canonicalização de URL.
+Tipos e schemas do envelope, snapshot, escopo e cargo. Regras: hierarquia, líder, cor, histerese, percentual, estados de ausência, busca normalizada, matemática do monitor, canonicalização de URL.
 
 ### Fase 2 — TSE e dados falsos
 Parser do catálogo, `-u.json`, `-ab.json`, `mun-cm.json`; normalizador; cliente com ETag/limites; fixtures reais; `FakeSource` com cenários (`sem-votos`, `parcial`, `virada`, `empate`, `fim`); snapshots em disco.
 
 ### Fase 3 — API
-Fastify com `/pleitos`, `/panorama`, `/escopos/{uf}`, `/municipios/{ibge}`, `/corrida`, `/localidades`, `/healthz`, `/readyz`; ETag, cache, Problem Details, rate limit; fonte injetável.
+Fastify com `/pleitos`, `/panorama`, `/escopos/{uf}`, `/municipios/{ibge}`, `/corrida` (contrato legado do monitor), `/localidades`, `/healthz`, `/readyz`; ETag, cache, Problem Details, rate limit; fonte injetável.
 
 ### Fase 4 — Geo
 Script que baixa malhas do IBGE, simplifica para TopoJSON, gera `br.topo.json` e `uf/*.topo.json` com metadados; orçamento de bytes.
@@ -113,7 +113,7 @@ SPA, roteamento por URL, mapa do Brasil, zoom para estado, municípios, botão V
 Painel por cargo, candidatos ordenados, resumo, abas, atualização automática, selo de frescor, estados de erro/offline.
 
 ### Fase 7 — Corrida
-Dois cavalos, posição por apuração e diferença, histerese, relincho, cena final, pausa, reduced motion, testes visuais.
+Duas linhas de pulso, altura pela diferença, histerese, selo "PULSO!", coração final, pausa, reduced motion, testes visuais.
 
 ### Fase 8 — Qualidade
 Testes unitários, contrato, componente, e2e, axe, orçamento de bytes; cobertura ≥ 80% global e ≥ 90% em domínio/TSE.
@@ -128,7 +128,7 @@ Módulos Terraform, ambientes dev/prod, validação e plano; sem apply.
 
 - **Unidade**: regras e parser com fixtures reais.
 - **Contrato**: schemas Zod e respostas da API.
-- **Componente**: mapa, painel, busca, corrida.
+- **Componente**: mapa, painel, busca, monitor de pulso.
 - **E2E**: jornadas J-01..J-05 em `DATA_MODE=fake`.
 - **A11y**: axe + teclado + reduced motion.
 - **Visual**: screenshot dos estados do mapa e da cena final.

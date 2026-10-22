@@ -26,17 +26,17 @@ Cinco valores de `status`, iguais aos da API e usados sem sinônimo no cliente (
 | Estado | Condição | Mapa | O que o usuário vê |
 |---|---|---|---|
 | **Carregando inicial** | Primeira carga | Esqueleto do mapa (contorno cinza-claro) | "Buscando os dados do TSE…"; sem spinner central |
-| **Sem votos** (`sem_voto`) | `v.vv = 0` (ou soma dos válidos = 0), com arquivo presente | Todos os estados brancos | Faixa "Aguardando o primeiro boletim de urna"; corrida parada na largada |
-| **Parcial** | `0 < p < 100` | Preenchimento com a cor do líder (RN-006) | Relógio e "% apurado" avançando; corrida em movimento |
-| **Finalizado** | `tf = s` em todos | Preenchimento final | Selo verde "Apuração encerrada"; corrida conclui a cena final conforme §7.4 |
-| **Empate exato** | RN-008 | Hachura diagonal no estado | Rótulo "Empate"; cavalos lado a lado |
+| **Sem votos** (`sem_voto`) | `v.vv = 0` (ou soma dos válidos = 0), com arquivo presente | Todos os estados brancos | Faixa "Aguardando o primeiro boletim de urna"; monitor aguardando o primeiro boletim |
+| **Parcial** | `0 < p < 100` | Preenchimento com a cor do líder (RN-006) | Relógio e "% apurado" avançando; linhas de pulso rolando |
+| **Finalizado** | `tf = s` em todos | Preenchimento final | Selo verde "Apuração encerrada"; monitor desenha o coração conforme §7.3 |
+| **Empate exato** | RN-008 | Hachura diagonal no estado | Rótulo "Empate"; linhas na mesma altura |
 | **Sem dado** (`sem_dado`) | `dados: null` | Cinza médio (`--map-nodata`) | Tooltip "Sem dados para este cargo" |
 | **Não aplicável** (`nao_aplicavel`) | Cargo inexistente no escopo/turno, sem fallback | Cinza claro com diagonal | Rótulo "Não se aplica a este pleito"; tooltip "Este cargo não existe em <escopo>" |
 | **Sem líder elegível** (`sem_lider_elegivel`) | Válidos > 0 e nenhum elegível (RN-021) | Cinza escuro (`--map-no-leader`) | Rótulo "Aguardando definição judicial"; votos válidos e de legenda continuam visíveis |
 | **Retificado** (`retificado`) | Correção aceita do TSE (RN-017) | Preenchimento normal | Selo "Dados retificados pelo TSE" por 60 min ou até 3 gerações sem regressão (o que durar mais), sem animação de queda |
 | **Desatualizado** | RN-013 (90 s – 10 min sem atualização) | Preenchimento normal | Faixa âmbar "Dados de hh:mm — a fonte não respondeu na última tentativa"; números mantidos |
 | **Fonte indisponível** | > 10 min sem sucesso | Preenchimento normal | Faixa vermelha com "Tentar novamente"; último snapshot preservado |
-| **Offline** | `navigator.onLine = false` ou falha de rede | Congelado no último estado | Faixa "Você está offline. Mostrando os últimos dados."; corrida congela (§7.7) |
+| **Offline** | `navigator.onLine = false` ou falha de rede | Congelado no último estado | Faixa "Você está offline. Mostrando os últimos dados."; monitor congela (§7.5) |
 | **2º turno não iniciado** | Arquivos zerados (RN-030) | Cinza claro, sem preenchimento por zero | "O 2º turno começa em 25/10"; nunca "0 votos" |
 | **Erro de escopo** | `404` de pleito/cargo/escopo | Esqueleto neutro | Cartão "Não encontramos esse município" + botão "Buscar cidade" |
 | **Arquivado** | Pleito fora do catálogo há > 24 h (RN-037) | Preenchimento final | Selo "Arquivado"; sem polling de apuração; acessível por URL direta, ausente do seletor |
@@ -238,82 +238,54 @@ digite o nome do estado ou da cidade:
 - **Sem exportação CSV ou planilha na v1** (D-026): nenhum botão de download; a limitação é declarada no rodapé da tabela e registrada como dívida para a v2.
 - Na impressão a tabela ignora a paginação e imprime o escopo completo (§10).
 
-## 7. Rodapé dos cavalinhos
+## 7. Monitor de pulso
+
+> Em 22/10/2026 o mantenedor substituiu a corrida de cavalos por um monitor de pulso (ADR-006). Os IDs RF-035..038, RN-015/016 e AT-020..023 foram preservados.
 
 ### 7.1 Composição
+
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│ Apuração: 87,4%          PL · Flavio Bolsonaro        PT · ...       │
-│  🐎━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🏁   │
-│  🐎━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🏁   │
-│  56.104.503 · 47,0%                          49.998.112 · 41,8%      │
-└──────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ ♥ Monitor da apuração        BPM 88  ☕           [Pausar]   │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │  ▁▂▅▇▅▂▁▁▂▅▇▅▂▁  (linha do líder, cor do partido)       │ │
+│ │  ▁▂▄▆▄▂▁▁▂▄▆▄▂▁  (linha do segundo, cor do partido)     │ │
+│ └──────────────────────────────────────────────────────────┘ │
+│ ● FLAVIO BOLSONARO 33.662.702 · 47,0%   ● LULA 32.327.723 · 45,2% │
+└──────────────────────────────────────────────────────────────┘
 ```
-- Duas raias de 56 px; pista com linha de chegada listrada à direita.
-- Cavalo: SVG original, vista lateral, sem jóquei, sem chicote, sem ferradura destacada; crina e cauda com movimento leve; manta e número na cor do partido.
-- Arte original, criada no projeto e licenciada com o repositório; autoria, licença e ausência de marca de terceiro registradas em [assets/race/README.md](../../assets/race/README.md) (D-051). Nenhum personagem, traço ou logotipo de terceiro é copiado.
-- Nome/partido em texto acima de cada raia (para leitor de tela e para quem não distingue cor).
-- Números em `tabular-nums` abaixo de cada raia, atualizados sem animação de contagem (evita "roleta").
+
+- Moldura escura com tela verde-escura, grade discreta e brilho nas linhas.
+- Duas linhas de ECG nas cores dos partidos; a do líder fica mais alta e mais espessa.
+- “BPM” é simbólico (ritmo da apuração), acompanhado de um ícone de café; não é medida médica.
+- Leitura textual abaixo: nome, partido, votos e percentual dos dois candidatos.
 
 ### 7.2 Movimento
-- Avanço = % de seções apuradas (RN-015); separação = diferença normalizada.
-- Galope: ciclo de 4 patas em 0,8 s, com `transform` apenas; poeira a cada 2 ciclos.
-- Suavização por mola (250 ms); sem saltos.
-- Se `p` não muda, o cavalo continua galopando no lugar (sensação de corrida), mas não avança.
-- A pista tem `role="img"` e `aria-label` resumindo a corrida; mudanças relevantes entram na fila de anúncios do §7.8 (máx. 1/10 s).
 
-### 7.3 Ultrapassagem
-- Gatilho: RN-016.
-- Balão de quadrinho branco, borda `--ink`, rabicho apontando para o cavalo, texto **"Relincho!"** (peso 700, 14 px).
-- Entrada 320 ms (escala 0,8 → 1, `ease-out`), permanência 900 ms, saída 200 ms.
-- Posição: acima da raia do cavalo que assumiu a frente, deslocado para trás para não cobrir a linha de chegada.
-- Sem som. Sem partículas agressivas. Sem texto dirigido a pessoas.
-- Anúncio, na fila do §7.8: "Virada: <nome> assume a liderança."
+- Cada linha rola horizontalmente em 1,4 s por ciclo, sem saltos.
+- `g = sinal(d)·ln(1+|d|)/ln(1+V)`; a distância vertical entre as linhas é `2 × (4 + 16 × min(1, 12×|g|))` px na tela (8 a 40 px).
+- A linha do líder fica acima; a do segundo, abaixo. Empate: as duas ficam na mesma altura.
+- Ao inverter a liderança de forma sustentada, o selo **“PULSO!”** aparece por 1,6 s e as linhas trocam de altura com transição de 600 ms.
+- Sem “linha reta”/flatline em nenhum momento.
 
-### 7.4 Cena final (2,4 s)
-| Tempo | Ação |
-|---|---|
-| 0,0–0,4 s | Cavalos desaceleram até a linha de chegada; poeira assenta |
-| 0,4–1,0 s | Vencedor vira a cabeça para o perdedor e inclina o corpo |
-| 1,0–1,6 s | Lambida carinhosa (língua e cabeça, 2 ciclos suaves); perdedor baixa a cabeça |
-| 1,6–2,2 s | Perdedor dobra as patas e deita de lado, sem impacto; vencedor permanece ao lado |
-| 2,2–2,4 s | Três corações sobem e desaparecem; legenda "Apuração encerrada" |
-- Texto neutro: "Apuração encerrada. <Candidato> venceu." (sem "derrotou").
-- Cena **uma vez por aba** (D-032): a chave é `pulso:final-scene:{pleito}:{cargo}` em `sessionStorage`, gravada ao iniciar a cena. Recarregar a aba não repete; nova aba repete; trocar de pleito/cargo usa outra chave. `localStorage` guarda **apenas** a pausa da corrida.
-- O botão **"Rever cena"** fica sempre disponível no rodapé depois do fim, inclusive após recarregar, e roda a cena sob demanda sem regravar a chave.
-- Com `prefers-reduced-motion`: sem cena; mostra o resultado em texto e um ícone estático de coração. "Rever cena" continua visível e exibe o mesmo cartão estático.
+### 7.3 Fim da apuração
 
-### 7.5 Controles
-- `Pausar animação` / `Retomar` (ícone + texto), persistido em `localStorage`.
-- Em mobile, o rodapé pode ser recolhido para 56 px ("Mostrar corrida").
-- A pista nunca cobre a busca nem o mapa; é `position: sticky` no fim do conteúdo, não fixa sobre o mapa.
+- As linhas desaceleram e um coração na cor do vencedor é desenhado no centro da tela, com “<nome> venceu”.
+- A cena roda uma vez por aba (`sessionStorage` `pulso:final-scene:{pleito}:{cargo}`); “Rever cena” fica disponível.
+- Texto neutro: “venceu”, nunca “derrotou”.
 
-### 7.6 Dupla de cavalos e reinício (D-025, D-030)
+### 7.4 Controles e acessibilidade
 
-- A dupla é o 1º e o 2º colocados no cargo da corrida (RN-015), com desempate determinístico: votos desc → nome de urna (`localeCompare pt-BR`) → número. Não depende da ordem do JSON.
-- A dupla é **fixa na sessão**. Troca só quando o **conjunto** dos dois primeiros muda por **2 snapshots consecutivos (≥ 10 s)**. Trocar posição entre os mesmos dois não é troca de dupla.
-- Ao trocar: reinicia **na posição atual** (não volta à largada), com texto visível e anúncio "A corrida recomeçou: <A> e <B>." por 5 s; a nova dupla herda a pausa e o estado da mola.
-- Candidato anulado, removido ou tornado inelegível (RN-021): o líder é recalculado; o cavalo afetado é marcado **"indisponível"** e para no lugar — opacidade 60% + rótulo textual, sem desaparecer da pista e sem deboche. Ele deixa de concorrer à dupla nos snapshots seguintes.
-- Se sobrar um único elegível: a pista mostra um cavalo e a legenda "Aguardando o segundo colocado"; sem ultrapassagem e sem cena final.
-- Se a dupla mudar depois do fim (retificação), a cena não roda de novo sozinha; fica disponível em "Rever cena".
+- Botão **Pausar/Retomar** congela a rolagem e o brilho; preferência em `localStorage` (`pulso:paused`), sem cookie.
+- `prefers-reduced-motion`: linhas estáticas, sem rolagem, sem pulso do coração e sem selo animado; os números continuam visíveis.
+- O bloco tem `role="img"` com descrição (“monitor com duas linhas; a mais alta é a do líder”).
+- `aria-live` anuncia a inversão e o resultado (máx. 1/10 s).
+- Os mesmos dados estão nos readouts e na tabela alternativa.
 
-### 7.7 Offline e reconexão (D-027)
+### 7.5 Offline e reconexão
 
-- Offline (`navigator.onLine = false` ou falha de rede): o polling para, números e cavalos **congelam** na última posição, a faixa do §1 aparece e a pista mostra "Sem conexão — corrida pausada". Aba oculta não é offline: vale a RN-012.
-- Ao voltar: **uma única** atualização condicional (`If-None-Match`) e então o polling normal retoma. `304` não muda nada na tela.
-- Ultrapassagens e viradas ocorridas no intervalo **não são reproduzidas**: nenhum balão e nenhum anúncio por evento perdido. O estado atual é aplicado de uma vez.
-- Reset suave da mola: a posição é reancorada no alvo com velocidade 0 e transição de 400 ms `ease-out`, sem oscilação e sem salto; depois a corrida volta ao regime normal.
-- Se a liderança mudou no intervalo, anuncia-se apenas o líder atual, uma vez, pelo §7.8.
-- A pausa escolhida pelo usuário é preservada. Cena final perdida durante o offline não é exibida retroativamente, mas "Rever cena" fica disponível se o pleito estava finalizado.
-
-### 7.8 Anúncios para leitor de tela (D-035)
-
-- Uma única região principal `aria-live="polite"` agrega por ciclo (10 s) com prioridade: **(1)** líder do escopo selecionado; **(2)** líder nacional; **(3)** fim da apuração.
-- Máximo **1 anúncio a cada 10 s** na região principal. O que não couber não interrompe: vai para a região "Resumo da apuração" (`aria-live="off"`, atualizada a cada ciclo e consultável por navegação).
-- Vários estados mudando no mesmo ciclo: anuncia só o escopo selecionado; se ele não mudou, o líder nacional, se mudou; se nada mudou, apenas o fim da apuração entra.
-- O anúncio usa o **mesmo líder que a tela mostra** (histerese aplicada, §4.7). Quando a votação aponta líder diferente do pintado, o detalhe vai para o Resumo como "disputa acirrada", sem trocar a cor.
-- Avisos de navegação (página da tabela, toast de pleito, "A corrida recomeçou") usam `role="status"` separado e não entram nessa fila, mas também respeitam 1 mensagem por 10 s quando concorrem com a apuração.
-- A região principal é montada antes do primeiro snapshot e nunca é removida do DOM (evita anúncio perdido na hidratação).
+- Offline congela as linhas; ao reconectar, uma única atualização e reancoragem suave, sem reproduzir inversões perdidas.
+- Erro de fonte mantém a última tela e o selo de frescor; nunca inventa batimento.
 
 ## 8. Microcopy (D-038)
 
@@ -333,18 +305,18 @@ digite o nome do estado ou da cidade:
 | Disputa acirrada | "Disputa acirrada: diferença de <N> votos. A cor é mantida até confirmação." |
 | Fim | "Apuração encerrada em 20/10/2026, 21h15. PL venceu em São Paulo." |
 | Virada | "Virada: Flavio Bolsonaro assume a liderança." |
-| Corrida reiniciada | "A corrida recomeçou: <A> e <B>." |
+| Monitor reiniciado | "A leitura recomeçou: <A> e <B>." |
 | Município fora do pleito | "Município não participa deste pleito." |
 | Geometria indisponível | "Geometria indisponível para este município. Os votos estão na tabela." |
 | 2º turno | "O 2º turno começa em 25/10/2026." |
 | Não oficial | "Este site não é um serviço oficial do TSE." |
 
-- Todo texto acima vem de um único módulo de microcopy, com chaves estáveis (ex.: `nao_aplicavel`, `corrida_reiniciada`); não há string solta em componente.
+- Todo texto acima vem de um único módulo de microcopy, com chaves estáveis (ex.: `nao_aplicavel`, `monitor_reiniciado`); não há string solta em componente.
 - Texto de estado especial sempre cita o escopo quando houver ambiguidade ("neste estado", "em São Paulo") e nunca substitui a hora do dado.
 
 ### 8.1 Tom e palavras proibidas (D-034)
 
-- **Proibidas**, em qualquer texto da tela, da corrida e da cena final: "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude", "roubo" e sinônimos diretos de humilhação.
+- **Proibidas**, em qualquer texto da tela, do monitor e da cena final: "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude", "roubo" e sinônimos diretos de humilhação.
 - **Permitidas**: "venceu", "assume a liderança", "disputa acirrada", "empate", "apuração encerrada".
 - **Tratamento simétrico**: os dois candidatos têm o mesmo tamanho de tipografia, a mesma saturação e a mesma posição de destaque; o perdedor não é dessaturado, não encolhe, não desaparece e não cai. A única distinção visual é a que uma regra prevê (líder por votos, empate, indisponível).
 - Sem ironia, sem adjetivo que qualifique candidato, partido ou resultado, sem som e sem imagem de candidato (RN-033).
@@ -354,13 +326,13 @@ digite o nome do estado ou da cidade:
 
 | Breakpoint | Comportamento |
 |---|---|
-| < 480 px | Mapa 1:1; chips em scroll; painel em sheet; corrida recolhível; busca em largura total |
+| < 480 px | Mapa 1:1; chips em scroll; painel em sheet; monitor recolhível; busca em largura total |
 | 480–1023 px | Mapa 4:3; painel em sheet; legenda em 2 linhas |
-| ≥ 1024 px | Mapa 16:10; painel lateral 400 px; corrida visível; legenda em 1 linha |
+| ≥ 1024 px | Mapa 16:10; painel lateral 400 px; monitor visível; legenda em 1 linha |
 
 ## 10. Impressão
 
-- `@media print`: esconde busca, chips, corrida e botões; mostra mapa + tabela + fonte/hora.
+- `@media print`: esconde busca, chips, monitor e botões; mostra mapa + tabela + fonte/hora.
 - A tabela é sempre impressa completa para o escopo atual.
 
 ## 11. Atribuição no HTML estático (D-039)

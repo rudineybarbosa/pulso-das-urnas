@@ -1,57 +1,60 @@
 ---
-name: Animação dos cavalos
-description: Implementar ou ajustar a corrida de cavalinhos do rodapé — posição derivada dos votos, ultrapassagem com balão de relincho, cena final carinhosa, pausa e prefers-reduced-motion. Use em qualquer tarefa que toque na corrida, nas animações ou no tom da cena final.
+name: Animação do monitor de pulso
+description: Implementar ou ajustar o monitor de pulso do rodapé — altura derivada dos votos, inversão com selo "PULSO!", coração final, pausa e prefers-reduced-motion. Use em qualquer tarefa que toque no rodapé, nas animações ou no tom da cena final. O ID "animacao-cavalos" é histórico; o tema atual é pulso.
 ---
 
-# Animação dos cavalos
+# Animação do monitor de pulso
+
+> O ID desta skill (`animacao-cavalos`) é legado. Os cavalos foram substituídos pelo monitor de pulso em 22/10/2026 (ADR-006). Não reintroduza cavalos, relincho ou flatline.
 
 Leia `docs/requisitos/07-ux-mapa-e-animacoes.md` §7 e as regras RN-015, RN-016 e RN-033.
 
 ## Matemática (não improvise)
 
 ```
-p = percentualApurado / 100
 V = votos válidos do cargo no escopo nacional
 d = votos(A) − votos(B)   // com sinal
 g = sinal(d) × ln(1 + |d|) / ln(1 + V)        // (−1, 1)
-xBase = margem + p × L
-separação = 0,14 × L × |g|
-xA = xBase + (separação/2) × sinal(d)
-xB = xBase − (separação/2) × sinal(d)
+magnitude = min(1, 12 × |g|)
+gap = 4 + 16 × magnitude                       // px
+yLíder = centro − gap
+ySegundo = centro + gap
 ```
 
-- Suavize com mola (250 ms); atualize no máximo a 10 Hz.
-- `V = 0` → pista vazia, sem divisão por zero.
-- O cavalo à frente é sempre o de maior votação.
-- Ultrapassagem: sinal muda + |g| ≥ 0,01 em 2 snapshots + cooldown de 30 s.
+- A linha mais alta é sempre a do maior votação; a distância vertical entre as linhas é `2 × gap` (8 a 40 px).
+- Atualize a 10 Hz no máximo; anime apenas `transform`/`opacity`.
+- `V = 0` → tela vazia, sem divisão por zero.
+- Inversão: sinal muda + `|g| ≥ 0,01` em 2 snapshots + cooldown de 30 s.
 
 ## Tom (bloqueante)
 
-- A corrida é esportiva e afetuosa. Nunca humilha, nunca insinua fraude, nunca usa ironia.
+- O monitor é lúdico e afetuoso. Nunca humilha, nunca insinua fraude, nunca usa ironia.
 - Textos: "venceu", "assume a liderança". Proibido: "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude", "roubo".
-- Sem jóquei, sem chicote, sem violência.
-- Balão "Relincho!" por até 1,2 s; sem som.
-- Cena final: vencedor lambe, perdedor deita sem impacto, corações sobem, texto neutro.
+- Não há linha reta/flatline, diagnóstico, som de alarme real ou linguagem médica de risco.
+- Selo "PULSO!" por até 1,6 s, sem cobrir números.
+- Cena final: coração na cor do vencedor, texto neutro; o perdedor mantém a linha e a cor.
 - A arte é original; não copie personagens, traços ou logotipos de terceiros.
 
 ## Acessibilidade
 
-- A pista tem `role="img"` e `aria-label` com o resumo.
-- `aria-live` anuncia virada e fim (máx. 1/10 s).
-- Botão "Pausar animação" persistido em `localStorage`.
-- `prefers-reduced-motion`: barra estática com nomes, partidos e números; sem cena.
+- A tela tem `role="img"` e `aria-label`/`<title>` com o resumo.
+- `aria-live` anuncia a inversão e o fim (máx. 1/10 s).
+- Botão "Pausar/Retomar" persistido em `localStorage` (`pulso:paused`); "Rever cena" sempre disponível após o fim.
+- `prefers-reduced-motion`: linhas estáticas com nomes, partidos e números; sem rolagem e sem coração animado.
 
 ## Implementação
 
-- SVG inline com grupos nomeados (`horse-a`, `horse-b`).
-- Anime apenas `transform`/`opacity`; nada de `top/left` ou layout.
+- SVG inline com dois grupos nomeados (`pulse__channel`), um por candidato.
+- Cada linha é um conjunto de `<use>` do mesmo motivo de ECG; a rolagem é um `translateX` de 80 px por ciclo.
+- A altura de cada grupo vem de `gap` e da liderança; transição de 600 ms.
 - Estado da cena em máquina de estados (`idle → running → overtake → finished → final-scene`) para não repetir a cena.
 - Cena final roda uma vez por **aba** (`sessionStorage` `pulso:final-scene:{pleito}:{cargo}`); "Rever cena" sempre disponível.
+- `localStorage` guarda só a pausa, nunca a marca da cena.
 
 ## Antes de concluir
 
-- [ ] `packages/domain/race-math.test.ts` e `overtake.test.ts` verdes.
-- [ ] `e2e/j04-virada.spec.ts`, `e2e/fim.spec.ts` e `e2e/reduced-motion.spec.ts` verdes.
-- [ ] GIF/vídeo anexado ao PR.
+- [ ] `packages/domain/src` (matemática de `racePositions`/`detectOvertake`) e `apps/api/src/app.test.ts` verdes.
+- [ ] `e2e/jornadas.spec.ts` (monitor, sem rolagem, reduced motion), `e2e/fim.spec.ts` e `e2e/a11y.spec.ts` verdes.
+- [ ] Screenshot/GIF anexado ao PR em `docs/operacao/evidencias/`.
 - [ ] Checklist de neutralidade revisado por outra pessoa.
 - [ ] 60 fps no aparelho de referência (trace).

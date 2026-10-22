@@ -20,7 +20,7 @@ Formato Given/When/Then. Um critério só é aceito com o teste correspondente v
 ### AT-003 — Seleção de pleito e cargo (RF-005, RF-006 · RN-002)
 > **Dado** que o usuário está em `/br`
 > **Quando** seleciona o cargo Governador
-> **Então** o mapa repinta pela liderança de governador, a URL passa a `?cargo=3` e a corrida continua no cargo nacional mais alto.
+> **Então** o mapa repinta pela liderança de governador, a URL passa a `?cargo=3` e o monitor continua no cargo nacional mais alto.
 **Tipo:** e2e. **Evidência:** teste `j03-citar.spec.ts`.
 
 ## Regra de cor
@@ -63,7 +63,7 @@ Formato Given/When/Then. Um critério só é aceito com o teste correspondente v
 > **Quando** o mapa de governador é exibido
 > **Então** os estados com disputa usam o arquivo do turno vigente e São Paulo usa o resultado final do 1º turno, marcado "1º turno", sem aparecer como "sem dado".
 > **E** o snapshot de fallback carrega `origem: { pleito, turno, generationId, generatedAt }`, o selo "1º turno" tem tooltip com essa origem e o horário do snapshot atual continua visível; o frescor é o do snapshot de origem.
-> **E** a corrida nacional do 2º turno usa apenas Presidente do turno vigente, sem cavalo herdado do 1º turno.
+> **E** o monitor nacional do 2º turno usa apenas Presidente do turno vigente, sem linha herdada do 1º turno.
 > **E** antes do início (`tf = n`, `pst = 0`), São Paulo exibe `sem_voto` com o rótulo "2º turno ainda não iniciado", nunca "0 votos" nem "sem dado".
 **Tipo:** unitário + contrato + e2e. **Evidência:** fixture `2026/6260/sp-c0003-e006260-u.json` (arquivo ausente no turno), golden de `origem` e cenário `dois-turnos-parcial`.
 
@@ -156,49 +156,49 @@ Formato Given/When/Then. Um critério só é aceito com o teste correspondente v
 
 ## Animação
 
-### AT-020 — Corrida (RF-035)
+### AT-020 — Monitor de pulso (RF-035)
 > **Dado** o cargo Presidente com dois candidatos
 > **Quando** a página carrega
-> **Então** dois cavalos aparecem com cor do partido, número e sigla, com `aria-label` e a pista visível sem cobrir o mapa.
+> **Então** um monitor exibe duas linhas de ECG nas cores dos partidos, com readouts de nome, votos e percentual, `role="img"` e descrição acessível, sem cobrir o mapa.
 **Tipo:** componente + visual. **Evidência:** screenshot.
 
-### AT-021 — Posição derivada e desempate da dupla (RF-036 · RN-015, RN-026)
-> **Dado** `p = 0,6`, `V = 100.000`, candidato A com 60.000 e B com 40.000
-> **Quando** a posição é calculada
-> **Então** `d = 20.000`, `g = ln(20001)/ln(100001) ≈ 0,86`, A fica à frente e o avanço corresponde a 60% da pista; invertendo os votos (A = 40.000, B = 60.000), B passa à frente sem mudar o avanço.
-> **E** `g(0) = 0` deixa os cavalos lado a lado e `V = 0` produz pista vazia, sem divisão por zero.
+### AT-021 — Altura e distância derivadas (RF-036 · RN-015, RN-026)
+> **Dado** `V = 100.000`, candidato A com 60.000 e B com 40.000
+> **Quando** a altura é calculada
+> **Então** `d = 20.000`, `g = ln(20001)/ln(100001) ≈ 0,86`, `magnitude = 1` e a linha de A fica acima da de B com separação máxima; invertendo os votos, B fica acima.
+> **E** `g(0) = 0` deixa as linhas na mesma altura e `V = 0` produz tela vazia, sem divisão por zero.
 > **E** a dupla é escolhida entre os dois mais votados por `vap` desc → nome de urna (`localeCompare("pt-BR")`) → número, independentemente da ordem do JSON; empate total escolhe sempre o mesmo par.
-> **E** a dupla é fixa na sessão e só troca quando o **conjunto** dos dois primeiros muda por 2 snapshots consecutivos (≥ 10 s); trocar posição entre os mesmos dois não é troca de dupla.
-**Tipo:** unitário. **Evidência:** tabela de casos com valores esperados + teste de desempate com candidatos homônimos e números distintos.
+> **E** a dupla é fixa na sessão e só troca quando o conjunto dos dois primeiros muda por 2 snapshots consecutivos (≥ 10 s).
+**Tipo:** unitário. **Evidência:** tabela de casos com valores esperados + teste de desempate.
 
-### AT-022 — Ultrapassagem, cooldown e troca de dupla (RF-037 · RN-015, RN-016, RN-021)
+### AT-022 — Inversão, alarme e troca de dupla (RF-037 · RN-015, RN-016, RN-021)
 > **Dado** o cenário `virada`
-> **Quando** o sinal de `g` inverte com `|g| ≥ 0,01` sustentado por 2 snapshots consecutivos (≥ 5 s de intervalo)
-> **Então** o cavalo que assumiu a frente mostra o balão "Relincho!" por até 1,2 s, sem cobrir números, e o `aria-live` anuncia "Virada: <nome> assume a liderança." uma única vez.
+> **Quando** o sinal de `g` inverte com `|g| ≥ 0,01` sustentado por 2 snapshots consecutivos (≥ 5 s)
+> **Então** as linhas trocam de altura e o selo "PULSO!" aparece por até 1,6 s, sem cobrir os readouts, e o `aria-live` anuncia "Virada: <nome> assume a liderança." uma única vez.
 > **E** o mesmo par não dispara de novo antes de 30 s de cooldown, e oscilações de `|g| < 0,01` não disparam nada.
-> **E** candidato anulado ou removido no meio: o líder é recalculado, o cavalo afetado fica marcado "indisponível" e para no lugar; se o conjunto dos dois primeiros mudar por 2 snapshots (≥ 10 s), a corrida reinicia na posição atual e anuncia "A corrida recomeçou: <A> e <B>".
-> **E** sobrando um único elegível, a pista mostra um cavalo com "Aguardando o segundo colocado", sem ultrapassagem e sem cena final.
-> **E** se a dupla mudar após o fim por retificação, a cena não roda sozinha de novo e fica disponível em "Rever cena".
+> **E** candidato anulado ou removido no meio: o líder é recalculado, a linha afetada fica marcada "indisponível" e não disputa altura; se o conjunto mudar por 2 snapshots (≥ 10 s), o monitor reancora e anuncia "A leitura recomeçou: <A> e <B>".
+> **E** sobrando um único elegível, a tela mostra uma linha e "Aguardando o segundo colocado", sem inversão e sem coração.
+> **E** não há linha reta/flatline em nenhum estado.
 **Tipo:** e2e + unitário da histerese. **Evidência:** GIF + teste de cooldown de 30 s com relógio injetado + caso `candidato-removido`.
 
-### AT-023 — Cena final, tom e simetria (RF-038 · RN-014, RN-033)
+### AT-023 — Encerramento, tom e simetria (RF-038 · RN-014, RN-033)
 > **Dado** o fim da apuração
 > **Quando** a cena roda
-> **Então** em 2,4 s o vencedor lambe o perdedor, o perdedor dobra as patas e deita de lado sem impacto, corações sobem e o texto é neutro ("Apuração encerrada. <Candidato> venceu."), sem "derrotou", sem ironia e sem ofensa a pessoas.
-> **E** nenhum texto da tela, da corrida ou da cena contém "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude" ou "roubo"; o teste varre o módulo de microcopy e falha ao encontrar qualquer termo da lista.
-> **E** os dois candidatos têm o mesmo tamanho de tipografia, a mesma saturação e a mesma posição de destaque; o perdedor não é dessaturado, não encolhe, não desaparece nem cai de mau jeito — a única distinção visual é a prevista por regra (líder por votos, empate, indisponível).
+> **Então** as linhas desaceleram e um coração na cor do vencedor é desenhado no centro, com "Apuração encerrada. <Candidato> venceu.", sem "derrotou", sem ironia e sem ofensa a pessoas.
+> **E** nenhum texto da tela, do monitor ou do encerramento contém "derrotou", "arrasou", "humilhou", "esmagou", "vexame", "fraude" ou "roubo"; o teste varre o módulo de microcopy.
+> **E** os dois candidatos têm a mesma tipografia nos readouts; o perdedor não é dessaturado, não desaparece e mantém a linha visível; não há flatline.
 > **E** a revisão editorial assina o checklist de neutralidade no PR.
 **Tipo:** e2e + revisão editorial. **Evidência:** vídeo, teste de palavras proibidas e checklist de neutralidade assinado.
 
-### AT-024 — Cena uma vez por aba, Rever cena, pausa e movimento reduzido (RF-038, RF-039, RF-040 · RNF-A11Y-05)
+### AT-024 — Cena por aba, Rever cena, pausa e movimento reduzido (RF-038, RF-039, RF-040 · RNF-A11Y-05)
 > **Dado** o fim da apuração do par (pleito, cargo)
 > **Quando** a cena termina e a página é recarregada na mesma aba
 > **Então** a cena não se repete, porque `sessionStorage` guarda `pulso:final-scene:{pleito}:{cargo}`; em uma nova aba ela roda de novo; trocar de pleito/cargo usa outra chave.
 > **E** `localStorage` contém apenas a preferência de pausa (`pulso:*`), nunca a marca da cena.
-> **E** o botão "Rever cena" fica sempre disponível no rodapé depois do encerramento, inclusive após recarregar, e roda a cena sob demanda sem regravar a chave.
+> **E** o botão "Rever cena" fica sempre disponível depois do encerramento, inclusive após recarregar, e roda a cena sob demanda sem regravar a chave.
 > **E** o botão de pausa/retomar reflete o estado persistido.
-> **E** com `prefers-reduced-motion: reduce` não há corrida, zoom animado nem cena; a barra estática mostra os dois candidatos e os números, e "Rever cena" exibe o cartão estático.
-**Tipo:** e2e. **Evidência:** teste `reduced-motion.spec.ts`, `fim.spec.ts` com reload e segunda aba, e dump de `sessionStorage`/`localStorage`.
+> **E** com `prefers-reduced-motion: reduce` não há rolagem, zoom animado nem coração animado; as linhas estáticas mostram os dois candidatos e os números, e "Rever cena" exibe o cartão estático.
+**Tipo:** e2e. **Evidência:** `e2e/jornadas.spec.ts` (reduced motion), `e2e/fim.spec.ts` e dump de `sessionStorage`/`localStorage`.
 
 ## Acessibilidade e transparência
 
@@ -272,11 +272,11 @@ Formato Given/When/Then. Um critério só é aceito com o teste correspondente v
 **Tipo:** carga. **Evidência:** `docs/operacao/carga-*.md` + gráfico + saída do k6 por runner.
 
 ### AT-033 — Sem PII e sem rastreamento (FR-014 · RNF-LGPD-01, RNF-LGPD-02, RNF-LGPD-03)
-> **Dado** uma sessão completa em `/br`, `/br/sp` e `/br/sp/sao-paulo`, com busca, troca de pleito e de aba, painel, tabela e corrida
+> **Dado** uma sessão completa em `/br`, `/br/sp` e `/br/sp/sao-paulo`, com busca, troca de pleito e de aba, painel, tabela e monitor
 > **Quando** o HAR e o armazenamento do navegador são inspecionados
 > **Então** nenhuma requisição sai para domínio de terceiro: só o próprio host da API, o host dos assets e as fontes servidas pelo projeto; nenhuma chamada a `resultados.tse.jus.br`, analytics, CDN de terceiro ou fonte externa.
 > **E** nenhum `Set-Cookie` é gravado e `document.cookie` permanece vazio.
-> **E** `localStorage` contém apenas chaves `pulso:*` (no máximo a pausa da corrida) e `sessionStorage` apenas `pulso:final-scene:*`.
+> **E** `localStorage` contém apenas chaves `pulso:*` (no máximo a pausa do monitor) e `sessionStorage` apenas `pulso:final-scene:*`.
 > **E** nenhum corpo de requisição ou de resposta carrega nome, e-mail, telefone, IP, localização precisa ou identificador de dispositivo; a API não persiste IP completo.
 > **E** a tela funciona igual com cookies bloqueados, sem login e sem consentimento de rastreio.
 **Tipo:** e2e + inspeção de rede. **Evidência:** HAR agregado das três rotas, dump de `localStorage`/`sessionStorage` e varredura do módulo de telemetria por campos de PII, em `e2e/privacidade.spec.ts`.
@@ -326,15 +326,15 @@ Formato Given/When/Then. Um critério só é aceito com o teste correspondente v
 > **Dado** um catálogo com um pleito geral em apuração e um pleito suplementar no município X
 > **Quando** o pleito suplementar é selecionado
 > **Então** ele aparece no seletor com o nome do município e abre apenas no escopo de X, com Prefeito e Vereador.
-> **E** a cor de nenhum estado, o ranking nacional, o cargo em destaque nacional nem a corrida nacional mudam em relação ao pleito geral.
+> **E** a cor de nenhum estado, o ranking nacional, o cargo em destaque nacional nem o monitor nacional mudam em relação ao pleito geral.
 > **E** os votos do suplementar não entram em nenhum agregado de UF ou de país.
 > **E** voltar ao pleito geral restaura exatamente o estado anterior da tela.
-**Tipo:** integração + contrato. **Evidência:** teste com os dois pleitos no mesmo catálogo comparando panorama, ranking e `g` da corrida antes/depois.
+**Tipo:** integração + contrato. **Evidência:** teste com os dois pleitos no mesmo catálogo comparando panorama, ranking e `g` do monitor antes/depois.
 
 ### AT-039 — Offline e reconexão (RF-032, RF-045 · RN-012, RN-013, RN-039)
 > **Dado** a página aberta com dados carregados
 > **Quando** a conexão cai (`navigator.onLine = false` ou falha de rede)
-> **Então** o polling para, números e cavalos congelam na última posição, a faixa "Você está offline. Mostrando os últimos dados de <data>." aparece e a pista mostra "Sem conexão — corrida pausada"; nenhum número é zerado.
+> **Então** o polling para, números e linhas congelam na última posição, a faixa "Você está offline. Mostrando os últimos dados de <data>." aparece e o monitor mostra "Sem conexão — pulso pausado"; nenhum número é zerado.
 > **E** durante o offline nenhuma requisição é feita; aba oculta não é offline (vale RN-012).
 > **E** ao reconectar, exatamente uma atualização condicional (`If-None-Match`) é feita, o polling normal retoma e um `304` não muda nada na tela.
 > **E** ultrapassagens e viradas do intervalo não são reproduzidas: nenhum balão e nenhum anúncio por evento perdido; se a liderança mudou, anuncia-se só o líder atual, uma vez.

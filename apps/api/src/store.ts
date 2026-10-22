@@ -605,6 +605,7 @@ export class DataStore {
       modo: this.mode,
       versao: `6257:1:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${this.progress()}`,
       cargo: { ...this.officeInfo(parsed, PRESIDENT), escopo: "br" },
+      pleito: { id: "6257", turno: 1 },
       apuracao: this.apuracao(parsed),
       cavalos: horses.map((candidate, index) => ({
         posicao: index + 1,

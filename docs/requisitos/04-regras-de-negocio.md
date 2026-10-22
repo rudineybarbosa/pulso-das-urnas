@@ -22,7 +22,7 @@ Empate de data: maior `codigo` de eleição.
 - País: cargos cuja abrangência no catálogo é `br`.
 - UF: cargos da eleição estadual aplicáveis à UF mais os cargos nacionais. `Deputado Distrital` só no DF; `Deputado Estadual` nos demais.
 - Município: os cargos da UF; em eleição municipal, `Prefeito` e `Vereador`.
-- Cargo `tp = 3` (consulta popular) NÃO participa do mapa nem da corrida; aparece apenas na lista de pleitos.
+- Cargo `tp = 3` (consulta popular) NÃO participa do mapa nem do monitor; aparece apenas na lista de pleitos.
 
 ### RN-005 — Hierarquia de cargos
 Ordena o "maior cargo em disputa". Quanto menor o peso, maior o cargo:
@@ -39,7 +39,7 @@ Ordena o "maior cargo em disputa". Quanto menor o peso, maior o cargo:
 | 70 | Vereador | 13 |
 | 80 | Conselheiro Distrital | 25 |
 
-A tabela é exaustiva. Cargo fora dela: peso 90, ordenado por `nmn` (`localeCompare("pt-BR")`, asc). Cargo `tp = 3` (consulta popular) NÃO entra na hierarquia: não é mapa, corrida nem destaque (RN-004). O cargo em destaque é o de menor peso presente no escopo na eleição ativa.
+A tabela é exaustiva. Cargo fora dela: peso 90, ordenado por `nmn` (`localeCompare("pt-BR")`, asc). Cargo `tp = 3` (consulta popular) NÃO entra na hierarquia: não é mapa, monitor nem destaque (RN-004). O cargo em destaque é o de menor peso presente no escopo na eleição ativa.
 
 ### RN-006 — Cor do estado
 "Cor do estado" é o **preenchimento** do polígono com a cor do partido do líder do cargo em destaque (RN-022). Não existe cor de identidade por estado; nenhuma UF tem cor fixa.
@@ -64,7 +64,7 @@ Líder é o candidato com maior `vap` entre os candidatos elegíveis para lidera
 Empate exato: dois ou mais candidatos elegíveis com o mesmo `vap` máximo.
 - Estado: hachura diagonal 45° (`--map-border` sobre branco), rótulo "Empate".
 - Painel: candidatos empatados na mesma posição, com a marca "Empate".
-- A corrida mostra os dois cavalos lado a lado (`g = 0`).
+- O monitor mostra as duas linhas na mesma altura (`g = 0`).
 
 ### RN-009 — Fallback entre turnos e gerações
 Se o escopo não tiver o cargo em destaque no turno vigente:
@@ -75,7 +75,7 @@ Se o escopo não tiver o cargo em destaque no turno vigente:
 
 Todo snapshot servido por fallback carrega `origem: { pleito, turno, generationId, generatedAt }` (D-018). A tela mostra o selo "1º turno" (ou "eleição de 2024") com tooltip da origem, sem esconder o horário do snapshot atual. O selo de frescor continua sendo o do snapshot usado.
 
-2º turno (RN-030): estados com disputa usam o arquivo do turno vigente; estados sem disputa usam o resultado final do turno anterior com o selo "1º turno". A corrida nacional usa apenas Presidente do turno vigente.
+2º turno (RN-030): estados com disputa usam o arquivo do turno vigente; estados sem disputa usam o resultado final do turno anterior com o selo "1º turno". O monitor nacional usa apenas Presidente do turno vigente.
 
 ### RN-010 — Percentual, base e rótulo
 Base única por tela, declarada pela API em `percentualBase`:
@@ -134,39 +134,37 @@ O pleito está finalizado quando todos os pares (escopo, cargo) ativos estão fi
 Enquanto os três critérios não estiverem satisfeitos, o status é "aguardando confirmação" e a cena final NÃO roda.
 A cena final só ocorre com `finalizado` ou `finalizado_por_estabilidade`.
 
-### RN-015 — Geometria da corrida
-A corrida acompanha **dois candidatos fixos** (A e B), escolhidos entre os dois mais votados do maior cargo nacional em disputa (RN-005).
-- Desempate para escolher os dois cavalos: `vap` desc → nome de urna (`localeCompare("pt-BR")`) → número. Determinístico (RN-026).
-- A dupla é fixa na sessão. Troca só quando o **conjunto** dos dois primeiros muda por 2 snapshots consecutivos (≥ 10 s); a pista reinicia na posição atual e `aria-live` anuncia "A corrida recomeçou: <A> e <B>".
-- Candidato anulado ou removido no meio: recalcular o líder (RN-021); o cavalo afetado é marcado "indisponível", para e não disputa posição; se a mudança alterar o conjunto dos dois primeiros, aplica-se a regra dos 2 snapshots.
-- `V = 0` (`sem_voto`, RN-035) → pista vazia, sem escolha de dupla.
+### RN-015 — Geometria do monitor de pulso
+O monitor acompanha **dois candidatos fixos** (A e B), escolhidos entre os dois mais votados do maior cargo nacional em disputa (RN-005).
+- Desempate: `vap` desc → nome de urna (`localeCompare("pt-BR")`) → número. Determinístico (RN-026).
+- A dupla é fixa na sessão. Troca só quando o **conjunto** dos dois primeiros muda por 2 snapshots consecutivos (≥ 10 s); o monitor reancora as linhas e `aria-live` anuncia "A leitura recomeçou: <A> e <B>".
+- Candidato anulado ou removido no meio: recalcular o líder (RN-021); a linha afetada fica marcada "indisponível", sem disputar altura; se o conjunto mudar, aplica-se a regra dos 2 snapshots.
+- `V = 0` (`sem_voto`, RN-035) → tela vazia, sem escolha de dupla e sem batimento.
 
 ```
-p = clamp(s.pst / 100, 0, 1)                  // progresso da apuração
-V = votos válidos do cargo no escopo nacional  // se V = 0, pista vazia
+V = votos válidos do cargo no escopo nacional
 d = votos(A) − votos(B)                        // com sinal
 g = sinal(d) × ln(1 + |d|) / ln(1 + V)         // g ∈ (−1, 1)
-largura útil L = 100% − 2 × margem − larguraCavalo
-xBase = margem + p × L
-separação = 14% × L × |g|
-xA = xBase + (separação/2) × sinal(d)
-xB = xBase − (separação/2) × sinal(d)
+magnitude = min(1, 12 × |g|)                   // amplia a leitura visual
+gap = 4 + 16 × magnitude                       // px
+yLíder = centro − gap
+ySegundo = centro + gap
 ```
 
-- `margem = 8%`, `larguraCavalo = 12%` da pista.
-- Suavização: interpolação exponencial com constante de tempo 250 ms; atualização no máximo a 10 Hz; `transform: translate3d`.
-- Limites: `x ∈ [margem, margem + L]`. Se um cavalo encostar no limite, a separação comprime, mantendo a ordem.
+- A linha do líder fica sempre acima; a distância vertical entre as linhas é `2 × gap` (8 a 40 px).
+- A rolagem horizontal é decorativa e constante (1,4 s por ciclo); não representa votos.
+- Transição de altura: 600 ms; atualização no máximo a 10 Hz; apenas `transform`.
 - `g` é recalculado a cada snapshot; nunca é usado dado de escopo diferente do nacional do cargo.
-- O cavalo que está à frente é sempre o de maior votação; a inversão do sinal de `d` é o que caracteriza a ultrapassagem.
+- Empate exato: as duas linhas ficam na mesma altura (`gap = 0` visual) e o detalhe marca "Empate".
 
-### RN-016 — Ultrapassagem
-Há ultrapassagem quando:
+### RN-016 — Inversão de liderança
+Há inversão quando:
 1. `sinal(g)` muda em relação ao snapshot anterior; e
 2. `|g| ≥ 0,01` em dois snapshots consecutivos (≥ 5 s de intervalo); e
-3. passaram ao menos 30 s desde a última ultrapassagem do mesmo par (cooldown por par).
+3. passaram ao menos 30 s desde a última inversão do mesmo par (cooldown por par).
 Oscilação abaixo de `0,01` não dispara.
-Efeito: balão "Relincho!" no cavalo que assumiu a frente por até 1,2 s; nenhum som; `aria-live` anuncia "Virada: <nome> assume a liderança".
-Histerese impede piscar quando a diferença oscila perto de zero.
+Efeito: selo **"PULSO!"** por até 1,6 s e troca de altura das linhas; nenhum som; `aria-live` anuncia "Virada: <nome> assume a liderança".
+Histerese impede piscar quando a diferença oscila perto de zero. Não existe linha reta/flatline em nenhum estado.
 
 ### RN-017 — Monotonicidade dos votos e retificação
 Votos por candidato NÃO DEVEM diminuir entre snapshots da mesma eleição, exceto quando o TSE publica geração com retificação.
@@ -205,7 +203,7 @@ Só define líder o candidato com `dvt = "Válido"`.
 - `Anulado`, `Anulado sub judice` e `Válido (legenda)` não definem líder.
 - Votos de legenda entram no total de válidos, mas não elegem líder sozinhos.
 - Se houver votos válidos e nenhum candidato elegível, o estado é `sem_lider_elegivel` (RN-035): cinza escuro com rótulo "Aguardando definição judicial".
-- Candidato anulado ou removido no meio da apuração: recalcular o líder e aplicar RN-015 (cavalo "indisponível").
+- Candidato anulado ou removido no meio da apuração: recalcular o líder e aplicar RN-015 (linha "indisponível").
 
 ### RN-022 — Partido do candidato
 A cor vem do partido do candidato (`par.sg` do partido ao qual o candidato pertence), não da coligação nem da federação.
@@ -257,12 +255,12 @@ Chave de snapshot: `(ciclo, eleicao, escopo, cargo, idg)`.
 - Antes do início, os arquivos existem com `vap = 0` e `tf = n`; exibir "2º turno ainda não iniciado", não "0 votos".
 - Candidatos do 2º turno são os que constam no arquivo do 2º turno; não inferir do 1º.
 - No 2º turno parcial, estados com disputa usam o arquivo do turno vigente; estados sem disputa usam o resultado final do turno anterior com o selo "1º turno" e `origem` (RN-009).
-- A corrida nacional do 2º turno usa apenas Presidente do turno vigente; nenhum cavalo vem do 1º turno.
+- O monitor nacional do 2º turno usa apenas Presidente do turno vigente; nenhuma linha vem do 1º turno.
 
 ### RN-031 — Eleições suplementares
 Pleitos suplementares (ex.: 6282–6284) são municipais: escopo cidade, cargos Prefeito/Vereador, e aparecem no seletor com o nome do município.
 - A eleição suplementar aparece apenas no seletor de pleitos e no escopo do próprio município.
-- NÃO altera a cor nacional, o ranking nacional, o cargo em destaque nacional nem a corrida; seus votos não entram em nenhum agregado de UF ou país.
+- NÃO altera a cor nacional, o ranking nacional, o cargo em destaque nacional nem o monitor; seus votos não entram em nenhum agregado de UF ou país.
 
 ### RN-032 — Limites e cortesia com a fonte
 - Máximo 5 requisições/s ao domínio do TSE, concorrência 4, por instância.
@@ -274,9 +272,9 @@ Pleitos suplementares (ex.: 6282–6284) são municipais: escopo cidade, cargos 
 ### RN-033 — Neutralidade editorial
 - Nenhum adjetivo qualifica candidato, partido ou resultado ("histórico", "esmagador", "surpreendente").
 - Ordem sempre por votos; nenhum destaque visual além do líder por regra.
-- A cena final trata os dois cavalos com afeto; o perdedor não é humilhado, não cai de mau jeito, não perde cor.
+- A cena final trata os dois candidatos com afeto; o perdedor não é humilhado, não tem a linha apagada nem vira flatline, e mantém a cor do partido.
 - Sem imagens de candidatos na v1.
-- Textos de virada e encerramento são revisados contra esta regra antes do merge.
+- Textos de inversão e encerramento são revisados contra esta regra antes do merge.
 
 ### RN-034 — Rastreabilidade do número
 Todo número exibido carrega na API: `source.generationId`, `source.generatedAt`, `source.url` e `count.percent`. A tela pode esconder detalhes, mas o dado tem que estar disponível no HTML/semântica e na tabela.
@@ -340,7 +338,7 @@ troca = validos > 0 E ((margem / validos ≥ 0,005) OU (margem ≥ 500))
 - Empate exato (`margem = 0`) usa hachura (RN-008), não troca de cor.
 - No primeiro snapshot de um escopo não há histerese: aplica-se o líder direto.
 - No máximo 1 mudança de cor por estado a cada 10 s; mudanças no mesmo ciclo são coalescidas (a última vence).
-- A histerese é aplicada por `(escopo, cargo em destaque)` e não altera a ordem, o líder exibido nem a corrida.
+- A histerese é aplicada por `(escopo, cargo em destaque)` e não altera a ordem, o líder exibido nem o monitor.
 
 ### RN-039 — Frescor em três idades
 ```
@@ -376,7 +374,7 @@ Orçamento (soma ≈ 22 s, com 8 s de folga):
 | Polling do cliente | 5 s |
 | Render | 2 s |
 
-Teto de staleness por resposta de resultado (panorama, escopo, município, corrida):
+Teto de staleness por resposta de resultado (panorama, escopo, município, monitor):
 - durante a apuração: `s-maxage + stale-while-revalidate + stale-if-error ≤ 30 s`;
 - após `finalizada`: `s-maxage + stale-while-revalidate + stale-if-error ≤ 21600` (6 h).
 Toda resposta dinâmica registra `ingest_lag_seconds` e `age`; alerta quando o p95 passar de 30 s com apuração ativa. Sem medição, a meta não é considerada atendida.
