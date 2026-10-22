@@ -17,7 +17,7 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     await expect(page.locator("path.map__city").first()).toBeVisible()
 
     await page.locator("path.map__city").first().click()
-    await expect(page).toHaveURL(/\/br\/sp\/\d+$/)
+    await expect(page).toHaveURL(/\/br\/sp\/[a-z0-9-]+$/)
     await expect(page.locator("aside.panel")).toBeVisible()
     await expect(page.locator("aside.panel").getByRole("heading")).toBeVisible()
 
@@ -33,9 +33,27 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     const options = page.getByRole("option")
     await expect(options.first()).toBeVisible()
     await options.filter({ hasText: "cidade" }).first().click()
-    await expect(page).toHaveURL(/\/br\/sp\/3550308$/)
+    await expect(page).toHaveURL(/\/br\/sp\/[a-z0-9-]+$/)
     await expect(page.locator("aside.panel")).toBeVisible()
     await expect(page.getByText("SÃO PAULO").first()).toBeVisible()
+  })
+
+  test("URL canônica por slug abre o painel", async ({ page }) => {
+    await page.goto("/br/sp/sao-paulo")
+    await expect(page.locator("aside.panel")).toBeVisible()
+    await expect(page.getByText("SÃO PAULO").first()).toBeVisible()
+  })
+
+  test("código IBGE redireciona para o slug canônico", async ({ page }) => {
+    await page.goto("/br/sp/3550308")
+    await expect(page).toHaveURL(/\/br\/sp\/sao-paulo$/)
+    await expect(page.locator("aside.panel")).toBeVisible()
+  })
+
+  test("modo telão mostra o mapa sem cabeçalho", async ({ page }) => {
+    await page.goto("/telao")
+    await expect(page.getByRole("heading", { name: /telão/i })).toBeVisible()
+    await expect(page.locator("path.map__state")).toHaveCount(27)
   })
 
   test("corrida tem dois cavalos e números", async ({ page }) => {

@@ -28,6 +28,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ["load/**/*.js"],
+    languageOptions: { globals: { __ENV: "readonly" } },
+  },
+  {
     files: ["scripts/**/*.mjs"],
     languageOptions: {
       globals: { console: "readonly", process: "readonly", fetch: "readonly" },
