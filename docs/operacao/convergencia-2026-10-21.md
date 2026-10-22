@@ -12,8 +12,8 @@ A convergência compara o código com o **recorte aprovado no grill-me**: fatia 
 |---|---|---|
 | Tipos | `pnpm typecheck` | ok |
 | Lint/format | `pnpm lint` | ok |
-| Unidade/contrato | `pnpm test` | 66 testes |
-| Cobertura | `pnpm test:coverage` | 95,6% linhas · 79,2% branches · 96,7% funções |
+| Unidade/contrato | `pnpm test` | 73 testes |
+| Cobertura | `pnpm test:coverage` | 95,1% linhas · 80,8% branches · 93,5% funções |
 | E2E | `pnpm test:e2e` | 9 testes |
 | Acessibilidade | `pnpm test:a11y` | 2 testes, axe sem violação séria |
 | Build | `pnpm build` | 103,1 KB gz JS · 3,3 KB gz CSS |
@@ -56,4 +56,4 @@ Nenhuma lacuna acima bloqueia a fatia entregue; todas estão fora do recorte apr
 
 ## Conclusão
 
-**Convergente para a fatia vertical.** Nenhuma tarefa nova foi anexada; as lacunas são de escopo posterior e estão registradas para o backlog.
+**Convergente para a fatia vertical.** Prova em [prova-entrega-2026-10-21.md](prova-entrega-2026-10-21.md). Nenhuma tarefa nova foi anexada; as lacunas são de escopo posterior e estão registradas para o backlog.

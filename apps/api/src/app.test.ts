@@ -87,6 +87,21 @@ describe("API", () => {
     expect(response.json().status).toBe("nao_aplicavel")
   })
 
+  it("a cor do mapa não muda ao trocar o cargo selecionado", async () => {
+    const first = await app().inject({ method: "GET", url: "/api/v1/panorama?cargo=1" })
+    const second = await app().inject({ method: "GET", url: "/api/v1/panorama?cargo=3" })
+    const colors = (body: { estados: Array<{ cor: unknown }> }) =>
+      body.estados.map((state) => state.cor)
+    expect(colors(first.json())).toEqual(colors(second.json()))
+  })
+
+  it("ausência devolve null, não zero", async () => {
+    const response = await app().inject({ method: "GET", url: "/api/v1/escopos/df?cargo=7" })
+    const body = response.json()
+    expect(body.status).toBe("nao_aplicavel")
+    expect(body.dados).toBeNull()
+  })
+
   it("corrida tem dois cavalos", async () => {
     const response = await app().inject({ method: "GET", url: "/api/v1/corrida" })
     const body = response.json()

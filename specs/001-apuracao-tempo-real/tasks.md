@@ -95,9 +95,9 @@ description: "Task list for the Pulso das Urnas v1 vertical slice"
 ## Fase 10 — Convergência e entrega
 
 - [X] T051 Rodar `/speckit.converge` e corrigir divergências. Verificar: relatório limpo.
-- [ ] T052 Revisão independente (`requesting-code-review`) e correções. Verificar: sem bloqueios.
-- [ ] T053 `prova-de-entrega`: testar cada AT da fatia na URL local e registrar no PR/relatório. Verificar: tabela critério × teste × resultado.
-- [ ] T054 Commits semânticos e verificação final (`lint`, `typecheck`, `test`, `e2e`, `build`). Verificar: árvore limpa.
+- [X] T052 Revisão independente (`requesting-code-review`) e correções. Verificar: sem bloqueios.
+- [X] T053 `prova-de-entrega`: testar cada AT da fatia na URL local e registrar no PR/relatório. Verificar: tabela critério × teste × resultado.
+- [X] T054 Commits semânticos e verificação final (`lint`, `typecheck`, `test`, `e2e`, `build`). Verificar: árvore limpa.
 
 ## Notas de execução
 

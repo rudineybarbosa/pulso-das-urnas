@@ -11,6 +11,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
+  // Firefox é usado porque o Chromium headless deste ambiente não entrega requestAnimationFrame.
   projects: [{ name: "firefox", use: { ...devices["Desktop Firefox"] } }],
   webServer: [
     {
