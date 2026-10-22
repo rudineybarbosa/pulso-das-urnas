@@ -1,6 +1,6 @@
 # Prova de entrega — fatia vertical v1
 
-**Commit avaliado**: `1ee85a9` (código e docs) · **Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real`
+**Commit avaliado**: `1ee85a9` (código e docs) · **HEAD da entrega**: `aec9aad` (ajustes de teste/CI) · **Data**: 2026-10-21 · **Feature**: `001-apuracao-tempo-real`
 
 Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=parcial` no simulador. As imagens estão em [`evidencias/`](evidencias/).
 
