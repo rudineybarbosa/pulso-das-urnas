@@ -1,8 +1,8 @@
 # Pulso das Urnas
 
-A apuração das eleições brasileiras em tempo real, estado por estado, cidade por cidade — com um mapa clicável e uma corrida de cavalinhos que mostra a disputa acontecendo.
+A apuração das eleições brasileiras em tempo real, estado por estado, cidade por cidade — com um mapa clicável e um monitor de pulso que mostra a disputa acontecendo.
 
-> **Status:** fatia vertical v1 implementada e verificada em 21/10/2026 (mapa, busca, painel, corrida, API, ingestão e testes). O deploy em nuvem e os itens de v1.1 estão em [docs/operacao/convergencia-2026-10-21.md](docs/operacao/convergencia-2026-10-21.md).
+> **Status:** fatia vertical v1 implementada e verificada em 21/10/2026 (mapa, busca, painel, monitor de pulso, API, ingestão e testes). O deploy em nuvem e os itens de v1.1 estão em [docs/operacao/convergencia-2026-10-21.md](docs/operacao/convergencia-2026-10-21.md).
 
 ## O que o sistema faz
 
@@ -11,7 +11,7 @@ A apuração das eleições brasileiras em tempo real, estado por estado, cidade
 3. Pinta cada estado com a cor do partido que lidera o **maior cargo em disputa** naquele estado; branco antes de qualquer voto.
 4. Permite descer do Brasil para o estado e do estado para a cidade, com busca por nome de estado ou cidade e botão **Voltar**.
 5. Mostra os votos de cada candidato na cidade escolhida, por cargo.
-6. Anima, no rodapé, uma corrida entre os dois candidatos mais votados, com ultrapassagem, relincho e um fim de eleição carinhoso.
+6. Anima, no rodapé, um monitor de pulso com os dois candidatos mais votados: a linha mais alta lidera, a distância reflete a diferença e o fim desenha um coração.
 
 ## Comece por aqui
 
@@ -34,7 +34,7 @@ A apuração das eleições brasileiras em tempo real, estado por estado, cidade
 | [docs/requisitos/10-testes-e-dados-falsos.md](docs/requisitos/10-testes-e-dados-falsos.md) | Estratégia de testes e simulador local |
 | [docs/requisitos/11-criterios-de-aceite.md](docs/requisitos/11-criterios-de-aceite.md) | AT-001 a AT-032 em Given/When/Then |
 | [docs/requisitos/12-rastreabilidade.md](docs/requisitos/12-rastreabilidade.md) | Matriz RF ↔ RN ↔ AT ↔ código |
-| [docs/decisoes/](docs/decisoes/) | ADR-001 a ADR-005 |
+| [docs/decisoes/](docs/decisoes/) | ADR-001 a ADR-006 |
 | [docs/agents/](docs/agents/) | Workflow, PRs, tickets e domínio |
 | [docs/agents/agent-tools.md](docs/agents/agent-tools.md) | Como OpenCode e Copilot encontram agentes e skills |
 | [SPECKIT-USAGE.md](SPECKIT-USAGE.md) | Spec Kit, agentes, skills e fluxo de feature |

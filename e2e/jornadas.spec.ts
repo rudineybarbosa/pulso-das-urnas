@@ -56,18 +56,33 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     await expect(page.locator("path.map__state")).toHaveCount(27)
   })
 
-  test("corrida tem dois cavalos e números", async ({ page }) => {
+  test("monitor tem duas linhas e números", async ({ page }) => {
     await page.goto("/br")
-    await expect(page.getByRole("heading", { name: "A corrida da apuração" })).toBeVisible()
-    await expect(page.locator("svg.horse")).toHaveCount(2)
-    await expect(page.locator(".race__number")).toHaveCount(2)
+    await expect(page.getByRole("heading", { name: /Monitor da apuração/ })).toBeVisible()
+    await expect(page.locator(".pulse__channel")).toHaveCount(2)
+    await expect(page.locator(".pulse__readout")).toHaveCount(2)
+  })
+
+  test("desktop cabe na janela sem rolagem", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto("/br")
+    await expect(page.locator(".pulse__channel")).toHaveCount(2)
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+    ).toBe(true)
+
+    await page.goto("/br/sp/sao-paulo")
+    await expect(page.locator("aside.panel")).toBeVisible()
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight),
+    ).toBe(true)
   })
 
   test("prefers-reduced-motion desliga a animação", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await page.goto("/br")
-    await expect(page.locator("svg.horse").first()).toBeVisible()
-    const animation = await page.locator("svg.horse").first().evaluate((element) => {
+    await expect(page.locator(".pulse__scroll").first()).toBeVisible()
+    const animation = await page.locator(".pulse__scroll").first().evaluate((element) => {
       return getComputedStyle(element).animationName
     })
     expect(animation).toBe("none")

@@ -11,7 +11,7 @@ Oferecer uma leitura geográfica e imediata da apuração:
 - **O-1.** Descobrir automaticamente pleitos, turnos e cargos em disputa, sem lista fixa no código.
 - **O-2.** Mostrar, no mapa do Brasil, a liderança de cada estado para o maior cargo em disputa, atualizada conforme o TSE publica.
 - **O-3.** Permitir descer até o município e ver os votos por candidato, com dois cliques.
-- **O-4.** Traduzir a diferença de votos em uma animação afetiva e neutra (a corrida dos cavalinhos), inclusive no encerramento da apuração.
+- **O-4.** Traduzir a diferença de votos em uma animação afetiva e neutra (o monitor de pulso), inclusive no encerramento da apuração.
 - **O-5.** Sustentar milhares de acessos simultâneos com custo próximo de zero e latência baixa.
 
 ## 3. Resultados esperados

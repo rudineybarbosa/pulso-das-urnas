@@ -66,8 +66,8 @@ Vocabulário único do projeto. Se um termo não estiver aqui, consulte o TSE an
 | **Modo fake** | Simulador local com replay ou dados sintéticos; mesmo contrato da API. | `DATA_MODE=fake` |
 | **Replay** | Reprodução acelerada de uma apuração real gravada em fixtures. | `replay` |
 | **Cenário** | Roteiro do simulador (virada, empate, fim, sem votos). | `scenario` |
-| **Corrida** | Animação do rodapé com dois cavalos. | `race` |
-| **Ultrapassagem** | Inversão sustentada da liderança que dispara o balão de relincho. | `overtake` |
+| **Monitor de pulso** | Animação do rodapé com duas linhas de ECG, uma por candidato; a mais alta lidera. | `pulse` |
+| **Inversão** | Mudança sustentada de liderança que dispara o selo "PULSO!". | `overtake` |
 
 ## Mapa TSE → domínio
 

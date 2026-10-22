@@ -12,7 +12,7 @@ Trabalha no desktop com duas telas. Confere o percentual apurado, compara estado
 Tem baixa visão e usa leitor de tela. Navega por teclado. Precisa de rótulos completos, contraste e uma tabela com os mesmos dados do mapa.
 
 ### P-4. Professor Elias, 45, ciência política — "quero mostrar o fenômeno geográfico"
-Projeta o mapa em sala. Quer ver a mancha de cores mudar, comparar pleitos e explicar a corrida. Precisa de legenda clara e de um modo sem animação para alunos com sensibilidade a movimento.
+Projeta o mapa em sala. Quer ver a mancha de cores mudar, comparar pleitos e explicar o monitor de pulso. Precisa de legenda clara e de um modo sem animação para alunos com sensibilidade a movimento.
 
 ## Jornadas
 
@@ -49,16 +49,16 @@ Projeta o mapa em sala. Quer ver a mancha de cores mudar, comparar pleitos e exp
 **Sucesso:** números batem com o arquivo do TSE da mesma geração; URL reproduz o estado da tela.
 **Falha:** percentual calculado sobre base errada; URL sem o cargo selecionado.
 
-### J-04. Acompanhar a virada e a corrida (P-1, P-4)
+### J-04. Acompanhar a virada no monitor de pulso (P-1, P-4)
 
 1. Deixa a página aberta durante a apuração.
 2. A cada ciclo, o mapa repinta os estados que viraram e o relógio avança.
-3. No rodapé, os cavalos avançam conforme as seções são apuradas; a distância entre eles acompanha a diferença de votos.
-4. Em uma ultrapassagem, o cavalo que assumiu a frente solta um balão "Relincho!" por até 1,2 s.
+3. No rodapé, as linhas de pulso rolam; a linha do líder fica mais alta e a distância acompanha a diferença de votos.
+4. Em uma inversão, as linhas trocam de altura e o selo "PULSO!" aparece por até 1,6 s.
 5. Ao final, o vencedor dá uma lambida carinhosa; o perdedor se deita; três corações sobem. O leitor de tela anuncia o resultado.
 
 **Sucesso:** a animação não atrapalha a leitura e reflete o dado; nada é ofensivo.
-**Falha:** cavalos que teleportam, balão que cobre números, animação que continua depois do fim.
+**Falha:** linhas que saltam, selo que cobre números, animação que continua depois do fim.
 
 ### J-05. Usar sem enxergar cor (P-3)
 

@@ -7,8 +7,8 @@ Este registro é a entrada do `/speckit.specify`. Cada resposta cita a fonte que
 ## Rodada 1 — escopo
 
 ### Q1 — Qual é a entrega desta execução?
-**Recomendação adotada:** fatia vertical end-to-end — contratos, domínio, parser do TSE, API, mapa, painel, busca, corrida e testes, com infraestrutura pronta para aplicar.
-**Fonte:** `docs/requisitos/01-escopo.md` fases F1–F6; o valor do produto só aparece quando mapa e corrida funcionam juntos.
+**Recomendação adotada:** fatia vertical end-to-end — contratos, domínio, parser do TSE, API, mapa, painel, busca, monitor de pulso e testes, com infraestrutura pronta para aplicar.
+**Fonte:** `docs/requisitos/01-escopo.md` fases F1–F6; o valor do produto só aparece quando mapa e monitor funcionam juntos.
 
 ### Q2 — Dados reais ou simulados?
 **Recomendação adotada:** ambos. `DATA_MODE=fake` é o padrão local (replay + cenários) e `real` lê o TSE no servidor; o navegador nunca chama a fonte.
@@ -37,7 +37,7 @@ Este registro é a entrada do `/speckit.specify`. Cada resposta cita a fonte que
 **Fonte:** RNF-MAINT-02; `10-testes-e-dados-falsos.md`.
 
 ### Q8 — Qual a ordem de implementação?
-**Recomendação adotada:** contratos → domínio → TSE/fixtures → API/fake → web (mapa → painel → busca) → corrida → a11y → infra. Dependências explícitas em `tasks.md`.
+**Recomendação adotada:** contratos → domínio → TSE/fixtures → API/fake → web (mapa → painel → busca) → monitor de pulso → a11y → infra. Dependências explícitas em `tasks.md`.
 **Fonte:** `10-testes` pirâmide; `08-arquitetura` camadas.
 
 ### Q9 — Quais fixtures usar?

@@ -95,7 +95,7 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | RNF-A11Y-03 | Mapa navegável por setas; `Enter`/`Space` ativa; `Esc` sobe um nível; atalhos anunciados. |
 | RNF-A11Y-04 | Nenhuma informação transmitida só por cor; sigla e rótulo sempre presentes. |
 | RNF-A11Y-05 | `prefers-reduced-motion` respeitado em 100% das animações; controle de pausa disponível. |
-| RNF-A11Y-06 | Alternativa em tabela para todo mapa e para a corrida; `aria-live` com no máximo 1 anúncio/10 s. |
+| RNF-A11Y-06 | Alternativa em tabela para todo mapa e para o monitor; `aria-live` com no máximo 1 anúncio/10 s. |
 | RNF-A11Y-07 | Testado com NVDA (Windows) e VoiceOver (iOS/Safari) nos fluxos J-01, J-02 e J-05. |
 
 ## Segurança — RNF-SEC
@@ -145,7 +145,7 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | ID | Requisito |
 |---|---|
 | RNF-LGPD-01 | Nenhum dado pessoal coletado, armazenado ou compartilhado. |
-| RNF-LGPD-02 | Sem cookies de rastreio; `localStorage` apenas para a preferência de pausa da corrida, com aviso; o escopo vive na URL (RN-036). |
+| RNF-LGPD-02 | Sem cookies de rastreio; `localStorage` apenas para a preferência de pausa do monitor, com aviso; o escopo vive na URL (RN-036). |
 | RNF-LGPD-03 | Métricas agregadas e anônimas; IP não persistido (truncado ou descartado). |
 | RNF-LGPD-04 | Página de privacidade em linguagem simples, linkada no rodapé. |
 | RNF-LGPD-05 | Logs do provedor/CDN retidos por **30 dias**, **sem exportação**; logs da aplicação **sem IP completo** (truncado ou descartado). A página de privacidade cita provedores e retenção. |

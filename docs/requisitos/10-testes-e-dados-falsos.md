@@ -4,9 +4,9 @@
 
 | Nível | Ferramenta | O que cobre | Onde |
 |---|---|---|---|
-| Unitário | Vitest | regras (RN), parsers, normalização, busca, matemática da corrida | `packages/*` |
+| Unitário | Vitest | regras (RN), parsers, normalização, busca, matemática do monitor | `packages/*` |
 | Contrato | Vitest + Zod + OpenAPI | schemas de entrada/saída, campos obrigatórios, versionamento | `packages/contracts`, `apps/api` |
-| Componente | Vitest + Testing Library | mapa, painel, busca, legenda, corrida | `apps/web` |
+| Componente | Vitest + Testing Library | mapa, painel, busca, legenda, monitor | `apps/web` |
 | Integração | Vitest + Firestore/GCS emulados | ingestão, idempotência, ponteiro, cache | `apps/ingest`, `apps/api` |
 | E2E | Playwright | jornadas J-01..J-05 em modo fake | `e2e/` |
 | Acessibilidade | axe-core + Playwright | violações sérias/críticas, teclado | `e2e/a11y` |
@@ -64,11 +64,11 @@ Regras:
 - Válidos > 0 e nenhum `dvt = "Válido"` → `sem_lider_elegivel` (RN-021, RN-035).
 
 ### 3.3 Corrida
-- `g(0) = 0` → cavalos lado a lado.
+- `g(0) = 0` → linhas na mesma altura.
 - `d > 0` → líder à frente; `d < 0` → invertido (nunca acontece com dados válidos).
 - `V = 0` → pista vazia, sem divisão por zero.
 - `p = 0` → ambos na largada; `p = 1` → ambos na chegada, com separação.
-- Histerese: alternância de ±0,005 não dispara relincho.
+- Histerese: alternância de ±0,005 não dispara o selo "PULSO!".
 - Mudança de sinal + |g| ≥ 0,01 em dois snapshots consecutivos (≥ 5 s) → dispara.
 - Cooldown de 30 s por par impede repetição (D-033); aos 29 s não dispara, aos 30 s dispara.
 - Dupla: empate em `vap` desempata por nome de urna (`pt-BR`) e depois número, independente da ordem do JSON.
@@ -89,10 +89,10 @@ Regras:
 | Sem líder elegível | `v.vv > 0` e todos os candidatos com `dvt` anulado | cinza escuro "Aguardando definição judicial"; legenda e votos válidos visíveis; legenda de partido não elege líder | AT-010 |
 | Retificação | geração com votos menores que a anterior | valor oficial prevalece, `vote_regression` com `idg` anterior/atual, selo por 60 min ou 3 gerações sem regressão, delta mínimo `0` | AT-029 |
 | Frescor parado | coleta recente, `generationId` antigo | `fonte_sem_atualizacao` âmbar, nunca "ao vivo"; números e cores intactos | AT-017 |
-| 2º turno parcial | parte das UFs com disputa no turno vigente | UF com disputa usa o turno; sem disputa usa o 1º turno com selo e `origem`; corrida só com Presidente do turno | AT-013 |
-| Suplementar | pleito municipal suplementar + pleito geral | panorama, ranking, cargo em destaque e corrida nacionais idênticos ao pleito geral | AT-038 |
+| 2º turno parcial | parte das UFs com disputa no turno vigente | UF com disputa usa o turno; sem disputa usa o 1º turno com selo e `origem`; monitor só com Presidente do turno | AT-013 |
+| Suplementar | pleito municipal suplementar + pleito geral | panorama, ranking, cargo em destaque e monitor nacionais idênticos ao pleito geral | AT-038 |
 | Catálogo alterado | `catalogVersion` nova sem um pleito e com um turno novo | selo "catálogo atualizado" por 24 h, depois `arquivado` fora do seletor; turno novo entra como mais recente | AT-040 |
-| Candidato removido | candidato do 2º lugar passa a `Anulado` aos 50% | líder recalculado; cavalo "indisponível" parado; se o conjunto mudar por 2 snapshots, corrida reinicia na posição atual | AT-022 |
+| Candidato removido | candidato do 2º lugar passa a `Anulado` aos 50% | líder recalculado; linha "indisponível" parada; se o conjunto mudar por 2 snapshots, o monitor reancora | AT-022 |
 | Offline/reconexão | `context.setOffline(true)` por 30 s e volta | congelamento, uma única condicional na volta, nenhum replay de ultrapassagem, mola reancorada em 400 ms | AT-039 |
 | Geometria ausente | malha sem 2 municípios do catálogo | tabela e busca com números, sem `<path>` nem foco no mapa, faixa discreta, distinto de `sem_dado` | AT-037 |
 
@@ -111,7 +111,7 @@ Regras:
 | `ausencias.spec.ts` | cinco estados de ausência no mapa e na tabela | AT-010 |
 | `offline.spec.ts` | `context.setOffline(true)` → reconexão | AT-039 |
 | `pleitos.spec.ts` | grupos do seletor, pleito finalizado e arquivado | AT-036, AT-040 |
-| `suplementar.spec.ts` | suplementar não altera panorama, ranking nem corrida | AT-038 |
+| `suplementar.spec.ts` | suplementar não altera panorama, ranking nem monitor | AT-038 |
 | `geometria.spec.ts` | município sem malha na tabela, busca e faixa | AT-037 |
 | `privacidade.spec.ts` | sem terceiros, sem cookie, só chaves `pulso:*` | AT-033 |
 | `deep-link.spec.ts` | canônico, `301` de IBGE/alias, troca de pleito | AT-016, AT-026 |
@@ -159,7 +159,7 @@ O que é sintético: o ritmo temporal. Isso fica explícito na tela quando `DATA
 ### 5.3 Cenários
 | Cenário | Roteiro |
 |---|---|
-| `sem-votos` | `p = 0`, todos brancos, corrida na largada |
+| `sem-votos` | `p = 0`, todos brancos, monitor aguardando o primeiro boletim |
 | `parcial` | `p` cresce de 0 a 100 em 5 min, sem virada |
 | `virada` | candidato B começa à frente e A assume aos 60% (dois picos de diferença) |
 | `empate` | diferença vai a zero e permanece por 30 s |

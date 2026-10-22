@@ -33,7 +33,7 @@ pulso-das-urnas/
 │   ├── api/                  # Fastify 5, leitura de snapshots
 │   └── ingest/               # job de coleta e normalização
 ├── packages/
-│   ├── domain/               # tipos, regras puras (RN), cálculo de cor/corrida
+│   ├── domain/               # tipos, regras puras (RN), cálculo de cor/pulso
 │   ├── tse/                  # parser, normalizador, cliente HTTP, fixtures
 │   ├── contracts/            # Zod + OpenAPI + tipos gerados
 │   ├── geo/                  # build do TopoJSON, centroides, projeção
@@ -79,7 +79,7 @@ App
 ├── SearchCombobox (localidades)
 ├── ScopePanel (candidatos, abas, resumo)
 ├── DataTable (alternativa acessível)
-├── RaceTrack (cavalos)
+├── PulseMonitor (linhas de pulso)
 └── FreshnessBadge
 ```
 
@@ -256,7 +256,7 @@ flowchart LR
 - Rate limit **no origin** (não na borda): **300 req/min por IP, burst 600**, contado por instância, sem estado compartilhado (D-044, que revisa o número de RNF-SEC-04). Excedeu → `429` com `Retry-After` e `RATE_LIMITED`. A chave é o IP que o proxy anexa ao `X-Forwarded-For` (última entrada), nunca o valor que o cliente enviou.
 - O limite protege o origin, não o usuário: leitura atendida pela CDN nunca chega à API e cliente normal faz ≤ 12 req/min. NAT compartilhado (escola, operadora) não é penalizado no caminho cacheado; quando chega ao origin, o teto agregado é `instâncias × 300` (máx. 6 instâncias).
 - Limite de instâncias como segunda proteção de custo.
-- CSP sem `unsafe-inline` e sem `unsafe-hashes`: CSS em arquivo gerado pelo build; mapa e corrida animam por CSSOM e variáveis CSS, nunca por atributo `style="..."` no HTML (RNF-SEC-01).
+- CSP sem `unsafe-inline` e sem `unsafe-hashes`: CSS em arquivo gerado pelo build; mapa e monitor animam por CSSOM e variáveis CSS, nunca por atributo `style="..."` no HTML (RNF-SEC-01).
 - Dependências: lockfile, Dependabot, `pnpm audit` no CI, SBOM.
 
 ## 9. Decisões resumidas
