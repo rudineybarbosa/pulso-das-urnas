@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "pulso-das-urnas-prod"
+  },
+  "targets": {
+    "pulso-das-urnas-prod": {
+      "hosting": {
+        "app": ["pulso-das-urnas-prod"]
+      }
+    }
+  }
+}

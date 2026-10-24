@@ -87,16 +87,17 @@ module "data" {
 }
 
 module "runtime" {
-  source           = "../../modules/runtime"
-  project_id       = var.project_id
-  env              = local.env
-  region           = var.region
-  image            = var.image
-  snapshots_bucket = module.data.snapshots_bucket
-  assets_bucket    = module.data.assets_bucket
-  min_instances    = 0
-  max_instances    = 3
-  depends_on       = [module.apis, module.data]
+  source              = "../../modules/runtime"
+  project_id          = var.project_id
+  env                 = local.env
+  region              = var.region
+  image               = var.image
+  snapshots_bucket    = module.data.snapshots_bucket
+  assets_bucket       = module.data.assets_bucket
+  min_instances       = 0
+  max_instances       = 3
+  default_election_id = "6257"
+  depends_on          = [module.apis, module.data]
 }
 
 module "scheduler" {

@@ -1,0 +1,6 @@
+project_id          = "pulso-das-urnas-prod"
+region              = "southamerica-east1"
+image               = "southamerica-east1-docker.pkg.dev/pulso-das-urnas-prod/pulso/api:release"
+billing_account     = "000000-000000-000000"
+public_host         = "pulso-das-urnas-prod.web.app"
+default_election_id = "6258"

@@ -6,6 +6,18 @@ variable "snapshots_bucket" { type = string }
 variable "assets_bucket" { type = string }
 variable "min_instances" { type = number }
 variable "max_instances" { type = number }
+variable "default_election_id" {
+  type    = string
+  default = "6258"
+}
+variable "ingest_activation_at" {
+  type    = string
+  default = "2026-10-25T16:55:00-03:00"
+}
+variable "ingest_deactivation_at" {
+  type    = string
+  default = "2026-10-26T00:00:00-03:00"
+}
 
 resource "google_service_account" "api" {
   project      = var.project_id
@@ -34,6 +46,18 @@ resource "google_storage_bucket_iam_member" "api_snapshots" {
 resource "google_project_iam_member" "ingest_run_jobs" {
   project = var.project_id
   role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.ingest.email}"
+}
+
+resource "google_project_iam_member" "api_datastore_viewer" {
+  project = var.project_id
+  role    = "roles/datastore.viewer"
+  member  = "serviceAccount:${google_service_account.api.email}"
+}
+
+resource "google_project_iam_member" "ingest_datastore_editor" {
+  project = var.project_id
+  role    = "roles/datastore.editor"
   member  = "serviceAccount:${google_service_account.ingest.email}"
 }
 
@@ -74,11 +98,23 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "ASSETS_BUCKET"
         value = var.assets_bucket
       }
+      env {
+        name  = "DEFAULT_ELECTION_ID"
+        value = var.default_election_id
+      }
       resources {
         limits = { cpu = "1", memory = "512Mi" }
       }
     }
   }
+}
+
+resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.api.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
 resource "google_cloud_run_v2_job" "ingest" {
@@ -101,15 +137,23 @@ resource "google_cloud_run_v2_job" "ingest" {
         }
         env {
           name  = "CYCLE_SECONDS"
-          value = "10"
+          value = "0"
         }
         env {
           name  = "CYCLE_COUNT"
-          value = "5"
+          value = "1"
         }
         env {
           name  = "MAX_RPS_TSE"
           value = "5"
+        }
+        env {
+          name  = "INGEST_ACTIVATION_AT"
+          value = var.ingest_activation_at
+        }
+        env {
+          name  = "INGEST_DEACTIVATION_AT"
+          value = var.ingest_deactivation_at
         }
         env {
           name  = "GCP_PROJECT"
@@ -118,6 +162,14 @@ resource "google_cloud_run_v2_job" "ingest" {
         env {
           name  = "SNAPSHOT_BUCKET"
           value = var.snapshots_bucket
+        }
+        env {
+          name  = "ELECTION_ID"
+          value = var.default_election_id
+        }
+        env {
+          name  = "CICLO"
+          value = "ele2026"
         }
       }
     }

@@ -18,7 +18,7 @@ terraform {
 
 variable "project_id" {
   type    = string
-  default = "pulso-prod"
+  default = "pulso-das-urnas-prod"
 }
 variable "region" {
   type    = string
@@ -26,7 +26,7 @@ variable "region" {
 }
 variable "image" {
   type    = string
-  default = "southamerica-east1-docker.pkg.dev/pulso-prod/pulso/api:latest"
+  default = "southamerica-east1-docker.pkg.dev/pulso-das-urnas-prod/pulso/api:latest"
 }
 variable "billing_account" {
   type    = string
@@ -35,6 +35,10 @@ variable "billing_account" {
 variable "public_host" {
   type    = string
   default = ""
+}
+variable "default_election_id" {
+  type    = string
+  default = "6258"
 }
 
 provider "google" {
@@ -87,16 +91,17 @@ module "data" {
 }
 
 module "runtime" {
-  source           = "../../modules/runtime"
-  project_id       = var.project_id
-  env              = local.env
-  region           = var.region
-  image            = var.image
-  snapshots_bucket = module.data.snapshots_bucket
-  assets_bucket    = module.data.assets_bucket
-  min_instances    = 0
-  max_instances    = 6
-  depends_on       = [module.apis, module.data]
+  source              = "../../modules/runtime"
+  project_id          = var.project_id
+  env                 = local.env
+  region              = var.region
+  image               = var.image
+  snapshots_bucket    = module.data.snapshots_bucket
+  assets_bucket       = module.data.assets_bucket
+  min_instances       = 0
+  max_instances       = 6
+  default_election_id = var.default_election_id
+  depends_on          = [module.apis, module.data]
 }
 
 module "scheduler" {
