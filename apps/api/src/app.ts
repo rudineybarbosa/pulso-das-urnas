@@ -271,14 +271,28 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     )
   })
 
-  app.get("/api/v1/corrida", async (request, reply) =>
-    cached(
+  app.get("/api/v1/corrida", async (request, reply) => {
+    const query = request.query as Record<string, string | undefined>
+    const election = query.pleito ?? store.defaultElection()
+    if (!store.hasPleito(election)) {
+      return problem(
+        reply,
+        404,
+        "PLEITO_NAO_ENCONTRADO",
+        "Pleito não encontrado",
+        "Não há pleito com esse código.",
+        request.url,
+        request.id,
+      )
+    }
+    await prepare(election)
+    return cached(
       request,
       reply,
-      store.race(),
+      store.race(election),
       "public, max-age=0, s-maxage=2, stale-while-revalidate=3, stale-if-error=5",
-    ),
-  )
+    )
+  })
 
   app.get("/api/v1/stream", (request, reply) => {
     reply.hijack()

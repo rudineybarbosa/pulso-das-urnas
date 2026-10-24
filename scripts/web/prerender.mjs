@@ -8,7 +8,7 @@ const root = process.cwd().endsWith("apps/web") ? join(process.cwd(), "..", ".."
 const dist = join(root, "apps", "web", "dist")
 const templatePath = join(dist, "index.html")
 const catalogPath = join(root, "data", "fixtures", "tse", "config", "mun-e006257-cm.json")
-const SITE = "https://pulso-das-urnas.web.app"
+const SITE = process.env.PUBLIC_SITE_URL ?? "https://pulso-das-urnas-prod.web.app"
 
 function slugify(value) {
   return value
@@ -25,7 +25,7 @@ function escape(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;")
 }
 
-function page(template, { title, description, url }) {
+function page(template, { title, description, url, scope = "Brasil" }) {
   const meta = [
     `<meta name="description" content="${escape(description)}" />`,
     `<meta property="og:type" content="website" />`,
@@ -36,8 +36,10 @@ function page(template, { title, description, url }) {
     `<meta name="twitter:card" content="summary" />`,
     `<link rel="canonical" href="${escape(url)}" />`,
   ].join("\n    ")
+  const content = `<main class="seo-content"><h1>${escape(title)}</h1><p>${escape(description)}</p><p>Escopo: ${escape(scope)}. Acompanhe o 2º turno de 2026 com dados públicos do TSE, horário da geração e estado de frescor.</p><p><a href="https://resultados.tse.jus.br/">Fonte oficial: Tribunal Superior Eleitoral</a>. Este site não é um serviço oficial do TSE.</p></main>`
   return template
     .replace(/<title>[^<]*<\/title>/, `<title>${escape(title)}</title>`)
+    .replace('<div id="root"></div>', `<div id="root">${content}</div>`)
     .replace("</head>", `    ${meta}\n  </head>`)
 }
 
@@ -56,14 +58,16 @@ for (const uf of ufs) {
   routes.push({
     path: `br/${sigla}`,
     title: `${stateName} — Pulso das Urnas`,
-    description: `Acompanhe a apuração em ${stateName}: liderança por cargo, votos por município e a corrida dos candidatos.`,
+    description: `Acompanhe a apuração do 2º turno de 2026 em ${stateName}, com dados públicos do TSE e horário da geração.`,
+    scope: stateName,
   })
   for (const city of uf.mu ?? []) {
     if (!city.nm) continue
     routes.push({
       path: `br/${sigla}/${slugify(city.nm)}`,
       title: `${city.nm} — Pulso das Urnas`,
-      description: `Votos por candidato em ${city.nm} (${sigla.toUpperCase()}), com fonte, horário e percentual apurado.`,
+      description: `Acompanhe a apuração do 2º turno de 2026 em ${city.nm} (${sigla.toUpperCase()}), com fonte TSE e horário da geração.`,
+      scope: `${city.nm} (${sigla.toUpperCase()})`,
     })
   }
 }
@@ -81,9 +85,21 @@ await writeFile(
   page(template, {
     title: "Pulso das Urnas — apuração em tempo real",
     description:
-      "Mapa do Brasil, votos por município e corrida dos candidatos na apuração das eleições.",
+      "Acompanhe a apuração do 2º turno de 2026 com mapa do Brasil, votos por município, fonte TSE e horário da geração.",
     url: `${SITE}/br`,
   }),
+)
+
+await writeFile(
+  join(dist, "robots.txt"),
+  `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /telao\nSitemap: ${SITE}/sitemap.xml\n`,
+)
+const sitemapRoutes = ["br", ...routes.map((route) => route.path)]
+await writeFile(
+  join(dist, "sitemap.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemapRoutes
+    .map((path) => `<url><loc>${SITE}/${path}</loc></url>`)
+    .join("")}</urlset>\n`,
 )
 
 if (routes.length < 5570) {

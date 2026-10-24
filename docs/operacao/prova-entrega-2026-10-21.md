@@ -21,12 +21,14 @@ Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=p
 | Pausa e `prefers-reduced-motion` (AT-024) | e2e verificando `animationName: none` | ✅ |
 | Encerramento com coração e "venceu" (AT-023) | e2e `fim` + screenshot `monitor-final.png` | ✅ |
 | Layout desktop sem rolagem | `scrollHeight == innerHeight` em 1280×800 e 1366×768, no Brasil e no município | ✅ |
+| Segundo turno 6258 com seletor, snapshots remotos e revisão do 6257 | e2e + API + runbook `runbook-gcp-producao.md` | ✅ |
+| SEO técnico para produção | prerender com canonical/domínio, HTML inicial, robots.txt e sitemap.xml | ✅ |
 | Teclado, foco, tabela alternativa paginada e axe (AT-025) | e2e a11y (2) + testes de componente | ✅ |
 | Rodapé com fonte, horário e não oficialidade (AT-027, RF-044) | e2e `J-01` | ✅ |
 | API com ETag/304 e cache por rota (AT-017/AT-030) | `curl` com `If-None-Match` → 304 | ✅ |
 | Cargo/pleito inexistente → 404 Problem Details | `curl` `cargo=99` → `CARGO_NAO_ENCONTRADO` | ✅ |
 | Ingestão real do TSE (ETag, catálogo, UFs, cargos) | `pnpm ingest` → 56 requisições, 8 s | ✅ |
-| Build e orçamento de bytes (RNF-PERF-04) | `pnpm build` + `pnpm size` → 104,1 KB gz JS / 3,9 KB gz CSS | ✅ |
+| Build e orçamento de bytes (RNF-PERF-04) | `pnpm build` + `pnpm size` → 104,3 KB gz JS / 4,0 KB gz CSS | ✅ |
 | Geo e orçamento de malhas (RNF-PERF-05) | `pnpm geo:budget` → Brasil 5,2 KB gz; maior UF 54,6 KB gz | ✅ |
 | Clone limpo serve a geometria (C5) | `rm -rf apps/web/public/geo && pnpm build` → `prebuild` recria e build passa | ✅ |
 | Município real fora de SP | `DATA_MODE=real` + `curl /municipios/3304557` (Rio) | ✅ |
@@ -34,15 +36,15 @@ Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=p
 | OG estático | `pnpm build` → 5.785 rotas com metadados | ✅ |
 | Terraform dev/prod (RNF-COST) | `terraform fmt -check` + `validate` nos dois envs | ✅ |
 | Cobertura (RNF-MAINT-02) | `pnpm test:coverage` → 95,1% linhas, 80,7% branches, 93,5% funções | ✅ |
-| Testes unitários/componente | `pnpm test` → 73 testes | ✅ |
-| E2E | `pnpm test:e2e` → 14 testes | ✅ |
+| Testes unitários/componente | `pnpm test` → 88 testes | ✅ |
+| E2E | `pnpm test:e2e` → 15 testes | ✅ |
 | Acessibilidade | `pnpm test:a11y` → 2 testes, axe sem violação séria | ✅ |
 
 ## Saídas reais
 
 ```
 install=0  lint=0  types=0  test=0 (73)  coverage=0 (95.1/80.76/93.54)
-build=0 (104.05 kB gz JS, 3.93 kB gz CSS)  size=0  e2e=0 (14)  a11y=0 (2)
+build=0 (104.28 kB gz JS, 3.97 kB gz CSS)  size=0  e2e=0 (14)  a11y=0 (2)
 geo=0  tf-fmt=0  tf-dev=0  tf-prod=0
 ```
 

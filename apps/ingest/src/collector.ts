@@ -72,7 +72,9 @@ export async function collectElection(
   const summary: CollectionSummary = { active: true, collected: 0, unchanged: 0, failed: 0 }
   for (let index = 0; index < scopes.length; index += 4) {
     const batch = scopes.slice(index, index + 4)
-    const results = await Promise.all(batch.map((scope) => collectOne(config, scope, client, repository)))
+    const results = await Promise.all(
+      batch.map((scope) => collectOne(config, scope, client, repository)),
+    )
     for (const result of results) summary[result] += 1
   }
   return summary

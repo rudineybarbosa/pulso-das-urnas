@@ -31,7 +31,12 @@ describe("collector do segundo turno", () => {
     }
 
     const result = await collectElection(
-      { electionId: "6258", cycle: "ele2026", activationAt: "2026-10-25T16:55:00-03:00", deactivationAt: "2026-10-26T00:00:00-03:00" },
+      {
+        electionId: "6258",
+        cycle: "ele2026",
+        activationAt: "2026-10-25T16:55:00-03:00",
+        deactivationAt: "2026-10-26T00:00:00-03:00",
+      },
       client,
       repository,
       new Date("2026-10-25T19:54:59Z"),
@@ -59,7 +64,12 @@ describe("collector do segundo turno", () => {
     }
 
     const result = await collectElection(
-      { electionId: "6258", cycle: "ele2026", activationAt: "2026-10-25T16:55:00-03:00", deactivationAt: "2026-10-26T00:00:00-03:00" },
+      {
+        electionId: "6258",
+        cycle: "ele2026",
+        activationAt: "2026-10-25T16:55:00-03:00",
+        deactivationAt: "2026-10-26T00:00:00-03:00",
+      },
       client,
       repository,
       new Date("2026-10-25T19:55:00Z"),
@@ -67,14 +77,19 @@ describe("collector do segundo turno", () => {
 
     expect(result.collected).toBe(28)
     expect(saved).toHaveLength(28)
-    expect(calls).toContain("https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json")
-    expect(calls).toContain("https://resultados.tse.jus.br/oficial/ele2026/6258/dados/sp/sp-c0001-e006258-u.json")
+    expect(calls).toContain(
+      "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json",
+    )
+    expect(calls).toContain(
+      "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/sp/sp-c0001-e006258-u.json",
+    )
   })
 
   it("não avança ponteiro quando TSE retorna 304", async () => {
     let writes = 0
     const client: TSECollectorClient = {
-      fetch: async () => ({ status: 304, notModified: true, etag: "etag", body: null } satisfies FetchResult),
+      fetch: async () =>
+        ({ status: 304, notModified: true, etag: "etag", body: null }) satisfies FetchResult,
     }
     const repository: SnapshotRepository = {
       putIfNewer: async (input) => {
@@ -85,7 +100,12 @@ describe("collector do segundo turno", () => {
     }
 
     const result = await collectElection(
-      { electionId: "6258", cycle: "ele2026", activationAt: "2026-10-25T16:55:00-03:00", deactivationAt: "2026-10-26T00:00:00-03:00" },
+      {
+        electionId: "6258",
+        cycle: "ele2026",
+        activationAt: "2026-10-25T16:55:00-03:00",
+        deactivationAt: "2026-10-26T00:00:00-03:00",
+      },
       client,
       repository,
       new Date("2026-10-25T19:55:00Z"),

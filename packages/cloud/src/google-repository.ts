@@ -63,7 +63,9 @@ export class GoogleSnapshotRepository implements SnapshotRepository {
     const ref = this.firestore.collection("current").doc(pointerDocumentName(input))
     return this.firestore.runTransaction(async (transaction) => {
       const currentSnapshot = await transaction.get(ref)
-      const current = currentSnapshot.exists ? (currentSnapshot.data() as SnapshotPointer) : undefined
+      const current = currentSnapshot.exists
+        ? (currentSnapshot.data() as SnapshotPointer)
+        : undefined
       if (!isNewer(input, current)) return current as SnapshotPointer
       transaction.set(ref, pointer)
       return pointer

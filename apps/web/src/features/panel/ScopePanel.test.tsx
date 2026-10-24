@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react"
 import type { ScopeSnapshot } from "@pulso/contracts"
 import { ScopePanel } from "./ScopePanel"
 
-  const snapshot: ScopeSnapshot = {
-    apiVersion: "1",
-    eleicao: "6257",
+const snapshot: ScopeSnapshot = {
+  apiVersion: "1",
+  eleicao: "6257",
   versao: "6257:3550308:1:1",
   catalogVersion: "v1",
   status: "ok",

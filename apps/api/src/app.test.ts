@@ -25,7 +25,10 @@ describe("API", () => {
 
   it("seleciona o segundo turno sem reutilizar silenciosamente o primeiro", async () => {
     const first = await app().inject({ method: "GET", url: "/api/v1/panorama?pleito=6257&cargo=1" })
-    const second = await app().inject({ method: "GET", url: "/api/v1/panorama?pleito=6258&cargo=1" })
+    const second = await app().inject({
+      method: "GET",
+      url: "/api/v1/panorama?pleito=6258&cargo=1",
+    })
 
     expect(first.statusCode).toBe(200)
     expect(first.json().eleicao).toBe("6257")
@@ -118,6 +121,15 @@ describe("API", () => {
     const body = response.json()
     expect(body.cavalos).toHaveLength(2)
     expect(body.cavalos[0].cor).toMatch(/^#[0-9A-F]{6}$/i)
+  })
+
+  it("corrida respeita o turno selecionado", async () => {
+    const response = await app().inject({
+      method: "GET",
+      url: "/api/v1/corrida?pleito=6258&cargo=1",
+    })
+    expect(response.statusCode).toBe(200)
+    expect(response.json().pleito.id).toBe("6258")
   })
 
   it("sem votos deixa estados sem líder", async () => {

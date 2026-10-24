@@ -20,7 +20,13 @@ interface Channel {
   y: number
 }
 
-export function PulseMonitor({ election = "6257", active = true }: { election?: string; active?: boolean }) {
+export function PulseMonitor({
+  election = "6257",
+  active = true,
+}: {
+  election?: string
+  active?: boolean
+}) {
   const [paused, setPaused] = useState(() => {
     try {
       return localStorage.getItem("pulso:paused") === "1"

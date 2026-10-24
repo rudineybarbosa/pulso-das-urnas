@@ -111,7 +111,9 @@ export function App() {
               Pulso das Urnas
             </Link>
             <div className="header__meta">
-              <span>{election === "6258" ? "Eleições 2026 · 2º turno" : "Eleições 2026 · 1º turno"}</span>
+              <span>
+                {election === "6258" ? "Eleições 2026 · 2º turno" : "Eleições 2026 · 1º turno"}
+              </span>
               {panorama.data ? (
                 <Freshness
                   source={panorama.data.fonte}
@@ -190,10 +192,7 @@ export function App() {
           />
           <Route path="/telao" element={<TelaoPage election={election} />} />
           <Route path="/br/:uf" element={<StatePage cargo={cargo} election={election} />} />
-          <Route
-            path="/br/:uf/:city"
-            element={<StatePage cargo={cargo} election={election} />}
-          />
+          <Route path="/br/:uf/:city" element={<StatePage cargo={cargo} election={election} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -11,7 +11,9 @@ function newer(candidate: SnapshotInput, current: SnapshotPointer | undefined): 
   if (!current) return true
   const candidateTime = Date.parse(candidate.generatedAt)
   const currentTime = Date.parse(current.generatedAt)
-  return candidateTime > currentTime || (candidateTime === currentTime && candidate.idg > current.idg)
+  return (
+    candidateTime > currentTime || (candidateTime === currentTime && candidate.idg > current.idg)
+  )
 }
 
 export class InMemorySnapshotRepository implements SnapshotRepository {
@@ -42,6 +44,6 @@ export class InMemorySnapshotRepository implements SnapshotRepository {
 
   async getCurrent(key: SnapshotKey): Promise<StoredSnapshot | null> {
     const pointer = this.pointers.get(`${key.pleito}__${key.escopo}__${key.cargo}`)
-    return pointer ? this.objects.get(pointer.objectName) ?? null : null
+    return pointer ? (this.objects.get(pointer.objectName) ?? null) : null
   }
 }

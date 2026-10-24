@@ -64,6 +64,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          VITE_DEFAULT_ELECTION: "6258"
+          PUBLIC_SITE_URL: https://${{ vars.PUBLIC_HOST }}
       - name: Imagem da API
         run: |
           gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet

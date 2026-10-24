@@ -157,18 +157,22 @@ export class DataStore {
     }
   }
 
-  private async loadCity(uf: string, tse: string, code: string): Promise<ParsedScope | null> {
+  private async loadCity(
+    uf: string,
+    tse: string,
+    code: string,
+    election = FIRST_ELECTION,
+  ): Promise<ParsedScope | null> {
     const local = this.tryLoad(
-      `2026/${code === PRESIDENT ? "6257" : "6259"}/${uf.toLowerCase()}${tse}-c000${code}-e00${code === PRESIDENT ? "6257" : "6259"}-u.json`,
+      `2026/${election}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`,
     )
     if (local) return local
     if (this.mode !== "real") return null
-    const key = `${uf}:${tse}:${code}`
+    const key = `${election}:${uf}:${tse}:${code}`
     const cached = this.cityCache.get(key)
     if (cached && this.now() - cached.at < 30_000) return cached.parsed
     const inflight = this.cityInflight.get(key)
     if (inflight) return inflight
-    const election = code === PRESIDENT ? "6257" : "6259"
     const url = `https://resultados.tse.jus.br/oficial/ele2026/${election}/dados/${uf.toLowerCase()}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`
     const task = fetchTseJson(url, { etag: cached?.etag })
       .then((result) => {
@@ -341,8 +345,10 @@ export class DataStore {
   }
 
   private nationalFor(election: string): ParsedScope | null {
-    return this.remoteNational.get(election) ??
+    return (
+      this.remoteNational.get(election) ??
       (election === SECOND_ELECTION ? this.secondTurnPresident : this.nationalPresident)
+    )
   }
 
   async refresh(election: string): Promise<void> {
@@ -577,7 +583,7 @@ export class DataStore {
       ibge: city.ibge,
     }
     if (this.mode === "real") {
-      const cityParsed = await this.loadCity(uf, city.tse, code)
+      const cityParsed = await this.loadCity(uf, city.tse, code, election)
       if (!cityParsed) return this.snapshotEnvelope(escopo, code, null, [], "sem_dado", election)
       const cityCandidates = this.candidates(cityParsed, code)
       const cityOffice = this.office(cityParsed, code)
@@ -666,8 +672,9 @@ export class DataStore {
     }
   }
 
-  race(): Race {
-    const parsed = this.nationalPresident
+  race(election = SECOND_ELECTION): Race {
+    const parsed = this.nationalFor(election)
+    const metadata = this.electionMeta(election)
     const candidates = this.candidates(parsed, PRESIDENT)
     const eligible = orderCandidates(candidates.filter((candidate) => isEligible(candidate)))
     const leader = eligible[0] ?? null
@@ -690,7 +697,7 @@ export class DataStore {
       modo: this.mode,
       versao: `6257:1:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${this.progress()}`,
       cargo: { ...this.officeInfo(parsed, PRESIDENT), escopo: "br" },
-      pleito: { id: "6257", turno: 1 },
+      pleito: { id: election, turno: metadata?.turn ?? 1 },
       apuracao: this.apuracao(parsed),
       cavalos: horses.map((candidate, index) => ({
         posicao: index + 1,
