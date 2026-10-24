@@ -1,7 +1,7 @@
 # Runbook — primeira publicação do Pulso das Urnas na GCP
 
-**URL planejada:** `https://pulso-das-urnas-prod.web.app`  
-**Região:** `southamerica-east1` (São Paulo)  
+**URL planejada:** `https://pulso-das-urnas.web.app`
+**Região:** `southamerica-east1` (São Paulo)
 **Janela do segundo turno:** 25/10/2026 16:55 até 26/10/2026 00:00 (`America/Sao_Paulo`)
 
 > Este documento é para o operador que nunca publicou uma aplicação na Google Cloud. O agente não cria a conta Google, não cadastra cartão, não lê credenciais e não executa `terraform apply` por conta própria.
@@ -10,7 +10,7 @@
 
 ```text
 Firebase Hosting
-  https://pulso-das-urnas-prod.web.app
+  https://pulso-das-urnas.web.app
        /api/** -> Cloud Run pulso-api
 
 Cloud Run pulso-api
@@ -54,19 +54,19 @@ Não prossiga se esses comandos falharem.
 1. Abra `https://console.cloud.google.com/freetrial`.
 2. Crie a conta Google Cloud Trial, se elegível.
 3. Confirme identidade e método de pagamento.
-4. Crie um projeto com ID globalmente único, por exemplo `pulso-das-urnas-prod-2026`.
+4. Crie o projeto com o ID `pulso-das-urnas`.
 5. Vincule o projeto a uma conta de faturamento.
 6. Anote o `PROJECT_ID` e o `BILLING_ACCOUNT_ID`.
 
-O ID `pulso-das-urnas-prod` pode estar ocupado. Use o ID efetivamente criado em todos os comandos.
+O ID escolhido é `pulso-das-urnas`. Se o Console informar que ele já está ocupado, pare e escolha outro ID antes de continuar; não substitua silenciosamente o valor nos comandos.
 
 ```bash
-export PROJECT_ID="pulso-das-urnas-prod-2026"
-export BILLING_ACCOUNT_ID="000000-000000-000000"
+export PROJECT_ID="pulso-das-urnas"
+export BILLING_ACCOUNT_ID="01814A-837814-2BD28A"
 export REGION="southamerica-east1"
-export SITE_ID="pulso-das-urnas-prod-2026"
+export SITE_ID="pulso-das-urnas"
 export HOST="${SITE_ID}.web.app"
-export TFSTATE_BUCKET="pulso-tfstate-prod"
+export TFSTATE_BUCKET="pulso-tfstate"
 
 gcloud auth login
 gcloud auth application-default login
@@ -95,7 +95,7 @@ No GitHub, em **Settings → Secrets and variables → Actions**, configure:
 - secret `GCP_DEPLOY_SA`: e-mail da service account de deploy;
 - secret `FIREBASE_TOKEN`: token criado com `npx firebase-tools login:ci`;
 - variable `GCP_PROJECT`: ID do projeto;
-- variable `PUBLIC_HOST`: host Firebase, por exemplo `pulso-das-urnas-prod.web.app`.
+- variable `PUBLIC_HOST`: host Firebase, por exemplo `pulso-das-urnas.web.app`.
 
 Não use chave JSON de service account no GitHub. Faça um workflow manual de plan antes de habilitar tags de produção.
 

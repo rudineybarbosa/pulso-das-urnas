@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "pulso-das-urnas-prod",
+    "site": "pulso-das-urnas",
     "public": "apps/web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [

@@ -8,7 +8,7 @@ const root = process.cwd().endsWith("apps/web") ? join(process.cwd(), "..", ".."
 const dist = join(root, "apps", "web", "dist")
 const templatePath = join(dist, "index.html")
 const catalogPath = join(root, "data", "fixtures", "tse", "config", "mun-e006257-cm.json")
-const SITE = process.env.PUBLIC_SITE_URL ?? "https://pulso-das-urnas-prod.web.app"
+const SITE = process.env.PUBLIC_SITE_URL ?? "https://pulso-das-urnas.web.app"
 
 function slugify(value) {
   return value

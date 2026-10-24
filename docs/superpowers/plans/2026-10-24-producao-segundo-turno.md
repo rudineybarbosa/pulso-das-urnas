@@ -103,7 +103,7 @@
 - [ ] Criar bootstrap do bucket de tfstate com versionamento e acesso uniforme antes do backend.
 - [ ] Adicionar `datastore.viewer` para API, `datastore.editor` para ingestão, Storage viewer/creator, `run.invoker` para Scheduler e integração Hosting.
 - [ ] Configurar Cloud Run Job com `ELECTION_ID=6258`, janela, `CYCLE_COUNT=1`, `CYCLE_SECONDS=0` e `SNAPSHOT_BUCKET`.
-- [ ] Configurar Firebase site `pulso-das-urnas-prod` e rewrites de `/healthz`, `/readyz`, `/api/**` antes do fallback SPA.
+- [ ] Configurar Firebase site `pulso-das-urnas` e rewrites de `/healthz`, `/readyz`, `/api/**` antes do fallback SPA.
 - [ ] Validar com `terraform fmt -check -recursive`, `terraform init -backend=false` e `terraform validate` em dev/prod.
 - [ ] Commitar com `infra: preparar cloud run storage firestore e firebase`.
 

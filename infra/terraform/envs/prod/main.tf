@@ -11,14 +11,14 @@ terraform {
     }
   }
   backend "gcs" {
-    bucket = "pulso-tfstate-prod"
+    bucket = "pulso-tfstate"
     prefix = "terraform/state"
   }
 }
 
 variable "project_id" {
   type    = string
-  default = "pulso-das-urnas-prod"
+  default = "pulso-das-urnas"
 }
 variable "region" {
   type    = string
@@ -26,7 +26,7 @@ variable "region" {
 }
 variable "image" {
   type    = string
-  default = "southamerica-east1-docker.pkg.dev/pulso-das-urnas-prod/pulso/api:latest"
+  default = "southamerica-east1-docker.pkg.dev/pulso-das-urnas/pulso/api:latest"
 }
 variable "billing_account" {
   type    = string
@@ -116,7 +116,7 @@ module "scheduler" {
 module "hosting" {
   source     = "../../modules/hosting"
   project_id = var.project_id
-  site_id    = "pulso-das-urnas-prod"
+  site_id    = "pulso-das-urnas"
   depends_on = [module.apis]
 }
 
@@ -131,4 +131,4 @@ module "observability" {
 }
 
 output "api_url" { value = module.runtime.api_url }
-output "site_id" { value = "pulso-das-urnas-prod" }
+output "site_id" { value = "pulso-das-urnas" }

@@ -12,7 +12,7 @@ Leia `docs/requisitos/09-infra-e-terraform.md` e o ADR-005. Custo é requisito (
 - Proibido recurso com custo fixo mensal (LB, NAT, Cloud SQL, Memorystore) sem ADR novo.
 - Nenhum segredo no repositório; autenticação por WIF.
 - `apply` só com pedido explícito do mantenedor; o padrão é `plan`.
-- Um ambiente por projeto: `pulso-dev`, `pulso-prod`; estado no GCS por ambiente.
+- Um ambiente por projeto: `pulso-dev`, `pulso-das-urnas`; estado no GCS por ambiente.
 
 ## Fluxo
 

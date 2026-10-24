@@ -2,7 +2,7 @@
 
 **Data:** 24/10/2026  
 **Status:** aprovado em conversa; aguardando execução do plano  
-**Objetivo:** publicar o Pulso das Urnas em `https://pulso-das-urnas-prod.web.app` para acompanhar o segundo turno de 2026 ao vivo a partir de 25/10/2026 às 16:55 em Brasília, mantendo o primeiro turno disponível para revisão.
+**Objetivo:** publicar o Pulso das Urnas em `https://pulso-das-urnas.web.app` para acompanhar o segundo turno de 2026 ao vivo a partir de 25/10/2026 às 16:55 em Brasília, mantendo o primeiro turno disponível para revisão.
 
 ## Decisões
 

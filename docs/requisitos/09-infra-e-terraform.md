@@ -4,7 +4,7 @@
 
 - Tudo que existe na nuvem é descrito em Terraform; o console serve para **ler**, não para criar.
 - Nenhum recurso com custo fixo mensal (RNF-COST-04). Sem load balancer dedicado, NAT, Cloud SQL ou Memorystore.
-- Duas contas de projeto: `pulso-dev` e `pulso-prod`, no mesmo billing account.
+- Duas contas de projeto: `pulso-dev` e `pulso-das-urnas`, no mesmo billing account.
 - Estado do Terraform no GCS, com *locking* nativo, um bucket por ambiente.
 - Aplicação do Terraform é **manual e explícita** (`make infra-apply ENV=dev`); CI só faz `plan` e publica o resumo.
 
@@ -62,7 +62,7 @@ O serviço Cloud Run é invocado publicamente (`roles/run.invoker` para `allUser
 ```json
 {
   "hosting": {
-    "site": "pulso-das-urnas-prod",
+    "site": "pulso-das-urnas",
     "public": "apps/web/dist",
     "ignore": ["**/.*"],
     "rewrites": [
@@ -115,7 +115,7 @@ flowchart LR
 | Serviço | Variável | Exemplo |
 |---|---|---|
 | api | `DATA_MODE` | `real` (prod) / `fake` (local) |
-| api | `GCP_PROJECT` | `pulso-prod` |
+| api | `GCP_PROJECT` | `pulso-das-urnas` |
 | api | `SNAPSHOT_BUCKET` | `pulso-snapshots-prod` |
 | api | `ASSETS_BUCKET` | `pulso-assets-prod` |
 | api | `CACHE_TTL_SECONDS` | `3` |
@@ -165,8 +165,8 @@ O teto de US$ 10 continua sendo o objetivo operacional para o cenário esperado,
 | Ambiente | Teto | Orçamento no Terraform |
 |---|---|---|
 | `pulso-dev` | **US$ 1/mês** | US$ 1, alertas 50/80/100% |
-| `pulso-prod` (fora da eleição) | **US$ 2/mês** | limiar de 20% do orçamento de US$ 10 |
-| `pulso-prod` (semana eleitoral) | **US$ 10** no total | US$ 10, alertas 50/80/100% |
+| `pulso-das-urnas` (fora da eleição) | **US$ 2/mês** | limiar de 20% do orçamento de US$ 10 |
+| `pulso-das-urnas` (semana eleitoral) | **US$ 10** no total | US$ 10, alertas 50/80/100% |
 
 O limiar de 20% (US$ 2) existe para avisar quando o regime normal estoura o teto mesmo dentro de um orçamento maior de semana eleitoral. Nenhum teto é ampliado por conveniência: ampliar exige ADR e aprovação (RNF-COST-04).
 
@@ -175,11 +175,11 @@ O limiar de 20% (US$ 2) existe para avisar quando o regime normal estoura o teto
 ```bash
 # 1) API para de aceitar tráfego (max-instances=0)
 gcloud run services update pulso-api \
-  --project=pulso-prod --region=southamerica-east1 --max-instances=0
+  --project=pulso-das-urnas --region=southamerica-east1 --max-instances=0
 
 # 2) ingestão para de rodar (nenhum ciclo novo, nenhuma chamada ao TSE)
 gcloud scheduler jobs pause pulso-ingest-1m \
-  --project=pulso-prod --location=southamerica-east1
+  --project=pulso-das-urnas --location=southamerica-east1
 ```
 
 - **Responsável:** o plantonista nominal do dia. Acionar é decisão do plantão; não depende de merge nem de `apply`.
@@ -190,9 +190,9 @@ gcloud scheduler jobs pause pulso-ingest-1m \
 
 ```bash
 gcloud run services update pulso-api \
-  --project=pulso-prod --region=southamerica-east1 --max-instances=6
+  --project=pulso-das-urnas --region=southamerica-east1 --max-instances=6
 gcloud scheduler jobs resume pulso-ingest-1m \
-  --project=pulso-prod --location=southamerica-east1
+  --project=pulso-das-urnas --location=southamerica-east1
 ```
 
 Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de considerar o incidente encerrado.
@@ -238,7 +238,7 @@ Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de consi
 Aciona-se quando o orçamento bate 100% ou o custo projetado passa do teto do ambiente (dev US$ 1/mês; prod US$ 2/mês fora da eleição; US$ 10 na semana). Comandos, responsável e efeito estão em §6.1. Procedimento:
 
 1. Registrar horário, ambiente, valor no dashboard e causa provável.
-2. Executar as duas ações (API `max-instances=0` e `gcloud scheduler jobs pause pulso-ingest-1m`); confirmar com `gcloud run services describe pulso-api --project=pulso-prod --region=southamerica-east1 --format='yaml(spec.template.metadata.annotations)' | grep maxScale` (deve mostrar `'0'`) e `gcloud scheduler jobs describe pulso-ingest-1m --project=pulso-prod --location=southamerica-east1 --format='value(state)'` → `PAUSED`.
+2. Executar as duas ações (API `max-instances=0` e `gcloud scheduler jobs pause pulso-ingest-1m`); confirmar com `gcloud run services describe pulso-api --project=pulso-das-urnas --region=southamerica-east1 --format='yaml(spec.template.metadata.annotations)' | grep maxScale` (deve mostrar `'0'`) e `gcloud scheduler jobs describe pulso-ingest-1m --project=pulso-das-urnas --location=southamerica-east1 --format='value(state)'` → `PAUSED`.
 3. Avisar no canal do projeto que a API está fora; a CDN segue servindo o cache por até 30 s na apuração (6 h após finalizada).
 4. Corrigir a causa antes de voltar; a volta é o inverso (`--max-instances=6` e `jobs resume`), seguida de ingestão manual e conferência de `ingest_lag_seconds`.
 5. Se o corte passar de 30 min em janela eleitoral, isso consome error budget (§7.6) e vira incidente registrado.
@@ -259,11 +259,11 @@ Fixar a versão anterior, sem novo build:
 
 ```bash
 gcloud run jobs update pulso-ingest \
-  --project=pulso-prod --region=southamerica-east1 \
+  --project=pulso-das-urnas --region=southamerica-east1 \
   --update-env-vars=PARSER_VERSION_PIN=1.4.2
 
 gcloud run jobs execute pulso-ingest \
-  --project=pulso-prod --region=southamerica-east1 --wait
+  --project=pulso-das-urnas --region=southamerica-east1 --wait
 ```
 
 1. Confirme no snapshot publicado o campo `parserVersion` esperado e o avanço do ponteiro.
@@ -295,9 +295,9 @@ O cenário em `load/panorama.js` recebe `VUS`, `DURATION` e `MIX`; a soma dos tr
 - Verificação:
   ```bash
   gcloud logging buckets describe _Default --location=global \
-    --project=pulso-prod --format='value(retentionDays)'   # 30
-  gcloud logging sinks list --project=pulso-prod           # só _Default e _Required
-  gcloud logging exclusions list --project=pulso-prod      # inclui run-requests-sem-ip
+    --project=pulso-das-urnas --format='value(retentionDays)'   # 30
+  gcloud logging sinks list --project=pulso-das-urnas           # só _Default e _Required
+  gcloud logging exclusions list --project=pulso-das-urnas      # inclui run-requests-sem-ip
   ```
 
 ## 8. Pré-requisitos locais
