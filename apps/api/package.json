@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@pulso/cloud": "workspace:*",
     "@pulso/contracts": "workspace:*",
     "@pulso/domain": "workspace:*",
     "@pulso/tse": "workspace:*",

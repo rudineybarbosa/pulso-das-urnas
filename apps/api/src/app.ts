@@ -114,6 +114,10 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     return reply.type("application/json; charset=utf-8").send(body)
   }
 
+  async function prepare(election: string): Promise<void> {
+    await store.refresh(election)
+  }
+
   function validScope(
     request: FastifyRequest,
     reply: FastifyReply,
@@ -168,6 +172,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const query = request.query as Record<string, string | undefined>
     const validated = validScope(request, reply, query)
     if ("code" in validated) return validated
+    await prepare(validated.election)
     return cached(
       request,
       reply,
@@ -182,6 +187,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const uf = params.uf.toUpperCase()
     const validated = validScope(request, reply, query)
     if ("code" in validated) return validated
+    await prepare(validated.election)
     if (!/^[A-Z]{2}$/.test(uf)) {
       return problem(
         reply,
@@ -218,6 +224,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const ibge = numberParam(params.ibge, 0)
     const validated = validScope(request, reply, query)
     if ("code" in validated) return validated
+    await prepare(validated.election)
     const snapshot = await store.municipality(ibge, validated.cargo, validated.election)
     if (!snapshot) {
       return problem(
@@ -243,6 +250,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const ibge = numberParam(params.ibge, 0)
     const query = request.query as Record<string, string | undefined>
     const election = query.pleito ?? store.defaultElection()
+    await prepare(election)
     const snapshot = await store.municipality(ibge, "1", election)
     if (!snapshot) {
       return problem(

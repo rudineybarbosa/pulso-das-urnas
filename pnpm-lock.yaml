@@ -92,6 +92,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@pulso/cloud':
+        specifier: workspace:*
+        version: link:../../packages/cloud
       '@pulso/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import type { SnapshotRepository } from "@pulso/cloud"
 import { fetchTseJson } from "@pulso/tse"
 import { join } from "node:path"
 import type {
@@ -61,6 +62,7 @@ export interface StoreOptions {
   scenario?: Scenario
   speed?: number
   now?: () => number
+  repository?: SnapshotRepository
 }
 
 interface PartyTable {
@@ -105,12 +107,18 @@ export class DataStore {
   >()
   private readonly nationalPresident: ParsedScope | null
   private readonly secondTurnPresident: ParsedScope | null
+  private readonly repository?: SnapshotRepository
+  private readonly remoteNational = new Map<string, ParsedScope>()
+  private readonly remoteByUf = new Map<string, Map<string, ParsedScope>>()
+  private readonly remoteRefreshedAt = new Map<string, number>()
+  private readonly remoteRefreshInflight = new Map<string, Promise<void>>()
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
     this.scenario = options.scenario ?? "parcial"
     this.speed = options.speed ?? 600
     this.now = options.now ?? (() => Date.now())
+    this.repository = options.repository
     this.startedAt = this.now()
     this.nationalPresident = this.tryLoad("2026/6257/br-c0001-e006257-u.json")
     this.secondTurnPresident = this.tryLoad("2026/6258/br-c0001-e006258-u.json")
@@ -326,12 +334,53 @@ export class DataStore {
   }
 
   private parsedFor(uf: string, code: string, election = FIRST_ELECTION): ParsedScope | null {
+    const remote = this.remoteByUf.get(election)?.get(uf)
+    if (remote) return remote
     if (election === SECOND_ELECTION) return null
     return this.byUf.get(uf)?.get(code) ?? null
   }
 
   private nationalFor(election: string): ParsedScope | null {
-    return election === SECOND_ELECTION ? this.secondTurnPresident : this.nationalPresident
+    return this.remoteNational.get(election) ??
+      (election === SECOND_ELECTION ? this.secondTurnPresident : this.nationalPresident)
+  }
+
+  async refresh(election: string): Promise<void> {
+    if (!this.repository) return
+    const refreshedAt = this.remoteRefreshedAt.get(election)
+    if (refreshedAt && this.now() - refreshedAt < 3_000) return
+    const inflight = this.remoteRefreshInflight.get(election)
+    if (inflight) return inflight
+    const task = this.refreshRemote(election)
+    this.remoteRefreshInflight.set(election, task)
+    await task
+    this.remoteRefreshInflight.delete(election)
+  }
+
+  private async refreshRemote(election: string): Promise<void> {
+    const repository = this.repository
+    if (!repository) return
+    const national = await repository.getCurrent({
+      ciclo: "ele2026",
+      pleito: election,
+      escopo: "br",
+      cargo: PRESIDENT,
+    })
+    if (national) this.remoteNational.set(election, parseResult(national.body as never))
+    const byUf = this.remoteByUf.get(election) ?? new Map<string, ParsedScope>()
+    await Promise.all(
+      UF_CODES.map(async ([uf]) => {
+        const current = await repository.getCurrent({
+          ciclo: "ele2026",
+          pleito: election,
+          escopo: uf.toLowerCase(),
+          cargo: PRESIDENT,
+        })
+        if (current) byUf.set(uf, parseResult(current.body as never))
+      }),
+    )
+    this.remoteByUf.set(election, byUf)
+    this.remoteRefreshedAt.set(election, this.now())
   }
 
   private electionMeta(election: string): { pleitoId: string; name: string; turn: number } | null {
