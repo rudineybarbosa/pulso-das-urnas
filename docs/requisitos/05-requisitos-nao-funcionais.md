@@ -126,10 +126,10 @@ Conclusão normativa: **a CDN é parte da arquitetura, não otimização opciona
 | ID | Requisito |
 |---|---|
 | RNF-COST-01 | Regime normal: R$ 0/mês, dentro das cotas gratuitas. |
-| RNF-COST-02 | Semana eleitoral: ≤ US$ 10 no total (banda do Hosting + Cloud Run + Storage). |
+| RNF-COST-02 | Semana eleitoral: cenário esperado de **US$ 3–9**, com objetivo operacional de ≤ US$ 10; cenário alto de US$ 20–35 e abuso sem teto automático, protegido por kill switch. |
 | RNF-COST-03 | Orçamento GCP com alertas em 50%, 80% e 100% do orçamento de cada ambiente (RNF-COST-05); hard stop manual documentado no runbook. |
 | RNF-COST-04 | Proibido introduzir recurso com custo fixo mensal (LB global, NAT, Cloud SQL, Memorystore) sem ADR e aprovação. |
-| RNF-COST-05 | **Tetos por ambiente**: dev ≤ **US$ 1/mês**; prod ≤ **US$ 2/mês** fora da eleição e ≤ **US$ 10 na semana eleitoral**. Orçamento GCP por ambiente com alertas em 50/80/100% e, em prod, limiar extra de 20% (US$ 2) para o teto fora da eleição (09 §6.1). |
+| RNF-COST-05 | **Tetos por ambiente**: dev ≤ **US$ 1/mês**; prod ≤ **US$ 2/mês** fora da eleição; cenário esperado da semana eleitoral US$ 3–9 e objetivo ≤ US$ 10. Cenário alto (US$ 20–35) exige decisão explícita; abuso aciona kill switch. Orçamento GCP com alertas em 50/80/100% (09 §6.1). |
 | RNF-COST-06 | **Kill switch** documentado e testado: API com `max-instances=0` e Scheduler pausado; comando, responsável e critério de acionamento no runbook (09 §7.5). Acionar é decisão do plantão, não requer deploy. |
 
 ## Compatibilidade — RNF-COMPAT

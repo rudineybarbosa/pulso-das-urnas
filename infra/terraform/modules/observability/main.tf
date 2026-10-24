@@ -12,6 +12,10 @@ variable "budget_usd" {
   type    = string
   default = "10"
 }
+variable "early_warning_percent" {
+  type    = number
+  default = 0
+}
 
 resource "google_monitoring_uptime_check_config" "api" {
   count        = var.public_host == "" ? 0 : 1
@@ -53,6 +57,12 @@ resource "google_billing_budget" "monthly" {
 
   threshold_rules {
     threshold_percent = 0.5
+  }
+  dynamic "threshold_rules" {
+    for_each = var.early_warning_percent > 0 ? [var.early_warning_percent] : []
+    content {
+      threshold_percent = threshold_rules.value
+    }
   }
   threshold_rules {
     threshold_percent = 0.8
