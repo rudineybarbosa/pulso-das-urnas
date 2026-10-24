@@ -19,7 +19,15 @@ import { SearchCombobox } from "./features/search/SearchCombobox"
 import { ScopePanel } from "./features/panel/ScopePanel"
 import { Freshness } from "./features/freshness/Freshness"
 import { PulseMonitor } from "./features/race/PulseMonitor"
-import { useCargos, useLocalidades, useMunicipality, usePanorama, useScope } from "./lib/queries"
+import { ElectionSelector } from "./features/election/ElectionSelector"
+import {
+  DEFAULT_ELECTION,
+  useCargos,
+  useLocalidades,
+  useMunicipality,
+  usePanorama,
+  useScope,
+} from "./lib/queries"
 import { slugify } from "@pulso/domain"
 
 const CARGO_FALLBACK = [
@@ -71,16 +79,17 @@ function scopeRows(snapshot: ScopeSnapshot): TableRow[] {
 export function App() {
   const [params, setParams] = useSearchParams()
   const cargo = params.get("cargo") ?? "1"
+  const election = params.get("pleito") ?? DEFAULT_ELECTION
   const navigate = useNavigate()
   const location = useLocation()
   const telao = location.pathname === "/telao"
   const queryClient = useQueryClient()
-  const panorama = usePanorama(cargo)
+  const panorama = usePanorama(cargo, election)
   const [refreshing, setRefreshing] = useState(false)
 
   function chooseLocalidade(item: Localidade) {
-    if (item.tipo === "estado") navigate(`/br/${item.uf.toLowerCase()}`)
-    else if (item.ibge) navigate(`/br/${item.uf.toLowerCase()}/${item.ibge}`)
+    if (item.tipo === "estado") navigate(`/br/${item.uf.toLowerCase()}${location.search}`)
+    else if (item.ibge) navigate(`/br/${item.uf.toLowerCase()}/${item.ibge}${location.search}`)
   }
 
   async function refresh() {
@@ -102,7 +111,7 @@ export function App() {
               Pulso das Urnas
             </Link>
             <div className="header__meta">
-              <span>Eleições 2026 · 1º turno</span>
+              <span>{election === "6258" ? "Eleições 2026 · 2º turno" : "Eleições 2026 · 1º turno"}</span>
               {panorama.data ? (
                 <Freshness
                   source={panorama.data.fonte}
@@ -114,6 +123,14 @@ export function App() {
             </div>
           </div>
           <div className="header__controls">
+            <ElectionSelector
+              value={election}
+              onChange={(nextElection) => {
+                const next = new URLSearchParams(params)
+                next.set("pleito", nextElection)
+                setParams(next, { replace: true })
+              }}
+            />
             <nav className="chips" aria-label="Cargo">
               {CARGO_FALLBACK.map((office) => (
                 <button
@@ -171,14 +188,17 @@ export function App() {
               )
             }
           />
-          <Route path="/telao" element={<TelaoPage />} />
-          <Route path="/br/:uf" element={<StatePage cargo={cargo} />} />
-          <Route path="/br/:uf/:city" element={<StatePage cargo={cargo} />} />
+          <Route path="/telao" element={<TelaoPage election={election} />} />
+          <Route path="/br/:uf" element={<StatePage cargo={cargo} election={election} />} />
+          <Route
+            path="/br/:uf/:city"
+            element={<StatePage cargo={cargo} election={election} />}
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
-      {telao ? null : <PulseMonitor active={!refreshing} />}
+      {telao ? null : <PulseMonitor election={election} active={!refreshing} />}
 
       {telao ? null : (
         <footer className="footer">
@@ -193,8 +213,8 @@ export function App() {
   )
 }
 
-function TelaoPage() {
-  const panorama = usePanorama("1")
+function TelaoPage({ election }: { election: string }) {
+  const panorama = usePanorama("1", election)
   const navigate = useNavigate()
   if (!panorama.data) return <Loading error={panorama.error} />
   return (
@@ -209,7 +229,7 @@ function TelaoPage() {
   )
 }
 
-function StatePage({ cargo }: { cargo: string }) {
+function StatePage({ cargo, election }: { cargo: string; election: string }) {
   const { uf = "", city } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -220,8 +240,8 @@ function StatePage({ cargo }: { cargo: string }) {
     (item) => item.tipo === "municipio" && item.slug === city && item.uf === upper,
   )
   const ibge = parsedIbge || slugMatch?.ibge || 0
-  const scope = useScope(upper, "1", Boolean(upper))
-  const municipality = useMunicipality(ibge, cargo, Boolean(ibge))
+  const scope = useScope(upper, "1", election, Boolean(upper))
+  const municipality = useMunicipality(ibge, cargo, election, Boolean(ibge))
   const cargos = useCargos(ibge)
   const [localCargo, setLocalCargo] = useState(cargo)
   const activeCargo = localCargo

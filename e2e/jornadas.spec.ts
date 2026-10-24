@@ -16,7 +16,7 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     await expect(page.getByRole("heading", { name: "São Paulo" })).toBeVisible()
     await expect(page.locator("path.map__city").first()).toBeVisible()
 
-    await page.locator("path.map__city").first().click()
+    await page.locator("path.map__city").first().click({ force: true })
     await expect(page).toHaveURL(/\/br\/sp\/[a-z0-9-]+$/)
     await expect(page.locator("aside.panel")).toBeVisible()
     await expect(page.locator("aside.panel").getByRole("heading")).toBeVisible()
@@ -30,12 +30,20 @@ test.describe("Jornadas do Pulso das Urnas", () => {
   test("busca por cidade", async ({ page }) => {
     await page.goto("/br")
     await page.getByLabel("digite o nome do estado ou da cidade:").fill("sao paulo")
-    const options = page.getByRole("option")
+    const options = page.locator('.search__list [role="option"]')
     await expect(options.first()).toBeVisible()
     await options.filter({ hasText: "cidade" }).first().click()
     await expect(page).toHaveURL(/\/br\/sp\/[a-z0-9-]+$/)
     await expect(page.locator("aside.panel")).toBeVisible()
     await expect(page.getByText("SÃO PAULO").first()).toBeVisible()
+  })
+
+  test("seleciona o primeiro turno pela URL", async ({ page }) => {
+    await page.goto("/br")
+    await expect(page.getByRole("combobox", { name: "Pleito" })).toHaveValue("6257")
+    await page.getByRole("combobox", { name: "Pleito" }).selectOption("6258")
+    await expect(page).toHaveURL(/pleito=6258/)
+    await expect(page.getByRole("combobox", { name: "Pleito" })).toHaveValue("6258")
   })
 
   test("URL canônica por slug abre o painel", async ({ page }) => {

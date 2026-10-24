@@ -3,6 +3,7 @@ import type { Panorama, Pleito, Race, ScopeSnapshot } from "@pulso/contracts"
 import { getJson } from "./api"
 
 const live = (active: boolean) => (active ? 5_000 : 60_000)
+export const DEFAULT_ELECTION = import.meta.env.VITE_DEFAULT_ELECTION ?? "6257"
 
 export function usePleitos() {
   return useQuery({
@@ -12,28 +13,33 @@ export function usePleitos() {
   })
 }
 
-export function usePanorama(cargo: string, active = true) {
+export function usePanorama(cargo: string, election = DEFAULT_ELECTION, active = true) {
   return useQuery({
-    queryKey: ["panorama", cargo],
-    queryFn: () => getJson<Panorama>(`/panorama?cargo=${cargo}`),
+    queryKey: ["panorama", election, cargo],
+    queryFn: () => getJson<Panorama>(`/panorama?pleito=${election}&cargo=${cargo}`),
     refetchInterval: (query) => (query.state.data?.apuracao.finalizada ? 60_000 : live(active)),
   })
 }
 
-export function useScope(uf: string, cargo: string, active = true) {
+export function useScope(uf: string, cargo: string, election = DEFAULT_ELECTION, active = true) {
   return useQuery({
-    queryKey: ["scope", uf, cargo],
-    queryFn: () => getJson<ScopeSnapshot>(`/escopos/${uf}?cargo=${cargo}`),
+    queryKey: ["scope", election, uf, cargo],
+    queryFn: () => getJson<ScopeSnapshot>(`/escopos/${uf}?pleito=${election}&cargo=${cargo}`),
     enabled: Boolean(uf),
     refetchInterval: (query) =>
       query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
   })
 }
 
-export function useMunicipality(ibge: number, cargo: string, active = true) {
+export function useMunicipality(
+  ibge: number,
+  cargo: string,
+  election = DEFAULT_ELECTION,
+  active = true,
+) {
   return useQuery({
-    queryKey: ["municipio", ibge, cargo],
-    queryFn: () => getJson<ScopeSnapshot>(`/municipios/${ibge}?cargo=${cargo}`),
+    queryKey: ["municipio", election, ibge, cargo],
+    queryFn: () => getJson<ScopeSnapshot>(`/municipios/${ibge}?pleito=${election}&cargo=${cargo}`),
     enabled: Number.isFinite(ibge) && ibge > 0,
     refetchInterval: (query) =>
       query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
@@ -52,10 +58,10 @@ export function useCargos(ibge: number) {
   })
 }
 
-export function useRace(active = true) {
+export function useRace(election = DEFAULT_ELECTION, active = true) {
   return useQuery({
-    queryKey: ["race"],
-    queryFn: () => getJson<Race>("/corrida"),
+    queryKey: ["race", election],
+    queryFn: () => getJson<Race>(`/corrida?pleito=${election}&cargo=1`),
     refetchInterval: (query) =>
       query.state.data?.interesses === "finalizado" ? 60_000 : active ? 5_000 : 60_000,
   })

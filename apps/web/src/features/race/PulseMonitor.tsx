@@ -20,7 +20,7 @@ interface Channel {
   y: number
 }
 
-export function PulseMonitor({ active = true }: { active?: boolean }) {
+export function PulseMonitor({ election = "6257", active = true }: { election?: string; active?: boolean }) {
   const [paused, setPaused] = useState(() => {
     try {
       return localStorage.getItem("pulso:paused") === "1"
@@ -28,7 +28,7 @@ export function PulseMonitor({ active = true }: { active?: boolean }) {
       return false
     }
   })
-  const { data } = useRace(active && !paused)
+  const { data } = useRace(election, active && !paused)
   const [alarm, setAlarm] = useState(false)
   const [scene, setScene] = useState(false)
   const tracker = useRef({ previousG: 0, streak: 0, lastAt: 0 })
