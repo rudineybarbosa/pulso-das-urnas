@@ -250,6 +250,17 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const ibge = numberParam(params.ibge, 0)
     const query = request.query as Record<string, string | undefined>
     const election = query.pleito ?? store.defaultElection()
+    if (!store.hasPleito(election)) {
+      return problem(
+        reply,
+        404,
+        "PLEITO_NAO_ENCONTRADO",
+        "Pleito não encontrado",
+        "Não há pleito com esse código.",
+        request.url,
+        request.id,
+      )
+    }
     await prepare(election)
     const snapshot = await store.municipality(ibge, "1", election)
     if (!snapshot) {
@@ -266,7 +277,11 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     return cached(
       request,
       reply,
-      { apiVersion: "1", escopo: snapshot.escopo, cargos: store.cargos(snapshot.escopo.uf) },
+      {
+        apiVersion: "1",
+        escopo: snapshot.escopo,
+        cargos: store.cargos(snapshot.escopo.uf, election),
+      },
       "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
     )
   })

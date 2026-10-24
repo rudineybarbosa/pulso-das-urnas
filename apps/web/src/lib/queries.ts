@@ -46,12 +46,12 @@ export function useMunicipality(
   })
 }
 
-export function useCargos(ibge: number) {
+export function useCargos(ibge: number, election = DEFAULT_ELECTION) {
   return useQuery({
-    queryKey: ["cargos", ibge],
+    queryKey: ["cargos", election, ibge],
     queryFn: () =>
       getJson<{ cargos: Array<{ id: string; nome: string; tipo: string }> }>(
-        `/municipios/${ibge}/cargos`,
+        `/municipios/${ibge}/cargos?pleito=${election}`,
       ),
     enabled: Number.isFinite(ibge) && ibge > 0,
     staleTime: 60_000,

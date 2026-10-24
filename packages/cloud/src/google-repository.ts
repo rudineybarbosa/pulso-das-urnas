@@ -47,6 +47,7 @@ export class GoogleSnapshotRepository implements SnapshotRepository {
       generatedAt: input.generatedAt,
       collectedAt: input.collectedAt,
       parserVersion: input.parserVersion,
+      etag: input.etag ?? null,
     }
     const file = this.storage.bucket(this.bucketName).file(objectName)
     try {

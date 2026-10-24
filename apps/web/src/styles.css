@@ -876,6 +876,9 @@ a {
 .footer p {
   margin: 2px 0;
 }
+.footer a {
+  color: #00695c;
+}
 
 @media (max-width: 900px) {
   .state-layout.has-panel {

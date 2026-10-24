@@ -32,6 +32,7 @@ export class InMemorySnapshotRepository implements SnapshotRepository {
       generatedAt: input.generatedAt,
       collectedAt: input.collectedAt,
       parserVersion: input.parserVersion,
+      etag: input.etag ?? null,
     }
     if (!this.objects.has(objectName)) {
       this.objects.set(objectName, { pointer, body: input.body })

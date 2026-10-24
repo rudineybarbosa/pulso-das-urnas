@@ -112,6 +112,7 @@ export class DataStore {
   private readonly remoteByUf = new Map<string, Map<string, ParsedScope>>()
   private readonly remoteRefreshedAt = new Map<string, number>()
   private readonly remoteRefreshInflight = new Map<string, Promise<void>>()
+  private readonly remoteCollectedAt = new Map<string, string>()
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
@@ -181,7 +182,7 @@ export class DataStore {
         this.cityCache.set(key, { at: this.now(), parsed, etag: result.etag ?? undefined })
         return parsed
       })
-      .catch(() => null)
+      .catch(() => cached?.parsed ?? null)
       .finally(() => this.cityInflight.delete(key))
     this.cityInflight.set(key, task)
     return task
@@ -241,11 +242,18 @@ export class DataStore {
         url: `https://resultados.tse.jus.br/oficial/ele2026/${election}/dados/${scope}/`,
         generationId: parsed.generationId,
         generatedAt: parsed.generatedAt,
-        collectedAt: new Date(now).toISOString(),
+        collectedAt: this.remoteCollectedAt.get(election) ?? new Date(now).toISOString(),
         parserVersion: "1.0.0",
         status: parsed.finished ? "finalizado" : "ao_vivo",
         sourceAgeSeconds: Math.max(0, Math.round((now - Date.parse(parsed.generatedAt)) / 1000)),
-        collectedAgeSeconds: 0,
+        collectedAgeSeconds: Math.max(
+          0,
+          Math.round(
+            (now -
+              Date.parse(this.remoteCollectedAt.get(election) ?? new Date(now).toISOString())) /
+              1000,
+          ),
+        ),
         snapshotAgeSeconds: 0,
       }
     }
@@ -366,27 +374,34 @@ export class DataStore {
   private async refreshRemote(election: string): Promise<void> {
     const repository = this.repository
     if (!repository) return
-    const national = await repository.getCurrent({
-      ciclo: "ele2026",
-      pleito: election,
-      escopo: "br",
-      cargo: PRESIDENT,
-    })
-    if (national) this.remoteNational.set(election, parseResult(national.body as never))
-    const byUf = this.remoteByUf.get(election) ?? new Map<string, ParsedScope>()
-    await Promise.all(
-      UF_CODES.map(async ([uf]) => {
-        const current = await repository.getCurrent({
-          ciclo: "ele2026",
-          pleito: election,
-          escopo: uf.toLowerCase(),
-          cargo: PRESIDENT,
-        })
-        if (current) byUf.set(uf, parseResult(current.body as never))
-      }),
-    )
-    this.remoteByUf.set(election, byUf)
-    this.remoteRefreshedAt.set(election, this.now())
+    try {
+      const national = await repository.getCurrent({
+        ciclo: "ele2026",
+        pleito: election,
+        escopo: "br",
+        cargo: PRESIDENT,
+      })
+      if (national) {
+        this.remoteNational.set(election, parseResult(national.body as never))
+        this.remoteCollectedAt.set(election, national.pointer.collectedAt)
+      }
+      const byUf = this.remoteByUf.get(election) ?? new Map<string, ParsedScope>()
+      await Promise.all(
+        UF_CODES.map(async ([uf]) => {
+          const current = await repository.getCurrent({
+            ciclo: "ele2026",
+            pleito: election,
+            escopo: uf.toLowerCase(),
+            cargo: PRESIDENT,
+          })
+          if (current) byUf.set(uf, parseResult(current.body as never))
+        }),
+      )
+      this.remoteByUf.set(election, byUf)
+      this.remoteRefreshedAt.set(election, this.now())
+    } catch {
+      // Keep the last successful snapshot and let the source age expose the outage.
+    }
   }
 
   private electionMeta(election: string): { pleitoId: string; name: string; turn: number } | null {
@@ -497,7 +512,7 @@ export class DataStore {
     const leader = pickLeader(candidates).candidate
     const status = resolveStatus({
       hasFile: parsed !== null && office !== null,
-      applies: this.cargos(uf).some((cargo) => cargo.id === code),
+      applies: parsed !== null || this.cargos(uf).some((cargo) => cargo.id === code),
       validVotes: valid,
       hasEligibleLeader: leader !== null,
     })
@@ -604,7 +619,7 @@ export class DataStore {
     const leader = pickLeader(candidates).candidate
     const status = resolveStatus({
       hasFile: parsed !== null && base !== null,
-      applies: this.cargos(uf).some((cargo) => cargo.id === code),
+      applies: parsed !== null || this.cargos(uf).some((cargo) => cargo.id === code),
       validVotes: valid,
       hasEligibleLeader: leader !== null,
     })
@@ -639,7 +654,7 @@ export class DataStore {
       apiVersion: "1",
       eleicao: election,
       modo: this.mode,
-      versao: `${parsed?.electionId ?? "6257"}:${escopo.id}:${code}:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${progress}`,
+      versao: `${election}:${escopo.id}:${code}:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${progress}`,
       catalogVersion: this.catalog.version,
       status,
       retificado: this.scenario === "retificacao",
@@ -695,7 +710,7 @@ export class DataStore {
     return {
       apiVersion: "1",
       modo: this.mode,
-      versao: `6257:1:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${this.progress()}`,
+      versao: `${election}:1:${parsed?.generationId ?? "sem"}:${this.catalog.version}:${this.progress()}`,
       cargo: { ...this.officeInfo(parsed, PRESIDENT), escopo: "br" },
       pleito: { id: election, turno: metadata?.turn ?? 1 },
       apuracao: this.apuracao(parsed),
@@ -808,7 +823,10 @@ export class DataStore {
     )
   }
 
-  cargos(uf?: string): Office[] {
+  cargos(uf?: string, election = FIRST_ELECTION): Office[] {
+    if (election === SECOND_ELECTION) {
+      return [{ ...this.officeInfo(this.nationalFor(election), PRESIDENT), destaque: true }]
+    }
     const parsed = uf ? this.byUf.get(uf) : undefined
     const codes = uf === "DF" ? ["1", "3", "5", "6", "8"] : ["1", "3", "5", "6", "7"]
     return codes.map((code) => {

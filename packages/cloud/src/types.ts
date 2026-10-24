@@ -11,6 +11,7 @@ export interface SnapshotInput extends SnapshotKey {
   collectedAt: string
   parserVersion: string
   body: unknown
+  etag?: string | null
 }
 
 export interface SnapshotPointer extends SnapshotKey {
@@ -19,6 +20,7 @@ export interface SnapshotPointer extends SnapshotKey {
   generatedAt: string
   collectedAt: string
   parserVersion: string
+  etag?: string | null
 }
 
 export interface StoredSnapshot {

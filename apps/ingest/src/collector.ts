@@ -36,11 +36,17 @@ async function collectOne(
   client: TSECollectorClient,
   repository: SnapshotRepository,
 ): Promise<"collected" | "unchanged" | "failed"> {
-  const key = { ciclo: config.cycle, pleito: config.electionId, escopo: scope, cargo: CARGO }
+  const normalizedScope = scope.toLowerCase()
+  const key = {
+    ciclo: config.cycle,
+    pleito: config.electionId,
+    escopo: normalizedScope,
+    cargo: CARGO,
+  }
   const current = await repository.getCurrent(key)
   let result: FetchResult
   try {
-    result = await client.fetch(resultUrl(config, scope), null)
+    result = await client.fetch(resultUrl(config, normalizedScope), current?.pointer.etag)
     if (result.notModified) return "unchanged"
     if (!result.body) return "failed"
     const parsed = parseResult(result.body as never)
@@ -51,6 +57,7 @@ async function collectOne(
       collectedAt: new Date().toISOString(),
       parserVersion: "1.0.0",
       body: result.body,
+      etag: result.etag,
     } satisfies SnapshotInput)
     return current?.pointer.idg === parsed.generationId ? "unchanged" : "collected"
   } catch {
@@ -76,6 +83,7 @@ export async function collectElection(
       batch.map((scope) => collectOne(config, scope, client, repository)),
     )
     for (const result of results) summary[result] += 1
+    if (index + 4 < scopes.length) await new Promise((resolve) => setTimeout(resolve, 800))
   }
   return summary
 }

@@ -36,10 +36,12 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with: { terraform_version: 1.9.8 }
       - name: Init e plan
-        working-directory: infra/terraform/envs/${{ inputs.environment || 'dev' }}
+        working-directory: infra/terraform/envs/${{ startsWith(github.ref, 'refs/tags/v') && 'prod' || inputs.environment || 'dev' }}
         run: |
           terraform init
-          terraform plan -input=false -out=tfplan
+          terraform plan -input=false -var="image=$IMAGE" -out=tfplan
+        env:
+          IMAGE: southamerica-east1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/pulso/api:${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: tfplan
@@ -62,6 +64,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: .
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
@@ -79,9 +85,7 @@ jobs:
         working-directory: infra/terraform/envs/${{ startsWith(github.ref, 'refs/tags/v') && 'prod' || 'dev' }}
         run: |
           terraform init
-          terraform apply -auto-approve -input=false -var="image=$IMAGE"
-        env:
-          IMAGE: southamerica-east1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/pulso/api:${{ github.sha }}
+          terraform apply -auto-approve -input=false tfplan
       - name: Hospedagem
         run: npx firebase-tools deploy --only hosting --project "$PROJECT_ID" --non-interactive
         env:

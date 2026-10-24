@@ -77,6 +77,7 @@ describe("collector do segundo turno", () => {
 
     expect(result.collected).toBe(28)
     expect(saved).toHaveLength(28)
+    expect(saved.map((item) => item.escopo)).toContain("sp")
     expect(calls).toContain(
       "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json",
     )
@@ -87,16 +88,33 @@ describe("collector do segundo turno", () => {
 
   it("não avança ponteiro quando TSE retorna 304", async () => {
     let writes = 0
+    let receivedEtag: string | null | undefined
     const client: TSECollectorClient = {
-      fetch: async () =>
-        ({ status: 304, notModified: true, etag: "etag", body: null }) satisfies FetchResult,
+      fetch: async (_url, etag) => {
+        receivedEtag = etag
+        return { status: 304, notModified: true, etag: "etag", body: null } satisfies FetchResult
+      },
     }
     const repository: SnapshotRepository = {
       putIfNewer: async (input) => {
         writes += 1
         return input as unknown as never
       },
-      getCurrent: async () => null,
+      getCurrent: async () => ({
+        pointer: {
+          ciclo: "ele2026",
+          pleito: "6258",
+          escopo: "br",
+          cargo: "1",
+          idg: "old",
+          objectName: "old.json",
+          generatedAt: "2026-10-25T19:00:00Z",
+          collectedAt: "2026-10-25T19:00:01Z",
+          parserVersion: "1.0.0",
+          etag: "etag",
+        },
+        body: {},
+      }),
     }
 
     const result = await collectElection(
@@ -113,5 +131,6 @@ describe("collector do segundo turno", () => {
 
     expect(result.unchanged).toBe(28)
     expect(writes).toBe(0)
+    expect(receivedEtag).toBe("etag")
   })
 })

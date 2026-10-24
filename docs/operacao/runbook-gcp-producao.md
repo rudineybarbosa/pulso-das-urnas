@@ -66,7 +66,7 @@ export BILLING_ACCOUNT_ID="000000-000000-000000"
 export REGION="southamerica-east1"
 export SITE_ID="pulso-das-urnas-prod-2026"
 export HOST="${SITE_ID}.web.app"
-export TFSTATE_BUCKET="pulso-tfstate-${PROJECT_ID}"
+export TFSTATE_BUCKET="pulso-tfstate-prod"
 
 gcloud auth login
 gcloud auth application-default login
@@ -75,6 +75,29 @@ gcloud config set compute/region "$REGION"
 ```
 
 `gcloud auth application-default login` autoriza bibliotecas locais. Não coloque tokens no Git.
+
+## 3.1. Identidade do GitHub Actions (WIF)
+
+Esta etapa é opcional para o primeiro deploy manual, mas necessária para o workflow de release.
+
+No Console, crie:
+
+1. uma service account de deploy, por exemplo `sa-deploy@PROJECT_ID.iam.gserviceaccount.com`;
+2. permissões mínimas `run.admin`, `artifactregistry.writer`, `iam.serviceAccountUser` e acesso ao bucket de tfstate;
+3. um Workload Identity Pool;
+4. um Provider OIDC do GitHub com `issuer=https://token.actions.githubusercontent.com`;
+5. uma condição restringindo o repositório ao GitHub correto e à organização correta;
+6. o vínculo `roles/iam.workloadIdentityUser` entre o principal do repositório e `sa-deploy`.
+
+No GitHub, em **Settings → Secrets and variables → Actions**, configure:
+
+- secret `GCP_WIF_PROVIDER`: nome completo do provider;
+- secret `GCP_DEPLOY_SA`: e-mail da service account de deploy;
+- secret `FIREBASE_TOKEN`: token criado com `npx firebase-tools login:ci`;
+- variable `GCP_PROJECT`: ID do projeto;
+- variable `PUBLIC_HOST`: host Firebase, por exemplo `pulso-das-urnas-prod.web.app`.
+
+Não use chave JSON de service account no GitHub. Faça um workflow manual de plan antes de habilitar tags de produção.
 
 ## 4. Criar o bucket do estado Terraform
 

@@ -43,12 +43,6 @@ resource "google_storage_bucket_iam_member" "api_snapshots" {
   member = "serviceAccount:${google_service_account.api.email}"
 }
 
-resource "google_project_iam_member" "ingest_run_jobs" {
-  project = var.project_id
-  role    = "roles/run.developer"
-  member  = "serviceAccount:${google_service_account.ingest.email}"
-}
-
 resource "google_project_iam_member" "api_datastore_viewer" {
   project = var.project_id
   role    = "roles/datastore.viewer"

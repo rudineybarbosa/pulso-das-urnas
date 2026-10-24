@@ -86,6 +86,7 @@ export function App() {
   const queryClient = useQueryClient()
   const panorama = usePanorama(cargo, election)
   const [refreshing, setRefreshing] = useState(false)
+  const withSearch = (path: string) => `${path}${location.search}`
 
   function chooseLocalidade(item: Localidade) {
     if (item.tipo === "estado") navigate(`/br/${item.uf.toLowerCase()}${location.search}`)
@@ -177,7 +178,7 @@ export function App() {
                   </div>
                   <BrazilMap
                     panorama={panorama.data}
-                    onSelect={(uf) => navigate(`/br/${uf.toLowerCase()}`)}
+                    onSelect={(uf) => navigate(withSearch(`/br/${uf.toLowerCase()}`))}
                   />
                   <Legend panorama={panorama.data} />
                   <DataTable
@@ -202,7 +203,8 @@ export function App() {
       {telao ? null : (
         <footer className="footer">
           <p>
-            Fonte: Tribunal Superior Eleitoral. Dados públicos, exibidos com o horário de geração.
+            Fonte: <a href="https://resultados.tse.jus.br/">Tribunal Superior Eleitoral</a>. Dados
+            públicos, exibidos com o horário de geração.
           </p>
           <p>Este site não é um serviço oficial do TSE.</p>
           <p>Sem cookies de rastreio · acessibilidade WCAG 2.2 AA · arte original</p>
@@ -215,11 +217,15 @@ export function App() {
 function TelaoPage({ election }: { election: string }) {
   const panorama = usePanorama("1", election)
   const navigate = useNavigate()
+  const location = useLocation()
   if (!panorama.data) return <Loading error={panorama.error} />
   return (
     <section className="view view--telao" aria-labelledby="telao-title">
       <h1 id="telao-title">Pulso das Urnas — telão</h1>
-      <BrazilMap panorama={panorama.data} onSelect={(uf) => navigate(`/br/${uf.toLowerCase()}`)} />
+      <BrazilMap
+        panorama={panorama.data}
+        onSelect={(uf) => navigate(`/br/${uf.toLowerCase()}${location.search}`)}
+      />
       <Legend panorama={panorama.data} />
       <p className="view__head">
         Atualização automática · {panorama.data.apuracao.percentual.toFixed(1)}% apurado
@@ -241,7 +247,7 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
   const ibge = parsedIbge || slugMatch?.ibge || 0
   const scope = useScope(upper, "1", election, Boolean(upper))
   const municipality = useMunicipality(ibge, cargo, election, Boolean(ibge))
-  const cargos = useCargos(ibge)
+  const cargos = useCargos(ibge, election)
   const [localCargo, setLocalCargo] = useState(cargo)
   const activeCargo = localCargo
   const heading = useRef<HTMLHeadingElement>(null)
@@ -262,12 +268,12 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
     heading.current?.focus()
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        navigate(city ? `/br/${uf.toLowerCase()}` : "/br")
+        navigate(city ? `/br/${uf.toLowerCase()}${location.search}` : `/br${location.search}`)
       }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [city, navigate, uf])
+  }, [city, location.search, navigate, uf])
 
   if (!scope.data) return <Loading error={scope.error} />
 
@@ -280,7 +286,9 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
         <button
           type="button"
           className="button button--back"
-          onClick={() => navigate(city ? `/br/${uf.toLowerCase()}` : "/br")}
+          onClick={() =>
+            navigate(city ? `/br/${uf.toLowerCase()}${location.search}` : `/br${location.search}`)
+          }
         >
           ← Voltar
         </button>
@@ -297,7 +305,7 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
           uf={upper}
           ibge={scope.data.escopo.ibge ?? 0}
           snapshot={scope.data}
-          onSelect={(code) => navigate(`/br/${uf.toLowerCase()}/${code}`)}
+          onSelect={(code) => navigate(`/br/${uf.toLowerCase()}/${code}${location.search}`)}
         />
         {panel ? (
           <ScopePanel
@@ -306,9 +314,11 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
             activeCargo={activeCargo}
             onCargo={(id) => {
               setLocalCargo(id)
-              navigate(`/br/${uf.toLowerCase()}/${ibge}?cargo=${id}`, { replace: true })
+              navigate(`/br/${uf.toLowerCase()}/${ibge}?pleito=${election}&cargo=${id}`, {
+                replace: true,
+              })
             }}
-            onClose={() => navigate(`/br/${uf.toLowerCase()}`)}
+            onClose={() => navigate(`/br/${uf.toLowerCase()}${location.search}`)}
           />
         ) : null}
       </div>

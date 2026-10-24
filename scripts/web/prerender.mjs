@@ -90,6 +90,17 @@ await writeFile(
   }),
 )
 
+await mkdir(join(dist, "telao"), { recursive: true })
+await writeFile(
+  join(dist, "telao", "index.html"),
+  page(template, {
+    title: "Pulso das Urnas — telão da apuração",
+    description: "Telão do mapa da apuração do 2º turno de 2026, com dados públicos do TSE.",
+    url: `${SITE}/telao`,
+    scope: "Brasil",
+  }),
+)
+
 await writeFile(
   join(dist, "robots.txt"),
   `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /telao\nSitemap: ${SITE}/sitemap.xml\n`,

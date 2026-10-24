@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises"
+import { access, readFile, readdir } from "node:fs/promises"
 import { join } from "node:path"
 import { GoogleSnapshotRepository } from "@pulso/cloud"
 import { findRepoRoot, parseResult } from "@pulso/tse"
@@ -18,7 +18,15 @@ if (!projectId || !bucketName) {
   throw new Error("Uso: pnpm exec tsx scripts/cloud/seed-snapshots.ts --project=ID --bucket=NOME [--election=6257]")
 }
 
-const root = join(findRepoRoot(), "data", "snapshots", "raw", "2026", electionId)
+const repositoryRoot = findRepoRoot()
+const rawRoot = join(repositoryRoot, "data", "snapshots", "raw", "2026", electionId)
+const fixtureRoot = join(repositoryRoot, "data", "fixtures", "tse", "2026", electionId)
+let root = rawRoot
+try {
+  await access(root)
+} catch {
+  root = fixtureRoot
+}
 const files = (await readdir(root)).filter((file) => file.endsWith("-u.json"))
 const repository = new GoogleSnapshotRepository({ projectId, bucketName })
 let uploaded = 0
