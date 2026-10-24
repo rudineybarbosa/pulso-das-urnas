@@ -1,6 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fetchTseJson, findRepoRoot } from "@pulso/tse"
+import { GoogleSnapshotRepository } from "@pulso/cloud"
+import { collectElection } from "./collector"
+import { electionConfigFromEnv } from "./election-config"
+import { INGEST_ACTIVATION_AT, INGEST_DEACTIVATION_AT, isIngestActive } from "./window"
 
 const BASE = "https://resultados.tse.jus.br/oficial"
 const ROOT = join(findRepoRoot(), "data", "snapshots", "raw")
@@ -14,6 +18,28 @@ async function save(path: string, body: unknown): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if (!isIngestActive(new Date())) {
+    console.log(
+      `ingestão fora da janela (${INGEST_ACTIVATION_AT} até ${INGEST_DEACTIVATION_AT}); nada a fazer`,
+    )
+    return
+  }
+
+  if (process.env.DATA_MODE === "real") {
+    const bucketName = process.env.SNAPSHOT_BUCKET
+    if (!bucketName) throw new Error("SNAPSHOT_BUCKET é obrigatório em DATA_MODE=real")
+    const summary = await collectElection(
+      electionConfigFromEnv(),
+      undefined,
+      new GoogleSnapshotRepository({
+        projectId: process.env.GCP_PROJECT,
+        bucketName,
+      }),
+    )
+    console.log(`coleta real concluída: ${JSON.stringify(summary)}`)
+    return
+  }
+
   const started = Date.now()
   const catalog = await fetchTseJson(`${BASE}/comum/config/ele-c.json`)
   await save("catalog/ele-c.json", catalog.body)
