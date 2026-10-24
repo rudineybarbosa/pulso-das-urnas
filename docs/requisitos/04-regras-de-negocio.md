@@ -105,6 +105,7 @@ Normalização: `NFD` → remover diacríticos → minúsculas → remover pontu
 | Apuração finalizada | 30 min | 60 s |
 | Sem pleito ativo | 6 h | 5 min |
 
+- A ingestão de 2026 é ativada em **25/10/2026 às 16:55** (`America/Sao_Paulo`) e desativada em **26/10/2026 às 00:00**; a janela de coleta de resultados começa às 17h. O job valida a data para não repetir a coleta em 25/10 de anos seguintes.
 - Aba oculta: suspender o polling do cliente; ao voltar, atualizar imediatamente.
 - Requisições condicionais obrigatórias (`If-None-Match`); `304` não conta como erro.
 - Jitter de ±20% para evitar sincronia de clientes.

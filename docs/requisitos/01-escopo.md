@@ -55,6 +55,8 @@
 | Dados por zona e seção | Granularidade além do município | v2 |
 | Fotos de candidatos | Peso e licenciamento | v2, com lazy loading |
 
+> **Decisão de 23/10/2026:** a votação declarada por visitantes foi rejeitada. Não haverá coleta de RG, IP, MAC ou fingerprint para “1 voto por pessoa”; o site permanece somente leitura sobre dados oficiais do TSE. Ver RN-012 para a janela de ativação da ingestão.
+
 ## 3. Fases de entrega
 
 | Fase | Entrega | Critério de saída |

@@ -35,6 +35,7 @@ A apuração das eleições brasileiras em tempo real, estado por estado, cidade
 | [docs/requisitos/11-criterios-de-aceite.md](docs/requisitos/11-criterios-de-aceite.md) | AT-001 a AT-032 em Given/When/Then |
 | [docs/requisitos/12-rastreabilidade.md](docs/requisitos/12-rastreabilidade.md) | Matriz RF ↔ RN ↔ AT ↔ código |
 | [docs/decisoes/](docs/decisoes/) | ADR-001 a ADR-006 |
+| [docs/operacao/runbook-gcp-producao.md](docs/operacao/runbook-gcp-producao.md) | Primeiro deploy, ativação do 2º turno e operação na GCP |
 | [docs/agents/](docs/agents/) | Workflow, PRs, tickets e domínio |
 | [docs/agents/agent-tools.md](docs/agents/agent-tools.md) | Como OpenCode e Copilot encontram agentes e skills |
 | [SPECKIT-USAGE.md](SPECKIT-USAGE.md) | Spec Kit, agentes, skills e fluxo de feature |

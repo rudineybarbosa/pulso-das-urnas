@@ -36,7 +36,7 @@ Versões: Terraform ≥ 1.9, `hashicorp/google` ≥ 6.0, `hashicorp/google-beta`
 | Artifact Registry | `pulso` | Docker, `southamerica-east1`, limpeza de imagens > 10 |
 | Cloud Run service | `pulso-api` | 512 MiB, 1 vCPU, concorrência 80, min 0 (1 na janela), max 6 (prod), timeout 30 s, `--no-allow-unauthenticated`? **público** via Hosting rewrite |
 | Cloud Run Job | `pulso-ingest` | 512 MiB, timeout 55 s, taskCount 1, retries 1 |
-| Cloud Scheduler | `pulso-ingest-1m` | `* * * * *`, fuso `America/Sao_Paulo`, OAuth com SA de ingestão, alvo `jobs:run` |
+| Cloud Scheduler | `pulso-ingest-1m` | `* 16-23 25 10 *`, fuso `America/Sao_Paulo`, ativação funcional às 16:55 de 25/10/2026, OAuth com SA de ingestão, alvo `jobs:run` |
 | Firestore | `(default)` | Native, `southamerica-east1`, modo produção |
 | Bucket | `pulso-snapshots-{env}` | Standard, `southamerica-east1`, versionamento ligado, lifecycle 90 dias |
 | Bucket | `pulso-assets-{env}` | geo/catálogo, cache público, versionamento desligado |
@@ -121,7 +121,8 @@ flowchart LR
 | api | `CACHE_TTL_SECONDS` | `3` |
 | api | `RATE_LIMIT_PER_MINUTE` | `300` (origin; a CDN absorve o volume) |
 | api | `RATE_LIMIT_BURST` | `600` |
-| ingest | `ELECTION_WINDOW` | `17:00-23:59` |
+| ingest | `INGEST_ACTIVATION_AT` | `2026-10-25T16:55:00-03:00` |
+| ingest | `INGEST_DEACTIVATION_AT` | `2026-10-26T00:00:00-03:00` |
 | ingest | `PARSER_VERSION_PIN` | vazio (usa a versão do build); `1.4.2` fixa a anterior — §7.7 |
 | ingest | `MAX_RPS_TSE` | `5` |
 | ingest | `CYCLE_SECONDS` | `10` |
@@ -134,18 +135,30 @@ Nenhuma variável é segredo. Se um dia houver, vai para Secret Manager e é ref
 
 ## 6. Custo estimado
 
-| Item | Free tier | Uso estimado (semana) | Custo |
-|---|---|---|---|
-| Firebase Hosting | 10 GB storage | 20 GB de banda | ~US$ 3,00 |
-| Cloud Run (api) | 2 M req, 360 k GB-s | 1 M req, 100 k GB-s | US$ 0 |
-| Cloud Run (job) | idem | 1.440 execuções × 55 s | ~US$ 0,40 |
-| Firestore | 1 GiB, 50 k leituras/dia | ~100 k leituras/dia | ~US$ 0,06/dia |
-| Cloud Storage | 5 GB | 2 GB | US$ 0 |
-| Artifact Registry | 0,5 GB | 1 GB | ~US$ 0,10 |
-| Scheduler | 3 jobs | 1 job | US$ 0 |
-| **Total** | | | **< US$ 10** |
+Os valores abaixo são estimativas de planejamento em USD, não garantia de fatura. O free tier depende da conta de faturamento, é agregado por billing account e pode mudar. O projeto não cria load balancer dedicado, NAT, Cloud SQL ou Memorystore.
 
-Fora da semana eleitoral, o custo tende a zero (min-instances 0; coleta conforme RN-012: 30 min com apuração em andamento, 6 h sem pleito ativo).
+| Cenário | Premissas | Estimativa no mês da eleição |
+|---|---|---:|
+| **Esperado** | 20 GB de Hosting, 420 execuções de 1 minuto, até 1 M requisições, snapshots abaixo de 5 GB | **US$ 3–9** |
+| **Alto** | 100 GB de Hosting, 5 M requisições, mais CPU/memória no Cloud Run e maior egress | **US$ 20–35** |
+| **Abuso** | dezenas de milhões de requisições/bots ou Scheduler fora da janela | **variável; kill switch imediato** |
+
+### Componentes do cenário esperado
+
+| Item | Uso na janela | Tratamento de custo |
+|---|---|---|
+| Firebase Hosting | site e cache; 20 GB de transferência planejada | principal custo esperado além das franquias diárias |
+| Cloud Run API | até 1 M requests, 1 vCPU/512 MiB, min 0 fora da janela | tende a ficar no free tier |
+| Cloud Run Job | 420 invocações de 1 minuto, 1 vCPU/512 MiB | abaixo da franquia mensal de CPU/RAM |
+| Firestore | ponteiros e catálogo, sem varrer coleção por request | abaixo das cotas em uso normal |
+| Cloud Storage | snapshots imutáveis, lifecycle de 90 dias | armazenamento regional pequeno; sem depender da franquia dos EUA |
+| Artifact Registry | uma imagem release e limpeza de versões antigas | manter abaixo de 0,5 GB quando possível |
+| Scheduler | um job, ativo somente no dia | dentro da cota de jobs |
+| Logs/Monitoring | logs estruturados, retenção definida | observar volume; logs também podem gerar cobrança após franquia |
+
+Fora do dia da eleição, o Scheduler fica pausado, o Cloud Run usa `min_instances = 0` e não há execução de ingestão. O custo recorrente esperado fica em armazenamento, Artifact Registry e observabilidade de baixo volume, tipicamente abaixo de **US$ 1–2/mês**.
+
+O teto de US$ 10 continua sendo o objetivo operacional para o cenário esperado, mas não é uma barreira automática. O budget alerta em 50/80/100%; o operador deve pausar o Scheduler e reduzir instâncias quando o custo projetado ultrapassar o teto.
 
 ### 6.1 Tetos por ambiente e kill switch
 
@@ -197,8 +210,9 @@ Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de consi
 - [ ] Alertas e orçamento conferidos; contatos definidos.
 - [ ] Cache-Control conferido na CDN (`x-cache: HIT`).
 
-### 7.2 Dia da eleição
-- [ ] 16h30: subir `min-instances=1` da API; rodar ingestão manual.
+### 7.2 Dia da eleição (25/10/2026)
+- [ ] 16h30: subir `min-instances=1` da API; conferir a janela `INGEST_ACTIVATION_AT` e o Scheduler.
+- [ ] 16h55: confirmar que o job de ingestão começou a rodar.
 - [ ] 17h00: conferir primeiro snapshot e `ingest_lag_seconds`.
 - [ ] A cada hora: dashboard (lag, 5xx, hit ratio, custo).
 - [ ] 23h59: manter até o último estado finalizar; depois reduzir min-instances.
