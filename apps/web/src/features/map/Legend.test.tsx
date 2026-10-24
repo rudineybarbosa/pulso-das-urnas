@@ -3,8 +3,9 @@ import { render, screen } from "@testing-library/react"
 import type { Panorama } from "@pulso/contracts"
 import { Legend } from "./Legend"
 
-const panorama: Panorama = {
-  apiVersion: "1",
+  const panorama: Panorama = {
+    apiVersion: "1",
+    eleicao: "6257",
   versao: "v1",
   catalogVersion: "v1",
   geradoEm: "2026-10-21T12:00:00-03:00",

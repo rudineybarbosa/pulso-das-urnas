@@ -100,6 +100,7 @@ export interface FallbackOrigin {
 export interface ScopeSnapshot {
   apiVersion: "1"
   modo?: "fake" | "real"
+  eleicao: string
   versao: string
   catalogVersion: string
   status: AbsenceStatus
@@ -135,6 +136,7 @@ export interface StateSummary {
 export interface Panorama {
   apiVersion: "1"
   modo?: "fake" | "real"
+  eleicao: string
   versao: string
   catalogVersion: string
   geradoEm: string
@@ -217,6 +219,7 @@ export const candidateSchema = z.object({
 
 export const scopeSnapshotSchema = z.object({
   apiVersion: z.literal("1"),
+  eleicao: z.string(),
   versao: z.string(),
   catalogVersion: z.string(),
   status: z.enum(["ok", "sem_voto", "sem_dado", "nao_aplicavel", "sem_lider_elegivel"]),
@@ -296,6 +299,7 @@ export const scopeSnapshotSchema = z.object({
 
 export const panoramaSchema = z.object({
   apiVersion: z.literal("1"),
+  eleicao: z.string(),
   versao: z.string(),
   catalogVersion: z.string(),
   geradoEm: z.string(),

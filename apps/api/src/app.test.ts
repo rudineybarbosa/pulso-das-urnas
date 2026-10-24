@@ -23,6 +23,17 @@ describe("API", () => {
     expect(response.headers.etag).toBeTruthy()
   })
 
+  it("seleciona o segundo turno sem reutilizar silenciosamente o primeiro", async () => {
+    const first = await app().inject({ method: "GET", url: "/api/v1/panorama?pleito=6257&cargo=1" })
+    const second = await app().inject({ method: "GET", url: "/api/v1/panorama?pleito=6258&cargo=1" })
+
+    expect(first.statusCode).toBe(200)
+    expect(first.json().eleicao).toBe("6257")
+    expect(second.statusCode).toBe(200)
+    expect(second.json().eleicao).toBe("6258")
+    expect(second.json().pleito.turno).toBe(2)
+  })
+
   it("responde 304 com o mesmo ETag", async () => {
     const instance = app()
     const first = await instance.inject({ method: "GET", url: "/api/v1/panorama?cargo=1" })

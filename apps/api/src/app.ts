@@ -118,8 +118,9 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     request: FastifyRequest,
     reply: FastifyReply,
     query: Record<string, string | undefined>,
-  ): string | FastifyReply {
-    if (query.pleito && !store.hasPleito(query.pleito)) {
+  ): { cargo: string; election: string } | FastifyReply {
+    const election = query.pleito ?? store.defaultElection()
+    if (!store.hasPleito(election)) {
       return problem(
         reply,
         404,
@@ -142,12 +143,12 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
         request.id,
       )
     }
-    return cargo
+    return { cargo, election }
   }
 
   app.get("/healthz", async () => ({ status: "ok" }))
   app.get("/readyz", async (_request, reply) => {
-    const panorama = store.panorama("1")
+    const panorama = store.panorama("1", store.defaultElection())
     if (panorama.estados.length < 1) {
       return reply.code(503).send({ status: "degraded" })
     }
@@ -166,11 +167,11 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
   app.get("/api/v1/panorama", async (request, reply) => {
     const query = request.query as Record<string, string | undefined>
     const validated = validScope(request, reply, query)
-    if (typeof validated !== "string") return validated
+    if ("code" in validated) return validated
     return cached(
       request,
       reply,
-      store.panorama(validated),
+      store.panorama(validated.cargo, validated.election),
       "public, max-age=0, s-maxage=3, stale-while-revalidate=5, stale-if-error=22",
     )
   })
@@ -180,7 +181,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const query = request.query as Record<string, string | undefined>
     const uf = params.uf.toUpperCase()
     const validated = validScope(request, reply, query)
-    if (typeof validated !== "string") return validated
+    if ("code" in validated) return validated
     if (!/^[A-Z]{2}$/.test(uf)) {
       return problem(
         reply,
@@ -206,7 +207,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     return cached(
       request,
       reply,
-      store.scopeSnapshot(uf, query.cargo ?? "1"),
+      store.scopeSnapshot(uf, validated.cargo, validated.election),
       "public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15",
     )
   })
@@ -216,8 +217,8 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     const query = request.query as Record<string, string | undefined>
     const ibge = numberParam(params.ibge, 0)
     const validated = validScope(request, reply, query)
-    if (typeof validated !== "string") return validated
-    const snapshot = await store.municipality(ibge, validated)
+    if ("code" in validated) return validated
+    const snapshot = await store.municipality(ibge, validated.cargo, validated.election)
     if (!snapshot) {
       return problem(
         reply,
@@ -240,7 +241,9 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
   app.get("/api/v1/municipios/:ibge/cargos", async (request, reply) => {
     const params = request.params as { ibge: string }
     const ibge = numberParam(params.ibge, 0)
-    const snapshot = await store.municipality(ibge, "1")
+    const query = request.query as Record<string, string | undefined>
+    const election = query.pleito ?? store.defaultElection()
+    const snapshot = await store.municipality(ibge, "1", election)
     if (!snapshot) {
       return problem(
         reply,
