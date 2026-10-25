@@ -10,6 +10,7 @@
   "dependencies": {
     "@pulso/cloud": "workspace:*",
     "@pulso/contracts": "workspace:*",
-    "@pulso/tse": "workspace:*"
+    "@pulso/tse": "workspace:*",
+    "tsx": "^4.19.2"
   }
 }
