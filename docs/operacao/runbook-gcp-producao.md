@@ -131,7 +131,7 @@ npx firebase-tools use --add "$PROJECT_ID"
 npx firebase-tools hosting:sites:list --project "$PROJECT_ID"
 ```
 
-O `firebase.json` versionado declara o site, os rewrites de `/healthz`, `/readyz` e `/api/**`, além do fallback da SPA. Se você escolher outro `SITE_ID`, ajuste também Terraform, `firebase.json` e `terraform.tfvars` antes do plan.
+O `firebase.json` versionado declara o site, o rewrite público de `/readyz` e `/api/**`, além do fallback da SPA. `/healthz` é reservado pela borda do Cloud Run e não deve ser usado no monitoramento público. Se você escolher outro `SITE_ID`, ajuste também Terraform, `firebase.json` e `terraform.tfvars` antes do plan.
 
 ## 6. Plan e apply da infraestrutura
 
@@ -217,7 +217,7 @@ Valide:
 
 ```bash
 curl -i "https://${HOST}/"
-curl -fsS "https://${HOST}/healthz"
+curl -fsS "https://${HOST}/readyz"
 curl -fsS "https://${HOST}/readyz"
 curl -fsS "https://${HOST}/api/v1/pleitos"
 curl -fsS "https://${HOST}/api/v1/panorama?pleito=6257&cargo=1"

@@ -29,6 +29,7 @@ blob-report/
 crash.log
 tfplan
 *.tfplan
+tfplan-*
 
 # Firebase
 .firebase/

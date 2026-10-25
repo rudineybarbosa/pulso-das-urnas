@@ -8,9 +8,13 @@ variable "billing_account" {
   type    = string
   default = ""
 }
-variable "budget_usd" {
+variable "budget_amount" {
   type    = string
   default = "10"
+}
+variable "budget_currency_code" {
+  type    = string
+  default = "USD"
 }
 variable "early_warning_percent" {
   type    = number
@@ -25,7 +29,7 @@ resource "google_monitoring_uptime_check_config" "api" {
   period       = "60s"
 
   http_check {
-    path         = "/healthz"
+    path         = "/readyz"
     port         = 443
     use_ssl      = true
     validate_ssl = true
@@ -50,8 +54,8 @@ resource "google_billing_budget" "monthly" {
 
   amount {
     specified_amount {
-      currency_code = "USD"
-      units         = var.budget_usd
+      currency_code = var.budget_currency_code
+      units         = var.budget_amount
     }
   }
 

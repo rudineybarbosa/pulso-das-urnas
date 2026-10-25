@@ -45,8 +45,8 @@ Versões: Terraform ≥ 1.9, `hashicorp/google` ≥ 6.0, `hashicorp/google-beta`
 | Service Account | `sa-api` | `datastore.viewer`, `storage.objectViewer` |
 | Service Account | `sa-ingest` | `datastore.editor`, `storage.objectCreator` **no bucket de snapshots** |
 | Service Account | `sa-deploy` | `run.admin`, `artifactregistry.writer`, `iam.serviceAccountUser`, `storage.admin` (state) |
-| Budget | `pulso-{env}` | dev US$ 1; prod US$ 10 (semana eleitoral) com limiar extra de 20% = US$ 2 (teto fora da eleição); alertas 50/80/100% — §6.1 |
-| Uptime check | `/healthz` | 1 min, regiões São Paulo + Iowa |
+| Budget | `pulso-{env}` | Conta de faturamento em BRL: dev R$ 5; prod R$ 50 (equivalente operacional arredondado a US$ 10) com limiar extra de 20% = R$ 10; alertas 50/80/100% — §6.1 |
+| Uptime check | `/readyz` | 1 min, regiões São Paulo + Iowa; `/healthz` é reservado pela borda do Cloud Run |
 | Alerta | 5xx > 1% (5 min) | métrica `run.googleapis.com/request_count` (5xx) + log estruturado da API; sem request log, que carregaria IP — §7.9 |
 | Alerta | lag de ingestão > 5 min | métrica customizada/publicada pela API |
 | Alerta | SLO 99,9% / queima de error budget | policy com dono nominal e escalonamento em 15 min — §7.6 |
@@ -153,22 +153,22 @@ Os valores abaixo são estimativas de planejamento em USD, não garantia de fatu
 | Firestore | ponteiros e catálogo, sem varrer coleção por request | abaixo das cotas em uso normal |
 | Cloud Storage | snapshots imutáveis, lifecycle de 90 dias | armazenamento regional pequeno; sem depender da franquia dos EUA |
 | Artifact Registry | uma imagem release e limpeza de versões antigas | manter abaixo de 0,5 GB quando possível |
-| Scheduler | um job, ativo somente no dia | dentro da cota de jobs |
+| Scheduler | dois jobs, ativos somente no dia | dentro da cota de jobs |
 | Logs/Monitoring | logs estruturados, retenção definida | observar volume; logs também podem gerar cobrança após franquia |
 
 Fora do dia da eleição, o Scheduler fica pausado, o Cloud Run usa `min_instances = 0` e não há execução de ingestão. O custo recorrente esperado fica em armazenamento, Artifact Registry e observabilidade de baixo volume, tipicamente abaixo de **US$ 1–2/mês**.
 
-O teto de US$ 10 continua sendo o objetivo operacional para o cenário esperado, mas não é uma barreira automática. O budget alerta em 50/80/100%; o operador deve pausar o Scheduler e reduzir instâncias quando o custo projetado ultrapassar o teto.
+O objetivo operacional continua equivalente a US$ 10 para o cenário esperado, mas o Budget usa a moeda da conta de faturamento (BRL nesta conta) e foi configurado em R$ 50. O Budget não é uma barreira automática: alerta em 50/80/100%; o operador deve pausar o Scheduler e reduzir instâncias quando o custo projetado ultrapassar o teto.
 
 ### 6.1 Tetos por ambiente e kill switch
 
 | Ambiente | Teto | Orçamento no Terraform |
 |---|---|---|
-| `pulso-dev` | **US$ 1/mês** | US$ 1, alertas 50/80/100% |
-| `pulso-das-urnas` (fora da eleição) | **US$ 2/mês** | limiar de 20% do orçamento de US$ 10 |
-| `pulso-das-urnas` (semana eleitoral) | **US$ 10** no total | US$ 10, alertas 50/80/100% |
+| `pulso-dev` | **R$ 5/mês** | R$ 5, alertas 50/80/100% |
+| `pulso-das-urnas` (fora da eleição) | **R$ 10/mês** | limiar de 20% do orçamento de R$ 50 |
+| `pulso-das-urnas` (semana eleitoral) | **R$ 50** no total | R$ 50, alertas 50/80/100% |
 
-O limiar de 20% (US$ 2) existe para avisar quando o regime normal estoura o teto mesmo dentro de um orçamento maior de semana eleitoral. Nenhum teto é ampliado por conveniência: ampliar exige ADR e aprovação (RNF-COST-04).
+O limiar de 20% (R$ 10) existe para avisar quando o regime normal estoura o teto mesmo dentro de um orçamento maior de semana eleitoral. Nenhum teto é ampliado por conveniência: ampliar exige ADR e aprovação (RNF-COST-04).
 
 **Kill switch** — cortar custo sem deploy, em duas ações:
 
@@ -205,7 +205,7 @@ Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de consi
 
 ### 7.1 Pré-eleição (D-7 a D-1)
 - [ ] `terraform plan` limpo em prod; `apply` revisado.
-- [ ] Deploy da versão candidata; smoke em `/healthz`, `/pleitos`, `/panorama`.
+- [ ] Deploy da versão candidata; smoke em `/readyz`, `/pleitos`, `/panorama`.
 - [ ] Catálogo de 2026 carregado e validado (pleitos 3220/3221, cargos 1/3/5/6/7/8).
 - [ ] Simulador testado nos cenários `virada`, `empate`, `fim`, `sem-votos`.
 - [ ] Cores partidárias revisadas; build sem fallback inesperado.
@@ -239,7 +239,7 @@ Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de consi
 
 ### 7.5 Kill switch de custo
 
-Aciona-se quando o orçamento bate 100% ou o custo projetado passa do teto do ambiente (dev US$ 1/mês; prod US$ 2/mês fora da eleição; US$ 10 na semana). Comandos, responsável e efeito estão em §6.1. Procedimento:
+Aciona-se quando o orçamento bate 100% ou o custo projetado passa do teto do ambiente (dev R$ 5/mês; prod R$ 10/mês fora da eleição; R$ 50 na semana). Comandos, responsável e efeito estão em §6.1. Procedimento:
 
 1. Registrar horário, ambiente, valor no dashboard e causa provável.
 2. Executar as duas ações (API `max-instances=0` e pausar `pulso-ingest-16h56` e `pulso-ingest-1m`); confirmar com `gcloud run services describe pulso-api --project=pulso-das-urnas --region=southamerica-east1 --format='yaml(spec.template.metadata.annotations)' | grep maxScale` (deve mostrar `'0'`) e consultar o estado dos dois jobs com `gcloud scheduler jobs describe JOB --project=pulso-das-urnas --location=southamerica-east1 --format='value(state)'` → `PAUSED`.
@@ -314,7 +314,7 @@ O cenário em `load/panorama.js` recebe `VUS`, `DURATION` e `MIX`; a soma dos tr
 
 - `terraform fmt -check -recursive` e `terraform validate` verdes nos dois ambientes.
 - `terraform plan` sem mudanças inesperadas após o apply.
-- `curl /healthz` e `/api/v1/panorama` respondendo com cabeçalhos de cache corretos.
+- `curl /readyz` e `/api/v1/panorama` respondendo com cabeçalhos de cache corretos.
 - Uptime check e alertas visíveis no console.
 - Orçamento por ambiente com o limiar extra de 20% em prod (§6.1); kill switch ensaiado.
 - Retenção de logs do `_Default` em 30 dias e nenhum sink de exportação (§7.9).

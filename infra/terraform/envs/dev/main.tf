@@ -119,12 +119,13 @@ module "hosting" {
 }
 
 module "observability" {
-  source          = "../../modules/observability"
-  project_id      = var.project_id
-  env             = local.env
-  public_host     = var.public_host
-  billing_account = var.billing_account
-  budget_usd      = "1"
+  source               = "../../modules/observability"
+  project_id           = var.project_id
+  env                  = local.env
+  public_host          = var.public_host
+  billing_account      = var.billing_account
+  budget_amount        = "5"
+  budget_currency_code = "BRL"
 }
 
 output "api_url" { value = module.runtime.api_url }

@@ -54,11 +54,11 @@ O frontend preserva `pleito` na URL. O seletor mostra “2º turno de 2026 — a
 - Cloud Run API com `min_instances = 0`, `max_instances = 6`, 512 MiB e 1 vCPU.
 - Cloud Run Job com uma coleta por execução; dois jobs do Scheduler cobrem a cadência de um minuto a partir de 16:56 na data programada, respeitando a precisão mínima de um minuto do serviço.
 - `CYCLE_COUNT=1` no job de produção; a janela é controlada pela aplicação e não por relógio implícito do container.
-- Firebase Hosting com site explícito, rewrites de `/healthz`, `/readyz` e `/api/**`, e fallback da SPA.
+- Firebase Hosting com site explícito, rewrite de `/readyz` e `/api/**`, e fallback da SPA; `/healthz` é reservado pela borda do Cloud Run.
 - `roles/storage.objectViewer` e `roles/datastore.viewer` para a API.
 - `roles/storage.objectCreator` e `roles/datastore.editor` para a ingestão.
 - `roles/run.invoker` para o Scheduler e para a integração pública do Hosting.
-- Budget de US$ 10 para a semana eleitoral, alertas em 50/80/100% e runbook de kill switch.
+- Budget na moeda da conta de faturamento (R$ 50 nesta conta, equivalente operacional arredondado a US$ 10) para a semana eleitoral, alertas em 50/80/100% e runbook de kill switch.
 
 ## Segurança e privacidade
 
