@@ -169,12 +169,25 @@ export class DataStore {
     code: string,
     election = FIRST_ELECTION,
   ): Promise<ParsedScope | null> {
+    const key = `${election}:${uf}:${tse}:${code}`
     const local = this.tryLoad(
       `2026/${election}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`,
     )
     if (local) return local
+    if (this.repository) {
+      const remote = await this.repository.getCurrent({
+        ciclo: "ele2026",
+        pleito: election,
+        escopo: `${uf.toLowerCase()}${tse}`,
+        cargo: code,
+      })
+      if (remote) {
+        const parsed = parseResult(remote.body as never)
+        this.cityCache.set(key, { at: this.now(), parsed, etag: remote.pointer.etag ?? undefined })
+        return parsed
+      }
+    }
     if (this.mode !== "real") return null
-    const key = `${election}:${uf}:${tse}:${code}`
     const cached = this.cityCache.get(key)
     if (cached && this.now() - cached.at < 30_000) return cached.parsed
     const inflight = this.cityInflight.get(key)
