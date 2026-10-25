@@ -502,7 +502,11 @@ export class DataStore {
     }
   }
 
-  scopeSnapshot(uf: string, cargoId = PRESIDENT, election = SECOND_ELECTION): ScopeSnapshot {
+  async scopeSnapshot(
+    uf: string,
+    cargoId = PRESIDENT,
+    election = SECOND_ELECTION,
+  ): Promise<ScopeSnapshot> {
     const code = cargoId || PRESIDENT
     const parsed = this.parsedFor(uf, code, election)
     const office = this.office(parsed, code)
@@ -530,7 +534,19 @@ export class DataStore {
       status,
       election,
     )
-    if (snapshot.dados) {
+    const cities = this.municipalities.ufs[uf] ?? []
+    const hasCompleteLocalCities =
+      cities.length > 0 &&
+      cities.every((city) =>
+        Boolean(
+          this.tryLoad(
+            `2026/${election}/${uf.toLowerCase()}${city.tse}-c000${code}-e00${election}-u.json`,
+          ),
+        ),
+      )
+    if (snapshot.dados && (this.mode === "real" || hasCompleteLocalCities)) {
+      snapshot.dados.municipios = await this.realMunicipalityRows(uf, code, election)
+    } else if (snapshot.dados) {
       snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
         const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
         const cityLeader = pickLeader(cityCandidates).candidate
@@ -553,6 +569,49 @@ export class DataStore {
       })
     }
     return snapshot
+  }
+
+  private async realMunicipalityRows(
+    uf: string,
+    code: string,
+    election: string,
+  ): Promise<NonNullable<ScopeSnapshot["dados"]>["municipios"]> {
+    const cities = this.municipalities.ufs[uf] ?? []
+    const rows: NonNullable<ScopeSnapshot["dados"]>["municipios"] = []
+    for (let index = 0; index < cities.length; index += 4) {
+      const batch = cities.slice(index, index + 4)
+      const parsedBatch = await Promise.all(
+        batch.map(async (city) => ({
+          city,
+          parsed: await this.loadCity(uf, city.tse, code, election),
+        })),
+      )
+      for (const { city, parsed } of parsedBatch) {
+        const candidates = this.candidates(parsed, code)
+        const office = this.office(parsed, code)
+        const leader = pickLeader(candidates).candidate
+        const valid = office?.validVotes ?? 0
+        rows.push({
+          ibge: city.ibge,
+          nome: city.nome,
+          uf,
+          cor: leader ? this.color(leader.partido) : null,
+          lider: leader
+            ? {
+                candidatoId: leader.id,
+                nome: leader.nomeUrna,
+                partido: leader.partido,
+                votos: leader.votos,
+              }
+            : null,
+          percentual: leader ? computeShare(leader.votos, valid) : null,
+        })
+      }
+      if (this.mode === "real" && index + 4 < cities.length) {
+        await new Promise((resolve) => setTimeout(resolve, 800))
+      }
+    }
+    return rows
   }
 
   cityCandidates(parsed: ParsedScope | null, code: string, ibge: number): Candidate[] {

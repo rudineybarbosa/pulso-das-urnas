@@ -213,7 +213,7 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
     return cached(
       request,
       reply,
-      store.scopeSnapshot(uf, validated.cargo, validated.election),
+      await store.scopeSnapshot(uf, validated.cargo, validated.election),
       "public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15",
     )
   })

@@ -23,6 +23,8 @@ Execução no checkout do commit, com `DATA_MODE=fake` para a tela e `SCENARIO=p
 | Layout desktop sem rolagem | `scrollHeight == innerHeight` em 1280×800 e 1366×768, no Brasil e no município | ✅ |
 | Segundo turno 6258 com seletor, snapshots remotos e revisão do 6257 | e2e + API + runbook `runbook-gcp-producao.md` | ✅ |
 | SEO técnico para produção | prerender com canonical/domínio, HTML inicial, robots.txt e sitemap.xml | ✅ |
+| Cor estadual consistente com municípios oficiais no Amapá | API com 16 fixtures municipais: 12 PT e 4 PL; teste de regressão | ✅ |
+| Interface mobile sem overflow e com cabeçalho organizado | e2e em 390×844 + screenshot `mobile-profissional.png` | ✅ |
 | Teclado, foco, tabela alternativa paginada e axe (AT-025) | e2e a11y (2) + testes de componente | ✅ |
 | Rodapé com fonte, horário e não oficialidade (AT-027, RF-044) | e2e `J-01` | ✅ |
 | API com ETag/304 e cache por rota (AT-017/AT-030) | `curl` com `If-None-Match` → 304 | ✅ |

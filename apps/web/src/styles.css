@@ -901,20 +901,164 @@ a {
 }
 
 @media (max-width: 640px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .app {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  .header {
+    padding: 12px 12px 14px;
+  }
+  .header__top {
+    display: grid;
+    gap: 8px;
+  }
+  .brand {
+    font-size: 19px;
+  }
+  .header__meta {
+    min-width: 0;
+    gap: 6px 10px;
+    font-size: 11px;
+  }
   .header__controls {
     flex-direction: column;
+    align-items: stretch;
+    flex: none;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .election-selector {
+    width: 100%;
+    flex: none;
+  }
+  .election-selector select {
+    width: 100%;
+    min-height: 40px;
+  }
+  .chips {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+  .chip {
+    flex: 0 0 auto;
+    padding: 7px 11px;
+    white-space: nowrap;
   }
   .search {
-    max-width: none;
     width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: none;
+  }
+  .search__input {
+    min-height: 40px;
   }
   .main,
   .race,
   .footer {
     width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    min-width: 0;
   }
-  .race__track {
-    height: 120px;
+  .main {
+    margin-top: 8px;
+  }
+  .view__head h1 {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+  .view__head p {
+    font-size: 13px;
+  }
+  .map-wrap {
+    width: 100%;
+    min-width: 0;
+    padding: 4px;
+  }
+  .map {
+    min-height: 300px;
+  }
+  .map__info {
+    min-height: 36px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .legend {
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .legend ul {
+    flex-wrap: wrap;
+  }
+  .state-layout,
+  .state-layout.has-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .state-layout .map-wrap {
+    min-height: 0;
+  }
+  .panel {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+  .pulse {
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    margin-top: 8px;
+  }
+  .pulse__bezel {
+    padding: 10px 8px 8px;
+  }
+  .pulse__head {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .pulse__head h2 {
+    font-size: 14px;
+  }
+  .pulse__status {
+    font-size: 10px;
+  }
+  .pulse__controls {
+    margin-left: auto;
+  }
+  .pulse__controls .button {
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+  .pulse__screen {
+    height: 112px;
+    margin-top: 8px;
+  }
+  .pulse__readouts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    font-size: 11px;
+  }
+  .pulse__hint {
+    margin-left: 0;
+    line-height: 1.3;
+  }
+  .footer {
+    margin-bottom: 12px;
+    padding: 10px;
+    font-size: 11px;
   }
 }
 

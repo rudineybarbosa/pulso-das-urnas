@@ -132,6 +132,25 @@ describe("API", () => {
     expect(response.json().pleito.id).toBe("6258")
   })
 
+  it("mantém a liderança municipal oficial do Amapá", async () => {
+    const response = await app("fim").inject({
+      method: "GET",
+      url: "/api/v1/escopos/ap?pleito=6257&cargo=1",
+    })
+    const cities = response.json().dados.municipios
+    const parties = cities.reduce(
+      (counts: Record<string, number>, city: { lider: { partido: string } }) => {
+        counts[city.lider.partido] = (counts[city.lider.partido] ?? 0) + 1
+        return counts
+      },
+      {},
+    )
+
+    expect(cities).toHaveLength(16)
+    expect(parties).toEqual({ PT: 12, PL: 4 })
+    expect(cities.find((city: { nome: string }) => city.nome === "MACAPÁ").lider.partido).toBe("PL")
+  })
+
   it("sem votos deixa estados sem líder", async () => {
     const response = await app("sem-votos").inject({ method: "GET", url: "/api/v1/panorama" })
     const body = response.json()

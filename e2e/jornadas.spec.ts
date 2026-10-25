@@ -86,6 +86,15 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     ).toBe(true)
   })
 
+  test("mobile não cria overflow e organiza o cabeçalho", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto("/br")
+    await expect(page.getByRole("combobox", { name: "Pleito" })).toBeVisible()
+    await expect(page.getByLabel("digite o nome do estado ou da cidade:")).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+    expect(await page.locator(".pulse").boundingBox()).not.toBeNull()
+  })
+
   test("prefers-reduced-motion desliga a animação", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await page.goto("/br")
