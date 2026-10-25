@@ -418,15 +418,36 @@ Budget é alerta, não bloqueio automático.
 
 ## 12. Erros comuns
 
-| Erro                       | Causa provável                          | Ação                                                       |
-| -------------------------- | --------------------------------------- | ---------------------------------------------------------- |
-| `billing account required` | projeto sem billing                     | vincular billing                                           |
-| `bucket name unavailable`  | nome global ocupado                     | escolher outro nome e ajustar backend                      |
-| `403 run.invoker`          | IAM incompleto                          | conferir `roles/run.invoker`                               |
-| `repository not found`     | Artifact Registry não criado            | aplicar infraestrutura e repetir push                      |
-| 6258 sem dados             | TSE ainda não publicou ou job não rodou | conferir horário, execução e `fonte.status`; não usar 6257 |
-| Firebase em URL errada     | site não explícito                      | conferir `firebase.json` e `hosting:sites:list`            |
-| soft 404                   | fallback SPA responde 200               | corrigir `404.html`/rewrites antes do Search Console       |
+| Erro                           | Causa provável                          | Ação                                                          |
+| ------------------------------ | --------------------------------------- | ------------------------------------------------------------- |
+| `billing account required`     | projeto sem billing                     | vincular billing                                              |
+| `bucket name unavailable`      | nome global ocupado                     | escolher outro nome e ajustar backend                         |
+| `403 run.invoker`              | IAM incompleto                          | conferir `roles/run.invoker`                                  |
+| `repository not found`         | Artifact Registry não criado            | aplicar infraestrutura e repetir push                         |
+| 6258 sem dados                 | TSE ainda não publicou ou job não rodou | conferir horário, execução e `fonte.status`; não usar 6257    |
+| `pulso-ingest` falha com `403` | `sa-ingest-prod` sem leitura no bucket  | aplicar `roles/storage.objectViewer` para o SA de ingestão    |
+| Job ok, mas API parada         | TSE não atualizou ou cache antigo       | conferir `last-modified`/`idg` do arquivo do TSE e o ponteiro |
+| Site mostra `100%` sem votos   | API antiga com progresso fixo           | conferir a revisão/imagem e `apuracao.percentual` na API      |
+| Um estado sem cor              | arquivo da UF ainda zerado no TSE       | conferir `dg`/`idg` do arquivo da UF; o mapa não inventa      |
+| Firebase em URL errada         | site não explícito                      | conferir `firebase.json` e `hosting:sites:list`               |
+| soft 404                       | fallback SPA responde 200               | corrigir `404.html`/rewrites antes do Search Console          |
+
+Diagnóstico rápido de dados parados:
+
+```bash
+gcloud run jobs executions list --job pulso-ingest \
+  --project pulso-das-urnas --region southamerica-east1 --limit 5
+gcloud logging read \
+  'resource.type="cloud_run_job" AND resource.labels.job_name="pulso-ingest"' \
+  --project pulso-das-urnas --limit 30
+curl -sI 'https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json' \
+  | grep -i last-modified
+curl -fsS 'https://pulso-das-urnas.web.app/api/v1/panorama?pleito=6258&cargo=1' \
+  | jq '{apuracao,fonte:{status:.fonte.status,generatedAt:.fonte.generatedAt,sourceAgeSeconds:.fonte.sourceAgeSeconds}}'
+```
+
+Se `fonte.sourceAgeSeconds` crescer e o `last-modified` do TSE não mudar, o problema é a fonte,
+não o Pulso. O site mantém o último snapshot e mostra o horário.
 
 ## 13. SEO e descoberta
 
