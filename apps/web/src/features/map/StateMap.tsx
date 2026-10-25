@@ -108,6 +108,11 @@ export function StateMap({ uf, ibge, snapshot, onSelect }: Props) {
             <strong>{hover.nome}</strong>
             <span>{hover.lider ? `${hover.lider} lidera` : "Sem dados"}</span>
           </>
+        ) : snapshot.municipiosCarregando ? (
+          <span>
+            Carregando votos municipais: {snapshot.municipiosCarregados ?? 0}/
+            {snapshot.municipiosTotal ?? "…"} municípios…
+          </span>
         ) : (
           <span>Clique em um município para ver os votos por candidato.</span>
         )}

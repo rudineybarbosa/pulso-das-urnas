@@ -110,6 +110,9 @@ export interface ScopeSnapshot {
   escopo: ScopeRef
   cargo: Office
   origem: FallbackOrigin | null
+  municipiosCarregados?: number
+  municipiosTotal?: number
+  municipiosCarregando?: boolean
   dados: ScopeData | null
 }
 
@@ -258,6 +261,9 @@ export const scopeSnapshotSchema = z.object({
       generatedAt: z.string(),
     })
     .nullable(),
+  municipiosCarregados: z.number().optional(),
+  municipiosTotal: z.number().optional(),
+  municipiosCarregando: z.boolean().optional(),
   dados: z
     .object({
       apuracao: z.object({

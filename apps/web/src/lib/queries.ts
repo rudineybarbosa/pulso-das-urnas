@@ -26,8 +26,10 @@ export function useScope(uf: string, cargo: string, election = DEFAULT_ELECTION,
     queryKey: ["scope", election, uf, cargo],
     queryFn: () => getJson<ScopeSnapshot>(`/escopos/${uf}?pleito=${election}&cargo=${cargo}`),
     enabled: Boolean(uf),
-    refetchInterval: (query) =>
-      query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
+    refetchInterval: (query) => {
+      if (query.state.data?.municipiosCarregando) return active ? 5_000 : 60_000
+      return query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active)
+    },
   })
 }
 

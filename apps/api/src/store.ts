@@ -113,6 +113,11 @@ export class DataStore {
   private readonly remoteRefreshedAt = new Map<string, number>()
   private readonly remoteRefreshInflight = new Map<string, Promise<void>>()
   private readonly remoteCollectedAt = new Map<string, string>()
+  private readonly municipalityRowsCache = new Map<
+    string,
+    NonNullable<ScopeSnapshot["dados"]>["municipios"]
+  >()
+  private readonly municipalityRowsInflight = new Map<string, Promise<void>>()
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
@@ -551,12 +556,24 @@ export class DataStore {
           ),
         ),
       )
-    if (snapshot.dados && (this.mode === "real" || hasCompleteLocalCities)) {
+    const totalMunicipalities = cities.length
+    if (snapshot.dados && this.mode === "real") {
+      const rowsKey = `${election}:${uf}:${code}`
+      const rows = this.municipalityRowsCache.get(rowsKey) ?? []
+      snapshot.dados.municipios = this.municipalityRowsWithNames(uf, cities, rows)
+      snapshot.municipiosCarregados = rows.length
+      snapshot.municipiosTotal = totalMunicipalities
+      snapshot.municipiosCarregando = rows.length < totalMunicipalities
+      this.startMunicipalityRows(uf, code, this.dataElection(election, code), election)
+    } else if (snapshot.dados && hasCompleteLocalCities) {
       snapshot.dados.municipios = await this.realMunicipalityRows(
         uf,
         code,
         this.dataElection(election, code),
       )
+      snapshot.municipiosCarregados = totalMunicipalities
+      snapshot.municipiosTotal = totalMunicipalities
+      snapshot.municipiosCarregando = false
     } else if (snapshot.dados) {
       snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
         const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
@@ -582,10 +599,44 @@ export class DataStore {
     return snapshot
   }
 
+  private municipalityRowsWithNames(
+    uf: string,
+    cities: Array<{ ibge: number; nome: string }>,
+    rows: NonNullable<ScopeSnapshot["dados"]>["municipios"],
+  ): NonNullable<ScopeSnapshot["dados"]>["municipios"] {
+    const byIbge = new Map((rows ?? []).map((row) => [row.ibge, row]))
+    return cities.map(
+      (city) =>
+        byIbge.get(city.ibge) ?? {
+          ibge: city.ibge,
+          nome: city.nome,
+          uf,
+          cor: null,
+          lider: null,
+          percentual: null,
+        },
+    )
+  }
+
+  private startMunicipalityRows(
+    uf: string,
+    code: string,
+    dataElection: string,
+    displayElection: string,
+  ): void {
+    const key = `${displayElection}:${uf}:${code}`
+    if (this.municipalityRowsInflight.has(key)) return
+    const task = (async () => {
+      await this.realMunicipalityRows(uf, code, dataElection, key)
+    })().finally(() => this.municipalityRowsInflight.delete(key))
+    this.municipalityRowsInflight.set(key, task)
+  }
+
   private async realMunicipalityRows(
     uf: string,
     code: string,
     election: string,
+    cacheKey?: string,
   ): Promise<NonNullable<ScopeSnapshot["dados"]>["municipios"]> {
     const cities = this.municipalities.ufs[uf] ?? []
     const rows: NonNullable<ScopeSnapshot["dados"]>["municipios"] = []
@@ -618,6 +669,7 @@ export class DataStore {
           percentual: leader ? computeShare(leader.votos, valid) : null,
         })
       }
+      if (cacheKey) this.municipalityRowsCache.set(cacheKey, [...rows])
       if (this.mode === "real" && index + 4 < cities.length) {
         await new Promise((resolve) => setTimeout(resolve, 800))
       }
