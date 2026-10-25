@@ -17,7 +17,8 @@ export function usePanorama(cargo: string, election = DEFAULT_ELECTION, active =
   return useQuery({
     queryKey: ["panorama", election, cargo],
     queryFn: () => getJson<Panorama>(`/panorama?pleito=${election}&cargo=${cargo}`),
-    refetchInterval: (query) => (query.state.data?.apuracao.finalizada ? 60_000 : live(active)),
+    refetchInterval: (query) =>
+      query.state.data?.fonte.status === "finalizado" ? 60_000 : live(active),
   })
 }
 
@@ -28,7 +29,7 @@ export function useScope(uf: string, cargo: string, election = DEFAULT_ELECTION,
     enabled: Boolean(uf),
     refetchInterval: (query) => {
       if (query.state.data?.municipiosCarregando) return active ? 5_000 : 60_000
-      return query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active)
+      return query.state.data?.fonte.status === "finalizado" ? 60_000 : live(active)
     },
   })
 }
@@ -44,7 +45,7 @@ export function useMunicipality(
     queryFn: () => getJson<ScopeSnapshot>(`/municipios/${ibge}?pleito=${election}&cargo=${cargo}`),
     enabled: Number.isFinite(ibge) && ibge > 0,
     refetchInterval: (query) =>
-      query.state.data?.dados?.apuracao.finalizada ? 60_000 : live(active),
+      query.state.data?.fonte.status === "finalizado" ? 60_000 : live(active),
   })
 }
 
