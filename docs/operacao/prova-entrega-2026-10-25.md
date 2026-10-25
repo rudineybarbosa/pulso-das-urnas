@@ -5,6 +5,9 @@ Ambiente: produção (`https://pulso-das-urnas.web.app`).
 Ticket: mapa estadual mostrava votos no painel municipal, mas vários estados continuavam sem
 cores ou presos em `0/N`.
 
+Commit publicado em `dev` e `main`: `a01ee3b`.
+Imagem ativa: `southamerica-east1-docker.pkg.dev/pulso-das-urnas/pulso/api@sha256:68a1d5eb…`.
+
 ## Causa raiz
 
 O endpoint estadual devolvia ETag calculado apenas por `versao`, que não mudava quando os
@@ -72,11 +75,16 @@ pinta os municípios conforme chegam.
 ```text
 pnpm lint                     ok
 pnpm typecheck                ok
-pnpm test                     95 testes, 19 arquivos
+pnpm test                     96 testes, 19 arquivos
 playwright e2e/jornadas       13 jornadas
 playwright e2e/a11y           2 cenários
 terraform validate            ok
 ```
+
+Primeira pintura de um estado grande (São Paulo, 645 municípios, instância recém-reiniciada):
+primeira resposta imediata com `0/645` e progresso; `645/645` com cor em 8,1 s. Com 14 estados
+abertos ao mesmo tempo, a primeira resposta levou 1,4 s e os estados menores terminaram em até
+10 s; a leitura do cache é limitada a 24 operações simultâneas por instância.
 
 ## Incidente de escrita corrigido no mesmo dia
 
