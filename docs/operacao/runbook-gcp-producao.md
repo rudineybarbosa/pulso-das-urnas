@@ -228,6 +228,24 @@ ausente e apenas uma instância por estado (lease no Firestore).
 
 Evidência da correção e do ensaio dos 27 estados: [prova-entrega-2026-10-25.md](prova-entrega-2026-10-25.md).
 
+### 8.2. Consultar o exterior (somente leitura)
+
+O TSE publica os votos do exterior no escopo `zz`, separado dos 27 estados:
+
+```bash
+# ranking nacional + ranking por consulado (186 locais)
+pnpm exec tsx scripts/tse/exterior.ts --election=6258
+
+# só o agregado nacional, resposta imediata
+pnpm exec tsx scripts/tse/exterior.ts --election=6258 --sem-locais
+
+# 1º turno, com CSV para planilha
+pnpm exec tsx scripts/tse/exterior.ts --election=6257 --top=10 --csv=/tmp/exterior.csv
+```
+
+O script só lê o TSE; não grava no Storage nem altera a API. Repita o comando durante a
+apuração para ver a atualização. `--top=N` controla o tamanho das listas.
+
 ## 9. Publicar frontend e validar
 
 ```bash
