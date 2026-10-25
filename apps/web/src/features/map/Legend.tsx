@@ -10,7 +10,11 @@ export function Legend({ panorama }: { panorama: Panorama }) {
       <ul className="legend__parties">
         {[...parties.entries()].slice(0, 12).map(([sigla, hex]) => (
           <li key={sigla}>
-            <span className="legend__chip" style={{ background: hex }} aria-hidden="true" />
+            <span
+              className="legend__chip legend__chip--party"
+              ref={(element) => element?.style.setProperty("--legend-color", hex)}
+              aria-hidden="true"
+            />
             {sigla}
           </li>
         ))}

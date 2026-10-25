@@ -79,7 +79,14 @@ export function ScopePanel({ snapshot, cargos, activeCargo, onCargo, onClose }: 
                   </span>
                 </div>
                 <div className="candidate__bar" aria-hidden="true">
-                  <span style={{ width: `${(candidate.votos / max) * 100}%` }} />
+                  <span
+                    ref={(element) =>
+                      element?.style.setProperty(
+                        "--candidate-width",
+                        `${(candidate.votos / max) * 100}%`,
+                      )
+                    }
+                  />
                 </div>
                 <span className="candidate__situation">{candidate.situacao}</span>
               </li>

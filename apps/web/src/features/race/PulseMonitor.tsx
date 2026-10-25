@@ -167,8 +167,8 @@ export function PulseMonitor({
                       key={index}
                       href="#pulse-motif"
                       x={index * 80}
-                      className="pulse__trace"
-                      style={{ stroke: channel.cor, opacity: channel.lider ? 1 : 0.55 }}
+                      className={`pulse__trace ${channel.lider ? "pulse__trace--leader" : ""}`}
+                      ref={(element) => element?.style.setProperty("--pulse-color", channel.cor)}
                       strokeWidth={channel.lider ? 3.4 : 2.4}
                       vectorEffect="non-scaling-stroke"
                     />
@@ -208,7 +208,7 @@ export function PulseMonitor({
             <div className="pulse__readout" key={channel.id}>
               <span
                 className="pulse__party"
-                style={{ background: channel.cor }}
+                ref={(element) => element?.style.setProperty("--party-color", channel.cor)}
                 aria-hidden="true"
               />
               <strong>{channel.nome}</strong>
