@@ -19,8 +19,8 @@ Cloud Run pulso-api
 Cloud Run Job pulso-ingest
   consulta o TSE e grava snapshots imutáveis
 
-Cloud Scheduler pulso-ingest-1m
-  dispara o job em 25/10; o job valida 16:55–00:00
+Cloud Scheduler pulso-ingest-16h56 + pulso-ingest-1m
+  disparam o job a partir de 16:56 em 25/10; o job valida 16:55–00:00
 ```
 
 O site continua disponível fora da janela. Depois da meia-noite, a ingestão para e a API mantém o último snapshot com horário e frescor.
@@ -247,11 +247,13 @@ A segunda resposta deve ser `304`.
 
 ### Antes de 16:30
 
-Deixe o Scheduler pausado:
+Deixe os jobs do Scheduler pausados:
 
 ```bash
-gcloud scheduler jobs pause pulso-ingest-1m \
-  --project "$PROJECT_ID" --location "$REGION"
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs pause "$job" \
+    --project "$PROJECT_ID" --location "$REGION"
+done
 ```
 
 ### 16:30
@@ -271,14 +273,16 @@ Execute os smoke tests da seção 9. Não espere dados de 6258 antes da publica�
 
 ### 16:55
 
-Retome o Scheduler:
+Retome os jobs do Scheduler:
 
 ```bash
-gcloud scheduler jobs resume pulso-ingest-1m \
-  --project "$PROJECT_ID" --location "$REGION"
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs resume "$job" \
+    --project "$PROJECT_ID" --location "$REGION"
+done
 ```
 
-O primeiro disparo pode ocorrer no minuto seguinte. O job valida a janela em Brasília, consulta 6258 e grava snapshots no bucket.
+O primeiro disparo ocorre a partir de 16:56. O job valida a janela em Brasília, consulta 6258 e grava snapshots no bucket.
 
 ### 17:00
 
@@ -301,8 +305,10 @@ A cada hora verifique `sourceAgeSeconds`, `collectedAgeSeconds`, lag do job, 5xx
 ### 00:00–00:05
 
 ```bash
-gcloud scheduler jobs pause pulso-ingest-1m \
-  --project "$PROJECT_ID" --location "$REGION"
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs pause "$job" \
+    --project "$PROJECT_ID" --location "$REGION"
+done
 gcloud run services update pulso-api \
   --project "$PROJECT_ID" --region "$REGION" --min 0
 ```
@@ -312,8 +318,10 @@ O site permanece acessível com o último snapshot.
 ## 11. Rollback e kill switch
 
 ```bash
-gcloud scheduler jobs pause pulso-ingest-1m \
-  --project "$PROJECT_ID" --location "$REGION"
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs pause "$job" \
+    --project "$PROJECT_ID" --location "$REGION"
+done
 gcloud run services update pulso-api \
   --project "$PROJECT_ID" --region "$REGION" --max 0
 ```
