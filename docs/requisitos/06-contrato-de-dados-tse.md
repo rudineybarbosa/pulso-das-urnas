@@ -140,7 +140,7 @@ a cada ciclo (RN-012):
 
 ## 3. Contrato interno da API
 
-Base: `https://pulsodasurnas.com.br/api/v1` (prod); `https://pulso-das-urnas.web.app/api/v1` permanece como endereço alternativo. JSON, `charset=utf-8`.
+Base: `https://pulso-das-urnas.web.app/api/v1` (dev/prod). JSON, `charset=utf-8`.
 
 Toda resposta de resultado respeita o teto de staleness de RN-040: durante a apuração `s-maxage + stale-while-revalidate + stale-if-error ≤ 30 s`; após `finalizada`, ≤ 6 h.
 
