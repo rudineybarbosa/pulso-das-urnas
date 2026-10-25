@@ -359,6 +359,13 @@ export class DataStore {
     )
   }
 
+  private dataElection(election: string, code: string): string {
+    if (code === PRESIDENT) return election
+    if (election === FIRST_ELECTION) return "6259"
+    if (election === SECOND_ELECTION) return "6260"
+    return election
+  }
+
   async refresh(election: string): Promise<void> {
     if (!this.repository) return
     const refreshedAt = this.remoteRefreshedAt.get(election)
@@ -545,7 +552,11 @@ export class DataStore {
         ),
       )
     if (snapshot.dados && (this.mode === "real" || hasCompleteLocalCities)) {
-      snapshot.dados.municipios = await this.realMunicipalityRows(uf, code, election)
+      snapshot.dados.municipios = await this.realMunicipalityRows(
+        uf,
+        code,
+        this.dataElection(election, code),
+      )
     } else if (snapshot.dados) {
       snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
         const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
@@ -642,6 +653,7 @@ export class DataStore {
     election = SECOND_ELECTION,
   ): Promise<ScopeSnapshot | null> {
     const code = cargoId || PRESIDENT
+    const dataElection = this.dataElection(election, code)
     const ufEntry = Object.entries(this.municipalities.ufs).find(([, cities]) =>
       cities.some((city) => city.ibge === ibge),
     )
@@ -657,7 +669,7 @@ export class DataStore {
       ibge: city.ibge,
     }
     if (this.mode === "real") {
-      const cityParsed = await this.loadCity(uf, city.tse, code, election)
+      const cityParsed = await this.loadCity(uf, city.tse, code, dataElection)
       if (!cityParsed) return this.snapshotEnvelope(escopo, code, null, [], "sem_dado", election)
       const cityCandidates = this.candidates(cityParsed, code)
       const cityOffice = this.office(cityParsed, code)
@@ -722,7 +734,7 @@ export class DataStore {
         parsed,
         escopo.uf?.toLowerCase() ?? "br",
         `${this.scenario}:${progress}`,
-        election,
+        parsed?.electionId ?? election,
       ),
       escopo,
       cargo: this.officeInfo(parsed, code),
