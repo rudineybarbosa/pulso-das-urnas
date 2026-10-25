@@ -67,6 +67,8 @@ resource "google_cloud_run_v2_service" "api" {
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
+  scaling {}
+
   template {
     service_account = google_service_account.api.email
     scaling {
@@ -100,6 +102,12 @@ resource "google_cloud_run_v2_service" "api" {
         limits = { cpu = "1", memory = "512Mi" }
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      scaling[0],
+    ]
   }
 }
 
