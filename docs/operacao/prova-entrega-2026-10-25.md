@@ -5,7 +5,7 @@ Ambiente: produção (`https://pulso-das-urnas.web.app`).
 Ticket: mapa estadual mostrava votos no painel municipal, mas vários estados continuavam sem
 cores ou presos em `0/N`.
 
-Commit publicado em `dev` e `main`: `0d427a6`.
+Commit publicado em `dev` e `main`: `37bf0eb` (correção de código em `0d427a6`).
 Imagem ativa: `southamerica-east1-docker.pkg.dev/pulso-das-urnas/pulso/api@sha256:93d7a5a7…`.
 
 ## Causa raiz
