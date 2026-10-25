@@ -6,7 +6,7 @@ Ticket: mapa estadual mostrava votos no painel municipal, mas vários estados co
 cores ou presos em `0/N`.
 
 Commit publicado em `dev` e `main`: `a01ee3b`.
-Imagem ativa: `southamerica-east1-docker.pkg.dev/pulso-das-urnas/pulso/api@sha256:68a1d5eb…`.
+Imagem ativa: `southamerica-east1-docker.pkg.dev/pulso-das-urnas/pulso/api@sha256:93d7a5a7…`.
 
 ## Causa raiz
 

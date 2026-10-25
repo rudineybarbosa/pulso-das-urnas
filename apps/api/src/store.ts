@@ -736,7 +736,10 @@ export class DataStore {
       snapshot.municipiosCarregando = loaded.size < totalMunicipalities
       snapshot.municipiosAtualizadosEm = this.oldestMunicipalityTime(rowsKey)
       snapshot.versao = `${snapshot.versao}:${loaded.size}:${this.municipalityVersion.get(rowsKey) ?? 0}`
-      this.maybeSweepMunicipalities(uf, code, this.dataElection(election, code), election)
+      const complete = loaded.size >= totalMunicipalities
+      if (!complete || this.isLiveElection(election)) {
+        this.maybeSweepMunicipalities(uf, code, this.dataElection(election, code), election)
+      }
     } else if (snapshot.dados) {
       const hasCompleteLocalCities =
         cities.length > 0 &&
