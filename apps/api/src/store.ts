@@ -80,7 +80,7 @@ const CITY_PANEL_TTL_MS = 15_000
 const CITY_ROWS_TTL_MS = 120_000
 const MUNICIPAL_REFRESH_MS = 120_000
 const MUNICIPAL_BATCH = 16
-const TSE_MIN_INTERVAL_MS = 300
+const TSE_MIN_INTERVAL_MS = 400
 
 function readPartyTable(): PartyTable {
   const path = join(findRepoRoot(), "data", "party-colors.json")
@@ -130,6 +130,8 @@ export class DataStore {
   private readonly municipalitySweepInflight = new Map<string, Promise<void>>()
   private tseQueue: Promise<void> = Promise.resolve()
   private lastTseRequestAt = 0
+  private repositoryActive = 0
+  private repositoryQueue: Array<() => void> = []
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
@@ -208,6 +210,23 @@ export class DataStore {
     return this.refreshCity(uf, tse, code, election)
   }
 
+  /**
+   * Fecha a torneira do Storage/Firestore quando muitas abas abrem estados ao
+   * mesmo tempo. Sem isso, 27 varreduras concorrentes saturam a instância.
+   */
+  private async withRepositorySlot<T>(task: () => Promise<T>): Promise<T> {
+    if (this.repositoryActive >= 24) {
+      await new Promise<void>((resolve) => this.repositoryQueue.push(resolve))
+    }
+    this.repositoryActive += 1
+    try {
+      return await task()
+    } finally {
+      this.repositoryActive -= 1
+      this.repositoryQueue.shift()?.()
+    }
+  }
+
   private async readCitySnapshot(
     uf: string,
     tse: string,
@@ -215,12 +234,14 @@ export class DataStore {
     election: string,
   ): Promise<{ parsed: ParsedScope; collectedAt: string; etag?: string } | null> {
     if (!this.repository) return null
-    const remote = await this.repository.getCurrent({
-      ciclo: "ele2026",
-      pleito: election,
-      escopo: `${uf.toLowerCase()}${tse}`,
-      cargo: code,
-    })
+    const remote = await this.withRepositorySlot(() =>
+      this.repository!.getCurrent({
+        ciclo: "ele2026",
+        pleito: election,
+        escopo: `${uf.toLowerCase()}${tse}`,
+        cargo: code,
+      }),
+    )
     if (!remote) return null
     const parsed = parseResult(remote.body as never)
     const key = `${election}:${uf}:${tse}:${code}`
@@ -253,8 +274,8 @@ export class DataStore {
         this.cityCache.set(key, { at: this.now(), parsed, etag: result.etag ?? undefined })
         this.cityCollectedAt.set(key, collectedAt)
         if (this.repository) {
-          void this.repository
-            .putIfNewer({
+          await this.withRepositorySlot(() =>
+            this.repository!.putIfNewer({
               ciclo: "ele2026",
               pleito: election,
               escopo: `${uf.toLowerCase()}${tse}`,
@@ -265,8 +286,13 @@ export class DataStore {
               parserVersion: "1.0.0",
               etag: result.etag,
               body: result.body,
-            })
-            .catch(() => undefined)
+            }),
+          ).catch((error: unknown) => {
+            console.error(
+              `falha ao gravar município no cache compartilhado: ${uf}${tse} c${code}`,
+              error instanceof Error ? error.message : String(error),
+            )
+          })
         }
         return parsed
       } catch {
@@ -278,8 +304,8 @@ export class DataStore {
   }
 
   /**
-   * Uma única fila por instância limita as consultas ao TSE a ~3 por segundo,
-   * mesmo quando vários municípios são carregados em paralelo.
+   * Uma única fila por instância limita as consultas ao TSE a menos de 3 por
+   * segundo, mesmo quando vários municípios são carregados em paralelo.
    */
   private waitTseSlot(): Promise<void> {
     const previous = this.tseQueue

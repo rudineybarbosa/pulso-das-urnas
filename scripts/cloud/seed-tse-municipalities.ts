@@ -47,13 +47,23 @@ async function collect(uf: string, tse: string): Promise<void> {
   if (saved % 100 === 0) console.log(`municipios processados: ${saved}`)
 }
 
-const groups = Object.entries(municipalities.ufs).filter(([, cities]) => cities.length > 0)
+const onlyUf = process.env.UF?.toUpperCase()
+const groups = Object.entries(municipalities.ufs).filter(
+  ([uf, cities]) => cities.length > 0 && (!onlyUf || uf === onlyUf),
+)
 for (const [uf, cities] of groups) {
   const before = saved
   for (let index = 0; index < cities.length; index += 4) {
     const batch = cities.slice(index, index + 4)
     const results = await Promise.allSettled(batch.map((city) => collect(uf, city.tse)))
-    failed += results.filter((result) => result.status === "rejected").length
+    for (const result of results) {
+      if (result.status === "rejected") {
+        failed += 1
+        if (failed <= 20) {
+          console.error(`${uf}: falha em município`, String(result.reason).slice(0, 200))
+        }
+      }
+    }
     if (index + 4 < cities.length) await new Promise((resolve) => setTimeout(resolve, 800))
   }
   console.log(`${uf}: ${cities.length} municípios, ${saved - before} gravados`)

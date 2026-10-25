@@ -18,6 +18,8 @@ export interface MunicipalSweepOptions {
   limit?: number
   client?: MunicipalClient
   pause?: (ms: number) => Promise<void>
+  /** Evita varrer municípios antes de o TSE publicar o pleito. */
+  requireNational?: boolean
 }
 
 export interface MunicipalSweepSummary {
@@ -27,6 +29,7 @@ export interface MunicipalSweepSummary {
   start: number
   next: number
   completedCycle: boolean
+  waitingForNational: boolean
   attempted: number
   updated: number
   unchanged: number
@@ -89,6 +92,7 @@ export async function sweepMunicipalities(
     start,
     next: start,
     completedCycle: false,
+    waitingForNational: false,
     attempted: 0,
     updated: 0,
     unchanged: 0,
@@ -96,6 +100,15 @@ export async function sweepMunicipalities(
     failed: 0,
   }
   if (total === 0) return summary
+  if (options.requireNational !== false && repository.getPointer) {
+    const national = await repository
+      .getPointer({ ciclo: config.cycle, pleito: election, escopo: "br", cargo: "1" })
+      .catch(() => null)
+    if (!national) {
+      summary.waitingForNational = true
+      return summary
+    }
+  }
   let index = start
   while (summary.attempted < limit && Date.now() < deadline) {
     const batch: typeof entries = []
@@ -147,6 +160,10 @@ export async function sweepMunicipalities(
     if (index === 0) summary.completedCycle = true
     await repository.setCursor?.(cursorKey(config, cargo), index)
     if (summary.attempted < limit && Date.now() < deadline) await pause(BATCH_PAUSE_MS)
+  }
+  if (summary.attempted > 0 && summary.missing > summary.attempted / 2) {
+    summary.next = start
+    await repository.setCursor?.(cursorKey(config, cargo), start)
   }
   return summary
 }

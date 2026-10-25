@@ -63,9 +63,11 @@ async function auditState(uf: string, cities: Array<{ tse: string }>): Promise<S
   return result
 }
 
+const onlyUf = process.env.UF?.toUpperCase()
 const states: StateAudit[] = []
 for (const [uf, cities] of Object.entries(municipalities.ufs)) {
   if (cities.length === 0) continue
+  if (onlyUf && uf !== onlyUf) continue
   states.push(await auditState(uf, cities))
 }
 

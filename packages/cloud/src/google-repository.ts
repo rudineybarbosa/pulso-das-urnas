@@ -58,19 +58,31 @@ export class GoogleSnapshotRepository implements SnapshotRepository {
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      if (!message.includes("conditionNotMet") && !message.includes("Precondition")) throw error
+      const code = (error as { code?: number }).code
+      const alreadyExists =
+        code === 412 ||
+        /conditionNotMet|pre-?condition/i.test(message) ||
+        /at least one of the pre-conditions/i.test(message)
+      if (!alreadyExists) throw error
     }
 
     const ref = this.firestore.collection("current").doc(pointerDocumentName(input))
-    return this.firestore.runTransaction(async (transaction) => {
-      const currentSnapshot = await transaction.get(ref)
-      const current = currentSnapshot.exists
-        ? (currentSnapshot.data() as SnapshotPointer)
-        : undefined
-      if (!isNewer(input, current)) return current as SnapshotPointer
-      transaction.set(ref, pointer)
-      return pointer
-    })
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await this.firestore.runTransaction(async (transaction) => {
+          const currentSnapshot = await transaction.get(ref)
+          const current = currentSnapshot.exists
+            ? (currentSnapshot.data() as SnapshotPointer)
+            : undefined
+          if (!isNewer(input, current)) return current as SnapshotPointer
+          transaction.set(ref, pointer)
+          return pointer
+        })
+      } catch (error) {
+        if (attempt >= 2) throw error
+        await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt))
+      }
+    }
   }
 
   async getCurrent(key: SnapshotKey): Promise<StoredSnapshot | null> {

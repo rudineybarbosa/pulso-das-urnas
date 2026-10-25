@@ -48,6 +48,7 @@ describe("aquecimento municipal", () => {
     const calls: string[] = []
     const summary = await sweepMunicipalities(config, repo, {
       limit: 8,
+      requireNational: false,
       pause: async () => undefined,
       client: {
         fetch: async (url) => {
@@ -73,6 +74,7 @@ describe("aquecimento municipal", () => {
     const { repository: repo, saved } = repository(cursor)
     const summary = await sweepMunicipalities(config, repo, {
       limit: 4,
+      requireNational: false,
       pause: async () => undefined,
       client: {
         fetch: async () => ({ status: 304, notModified: true, etag: '"abc"', body: null }),
@@ -86,6 +88,25 @@ describe("aquecimento municipal", () => {
     expect(cursor.value).toBe(104)
   })
 
+  it("espera o arquivo nacional antes de varrer municípios", async () => {
+    const cursor = { value: 0 }
+    const { repository: repo } = repository(cursor)
+    const calls: string[] = []
+    const summary = await sweepMunicipalities(config, repo, {
+      client: {
+        fetch: async (url) => {
+          calls.push(url)
+          return { status: 200, notModified: false, etag: null, body }
+        },
+      },
+    })
+
+    expect(summary.waitingForNational).toBe(true)
+    expect(summary.attempted).toBe(0)
+    expect(calls).toHaveLength(0)
+    expect(cursor.value).toBe(0)
+  })
+
   it("usa o pleito estadual correto para cargos estaduais", async () => {
     const cursor = { value: 0 }
     const { repository: repo } = repository(cursor)
@@ -93,6 +114,7 @@ describe("aquecimento municipal", () => {
     await sweepMunicipalities(config, repo, {
       cargo: "7",
       limit: 4,
+      requireNational: false,
       pause: async () => undefined,
       client: {
         fetch: async (url) => {

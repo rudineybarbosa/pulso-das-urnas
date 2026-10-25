@@ -202,6 +202,32 @@ gcloud firestore databases list --project "$PROJECT_ID"
 
 O script não cria números: ele lê somente os arquivos oficiais versionados em `data/snapshots/raw`.
 
+### 8.1. Aquecer os municípios no cache compartilhado
+
+O mapa estadual pinta um município por vez. Para o primeiro turno, importe todos os arquivos
+municipais oficiais (Presidente) uma vez:
+
+```bash
+GCP_PROJECT="$PROJECT_ID" SNAPSHOT_BUCKET=pulso-snapshots-prod \
+ELECTION_ID=6257 CARGO_ID=1 \
+pnpm exec tsx scripts/cloud/seed-tse-municipalities.ts
+```
+
+O script usa ETag: rodar de novo baixa só o que mudou. Audite a cobertura (falha com código 1 se
+faltar município):
+
+```bash
+GCP_PROJECT="$PROJECT_ID" SNAPSHOT_BUCKET=pulso-snapshots-prod \
+ELECTION_ID=6257 CARGO_ID=1 \
+pnpm exec tsx scripts/cloud/audit-municipalities.ts
+```
+
+Durante a janela eleitoral, o job `pulso-municipios` faz o mesmo ciclo a cada 5 minutos para o
+pleito ativo, continuando do cursor salvo no Firestore. A API só consulta o TSE para município
+ausente e apenas uma instância por estado (lease no Firestore).
+
+Evidência da correção e do ensaio dos 27 estados: [prova-entrega-2026-10-25.md](prova-entrega-2026-10-25.md).
+
 ## 9. Publicar frontend e validar
 
 ```bash
@@ -243,6 +269,21 @@ curl -i -H "If-None-Match: $ETAG" \
 
 A segunda resposta deve ser `304`.
 
+Municípios: enquanto o estado ainda está carregando, o ETag **precisa mudar** a cada lote. Se vier
+`304` com `municipiosCarregando=true`, o navegador ficará preso no primeiro retrato:
+
+```bash
+UF=sp
+FIRST=$(curl -sS -D - "https://${HOST}/api/v1/escopos/${UF}?pleito=6257&cargo=1" -o /tmp/uf.json \
+  | awk -F': ' 'tolower($1)=="etag" {print $2}' | tr -d '\r')
+sleep 5
+curl -sS -o /tmp/uf2.json -w '%{http_code}\n' \
+  -H "If-None-Match: ${FIRST}" \
+  "https://${HOST}/api/v1/escopos/${UF}?pleito=6257&cargo=1"
+jq '{municipiosCarregados,municipiosTotal,municipiosCarregando,
+     cores:(.dados.municipios|map(select(.cor!=null))|length)}' /tmp/uf2.json
+```
+
 ## 10. Cronograma do dia 25/10/2026
 
 ### Antes de 16:30
@@ -250,7 +291,7 @@ A segunda resposta deve ser `304`.
 Deixe os jobs do Scheduler pausados:
 
 ```bash
-for job in pulso-ingest-16h56 pulso-ingest-1m; do
+for job in pulso-ingest-16h56 pulso-ingest-1m pulso-municipios-5m; do
   gcloud scheduler jobs pause "$job" \
     --project "$PROJECT_ID" --location "$REGION"
 done
@@ -276,13 +317,13 @@ Execute os smoke tests da seção 9. Não espere dados de 6258 antes da publica�
 Retome os jobs do Scheduler:
 
 ```bash
-for job in pulso-ingest-16h56 pulso-ingest-1m; do
+for job in pulso-ingest-16h56 pulso-ingest-1m pulso-municipios-5m; do
   gcloud scheduler jobs resume "$job" \
     --project "$PROJECT_ID" --location "$REGION"
 done
 ```
 
-O primeiro disparo ocorre a partir de 16:56. O job valida a janela em Brasília, consulta 6258 e grava snapshots no bucket.
+O primeiro disparo ocorre a partir de 16:56. O job valida a janela em Brasília, consulta 6258 e grava snapshots no bucket. O job municipal começa no primeiro múltiplo de 5 minutos depois das 16:55 e percorre o país em ciclo.
 
 ### 17:00
 
@@ -294,6 +335,9 @@ gcloud logging read \
   'resource.type="cloud_run_job" AND resource.labels.job_name="pulso-ingest"' \
   --project "$PROJECT_ID" --limit 20
 
+gcloud run jobs executions list \
+  --job pulso-municipios --project "$PROJECT_ID" --region "$REGION" --limit 3
+
 curl -fsS "https://${HOST}/api/v1/panorama?pleito=6258&cargo=1" \
   | jq '{eleicao,fonte,apuracao}'
 ```
@@ -301,11 +345,13 @@ curl -fsS "https://${HOST}/api/v1/panorama?pleito=6258&cargo=1" \
 ### Durante a apuração
 
 A cada hora verifique `sourceAgeSeconds`, `collectedAgeSeconds`, lag do job, 5xx, hit ratio e custo.
+No mapa, confirme que `municipiosCarregando=false` e que `municipiosAtualizadosEm` avança. Abra um
+município e confira que os votos do painel são pelo menos tão recentes quanto o horário do topo.
 
 ### 00:00–00:05
 
 ```bash
-for job in pulso-ingest-16h56 pulso-ingest-1m; do
+for job in pulso-ingest-16h56 pulso-ingest-1m pulso-municipios-5m; do
   gcloud scheduler jobs pause "$job" \
     --project "$PROJECT_ID" --location "$REGION"
 done
@@ -313,7 +359,9 @@ gcloud run services update pulso-api \
   --project "$PROJECT_ID" --region "$REGION" --min 0
 ```
 
-O site permanece acessível com o último snapshot.
+O site permanece acessível com o último snapshot. Depois da apuração, volte
+`min_instances = 0` em `infra/terraform/envs/prod/main.tf` e aplique o plano para retirar o custo
+fixo; mantenha `cpu_idle = false` apenas durante a janela eleitoral.
 
 ## 11. Rollback e kill switch
 
