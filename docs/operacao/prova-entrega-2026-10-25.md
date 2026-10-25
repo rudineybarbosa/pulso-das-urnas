@@ -21,16 +21,16 @@ Havia ainda três agravantes:
 
 ## Correções entregues
 
-| Item | Evidência |
-| --- | --- |
-| ETag muda quando os municípios chegam | teste `modo real pinta municípios do cache compartilhado e muda o ETag ao carregar` |
-| Cache compartilhado em Storage/Firestore | `readCitySnapshot` + `putIfNewer`; auditoria 5571/5571 |
-| Primeira pintura rápida | leitura em lotes de 16 no cache; 27 estados completos em até 8 s |
-| Município ausente continua pendente | `municipalityRow` só conta quando o cargo existe no arquivo |
-| Revalidação do painel | TTL de 15 s, `stale-while-revalidate`; limite de ~2,5 req/s por instância ao TSE |
-| CDN não repete o `0/N` | `s-maxage=1` enquanto `municipiosCarregando=true` |
-| Aquecimento contínuo | job `pulso-municipios` + Scheduler `pulso-municipios-5m` |
-| API aquecida | `min_instances=1` e `cpu_idle=false` no serviço `pulso-api` |
+| Item                                     | Evidência                                                                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| ETag muda quando os municípios chegam    | teste `modo real pinta municípios do cache compartilhado e muda o ETag ao carregar` |
+| Cache compartilhado em Storage/Firestore | `readCitySnapshot` + `putIfNewer`; auditoria 5571/5571                              |
+| Primeira pintura rápida                  | leitura em lotes de 16 no cache; 27 estados completos em até 8 s                    |
+| Município ausente continua pendente      | `municipalityRow` só conta quando o cargo existe no arquivo                         |
+| Revalidação do painel                    | TTL de 15 s, `stale-while-revalidate`; limite de ~2,5 req/s por instância ao TSE    |
+| CDN não repete o `0/N`                   | `s-maxage=1` enquanto `municipiosCarregando=true`                                   |
+| Aquecimento contínuo                     | job `pulso-municipios` + Scheduler `pulso-municipios-5m`                            |
+| API aquecida                             | `min_instances=1` e `cpu_idle=false` no serviço `pulso-api`                         |
 
 ## Verificação em produção
 

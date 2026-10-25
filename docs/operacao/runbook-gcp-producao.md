@@ -400,15 +400,15 @@ Budget é alerta, não bloqueio automático.
 
 ## 12. Erros comuns
 
-| Erro | Causa provável | Ação |
-|---|---|---|
-| `billing account required` | projeto sem billing | vincular billing |
-| `bucket name unavailable` | nome global ocupado | escolher outro nome e ajustar backend |
-| `403 run.invoker` | IAM incompleto | conferir `roles/run.invoker` |
-| `repository not found` | Artifact Registry não criado | aplicar infraestrutura e repetir push |
-| 6258 sem dados | TSE ainda não publicou ou job não rodou | conferir horário, execução e `fonte.status`; não usar 6257 |
-| Firebase em URL errada | site não explícito | conferir `firebase.json` e `hosting:sites:list` |
-| soft 404 | fallback SPA responde 200 | corrigir `404.html`/rewrites antes do Search Console |
+| Erro                       | Causa provável                          | Ação                                                       |
+| -------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| `billing account required` | projeto sem billing                     | vincular billing                                           |
+| `bucket name unavailable`  | nome global ocupado                     | escolher outro nome e ajustar backend                      |
+| `403 run.invoker`          | IAM incompleto                          | conferir `roles/run.invoker`                               |
+| `repository not found`     | Artifact Registry não criado            | aplicar infraestrutura e repetir push                      |
+| 6258 sem dados             | TSE ainda não publicou ou job não rodou | conferir horário, execução e `fonte.status`; não usar 6257 |
+| Firebase em URL errada     | site não explícito                      | conferir `firebase.json` e `hosting:sites:list`            |
+| soft 404                   | fallback SPA responde 200               | corrigir `404.html`/rewrites antes do Search Console       |
 
 ## 13. SEO e descoberta
 
