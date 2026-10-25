@@ -1,0 +1,242 @@
+{
+  "source": "Tribunal Superior Eleitoral",
+  "capturedAt": "2026-10-25T01:18:55.967Z",
+  "cycle": "ele2026",
+  "electionId": "6257",
+  "round": 1,
+  "files": [
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ac/ac-c0001-e006257-u.json",
+      "path": "2026/6257/ac-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "c67559bc6e31b503162fcdd74604f00ce877efc4b90d7fdea8b48a0e634b4b0e",
+      "parserVersion": "1.0.0",
+      "size": 9293
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/al/al-c0001-e006257-u.json",
+      "path": "2026/6257/al-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "96e234bc2a91d872d54a9951fbd60dce9b54ad0dc1fe347e322d89d25be187d4",
+      "parserVersion": "1.0.0",
+      "size": 9324
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/am/am-c0001-e006257-u.json",
+      "path": "2026/6257/am-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "8cbbec68324aec9f02df666154d47b2ee00f8c6380a099c7442721adf45214e7",
+      "parserVersion": "1.0.0",
+      "size": 9329
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ap/ap-c0001-e006257-u.json",
+      "path": "2026/6257/ap-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "42c0d70f1abefdc5e5c5f75f4d341a66c373b34863685f22bc31aa742ec6a062",
+      "parserVersion": "1.0.0",
+      "size": 9294
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ba/ba-c0001-e006257-u.json",
+      "path": "2026/6257/ba-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "b50778a7cb0f9763994873ea045e95da1ee962577675dfcb99786f2853208415",
+      "parserVersion": "1.0.0",
+      "size": 9365
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/br/br-c0001-e006257-u.json",
+      "path": "2026/6257/br-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "2866703eb4fc0ad6f17f0e081a00ab1175490b0786325e700cff1d8b40d25bca",
+      "parserVersion": "1.0.0",
+      "size": 9349
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ce/ce-c0001-e006257-u.json",
+      "path": "2026/6257/ce-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "ff65f98d1f1462c8230a2856f6c0e46ee7fb2a8f8ac7f1bf60979c6b1eea5f07",
+      "parserVersion": "1.0.0",
+      "size": 9355
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/df/df-c0001-e006257-u.json",
+      "path": "2026/6257/df-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "6fa13cd7f0b3024777891dbe94723e7e39ecbba76bdc702e9f81428826a7283a",
+      "parserVersion": "1.0.0",
+      "size": 9324
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/es/es-c0001-e006257-u.json",
+      "path": "2026/6257/es-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "9e8036ad95dfc1fa119b26164bba9201fa6562c007418c773f13e7f5b6fe319d",
+      "parserVersion": "1.0.0",
+      "size": 9328
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/go/go-c0001-e006257-u.json",
+      "path": "2026/6257/go-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "0bca25dc783c2b3c711f0cfe7432fe9e10d78d5ef8449c6d1368740bbe2dc1d6",
+      "parserVersion": "1.0.0",
+      "size": 9343
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ma/ma-c0001-e006257-u.json",
+      "path": "2026/6257/ma-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "22daf14542c35a384967da16c71ca02b5292b5703d4ef09357dc1a1a65b9a41d",
+      "parserVersion": "1.0.0",
+      "size": 9343
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/mg/mg-c0001-e006257-u.json",
+      "path": "2026/6257/mg-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "d01c373751e029fdba347cce9f367679707bfb897f3942b3e233a273b87db199",
+      "parserVersion": "1.0.0",
+      "size": 9382
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ms/ms-c0001-e006257-u.json",
+      "path": "2026/6257/ms-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "35a5e50df19afeea34928eb3810f53cbcd122730c27d4d2fb2a52cdbd3ae6b19",
+      "parserVersion": "1.0.0",
+      "size": 9324
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/mt/mt-c0001-e006257-u.json",
+      "path": "2026/6257/mt-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "0e7250b701d2889ba864082682e5ff5e14593bbac0a978c7d1ee88e6b42e285e",
+      "parserVersion": "1.0.0",
+      "size": 9330
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/pa/pa-c0001-e006257-u.json",
+      "path": "2026/6257/pa-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "669dbc9548fb9a1f8ebb47a656234364c4aa18eb69c15f7b80634d16e23c2989",
+      "parserVersion": "1.0.0",
+      "size": 9351
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/pb/pb-c0001-e006257-u.json",
+      "path": "2026/6257/pb-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "7da03ae14bac3cf830d723ef04a02d5f830dc696ca9480647e76f1e146648e00",
+      "parserVersion": "1.0.0",
+      "size": 9335
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/pe/pe-c0001-e006257-u.json",
+      "path": "2026/6257/pe-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "a18f9e0ec8f7073b3a9ff932321ae8592d3a906b875a33e080c2abb2444510bf",
+      "parserVersion": "1.0.0",
+      "size": 9349
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/pi/pi-c0001-e006257-u.json",
+      "path": "2026/6257/pi-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "d6dac2da5cbff871ab4c323beae7df6902ccb6e9c7a6b38e17518b2eac8842a2",
+      "parserVersion": "1.0.0",
+      "size": 9333
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/pr/pr-c0001-e006257-u.json",
+      "path": "2026/6257/pr-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "d54aff50901472503eece5aabdce59518e67fd57cb7e7337b81132f995d72d02",
+      "parserVersion": "1.0.0",
+      "size": 9364
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/rj/rj-c0001-e006257-u.json",
+      "path": "2026/6257/rj-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "8a67b766e614b72140c0f6e026a097e4b20098f0c66cd528bb6a7aed194fda6a",
+      "parserVersion": "1.0.0",
+      "size": 9377
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/rn/rn-c0001-e006257-u.json",
+      "path": "2026/6257/rn-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "87e559952a7a66a7592b8a9617e53af7e5748ee73d7802807e8e5a05e33df7f4",
+      "parserVersion": "1.0.0",
+      "size": 9329
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/ro/ro-c0001-e006257-u.json",
+      "path": "2026/6257/ro-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "c696369d5397d28e78c8313e5dd767728e995825bb053f1035b83f2688e68c31",
+      "parserVersion": "1.0.0",
+      "size": 9309
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/rr/rr-c0001-e006257-u.json",
+      "path": "2026/6257/rr-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "9bf774caceab5460c906ca3120dfbe72039b92bd852d21fc77e6a728253e0218",
+      "parserVersion": "1.0.0",
+      "size": 9277
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/rs/rs-c0001-e006257-u.json",
+      "path": "2026/6257/rs-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "7a56c5d75aa8a0aa75127e72814a7cbbbf9876b96f1d77a0c3154b95fd43371c",
+      "parserVersion": "1.0.0",
+      "size": 9367
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/sc/sc-c0001-e006257-u.json",
+      "path": "2026/6257/sc-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "b51645c4cf68c1fe4761acdafd1214325c259661eb6522b286b97ab1b1d13381",
+      "parserVersion": "1.0.0",
+      "size": 9355
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/se/se-c0001-e006257-u.json",
+      "path": "2026/6257/se-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "c163da0f27c4b0bbdcc34359c87b88607d5823573c813d5835afff339340be77",
+      "parserVersion": "1.0.0",
+      "size": 9321
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/sp/sp-c0001-e006257-u.json",
+      "path": "2026/6257/sp-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "6e417d16de88b97e27abffc58f404e753ee73a34142da0bb266821d903e67c68",
+      "parserVersion": "1.0.0",
+      "size": 9396
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/sp/sp71072-c0001-e006257-u.json",
+      "path": "2026/6257/sp71072-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "27c9f91b6a9f07bce22381ba31c4151906ef828f3a7ca3f52c0b9345f1ae7c3b",
+      "parserVersion": "1.0.0",
+      "size": 9376
+    },
+    {
+      "url": "https://resultados.tse.jus.br/oficial/ele2026/6257/dados/to/to-c0001-e006257-u.json",
+      "path": "2026/6257/to-c0001-e006257-u.json",
+      "capturedAt": "2026-10-25T01:18:55.967Z",
+      "sha256": "76150bdef9fdbf557decc1d7e073b1fa361849316bb6cce5b8f6208ac48cdbd5",
+      "parserVersion": "1.0.0",
+      "size": 9306
+    }
+  ],
+  "parserVersion": "1.0.0"
+}

@@ -40,6 +40,7 @@ Regras:
 - Dados são públicos; nenhuma fixture contém dado pessoal.
 - Fixtures grandes são reduzidas apenas quando o campo removido não é usado (documentar no manifest).
 - `manifest.json` registra também a `parserVersion` semver que produziu a fixture; mudança de formato exige fixture nova capturada (RN-042).
+- O manifest `data/fixtures/tse/manifest.json` registra as 29 respostas oficiais do Presidente no 1º turno de 2026 (`6257`), conferidas contra `resultados.tse.jus.br` em 25/10/2026, com SHA-256 e tamanho de cada arquivo.
 - **Pin e rollback de parser (D-050):** com `PARSER_VERSION_PIN=<versao>` a ingestão reprocessa a fixture com a versão fixada, sem novo deploy; falha de schema não grava, não avança `current`, mantém o último snapshot válido, registra `parser_schema_failure` e alerta. A flag é auditada no log e o rollback está em `docs/operacao/rollback-parser.md`. Teste: `apps/ingest/parser-pin.test.ts` e `apps/ingest/schema-failure.test.ts`.
 
 ## 3. Casos de teste das regras

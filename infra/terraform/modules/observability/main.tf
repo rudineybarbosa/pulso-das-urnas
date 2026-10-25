@@ -21,6 +21,10 @@ variable "early_warning_percent" {
   default = 0
 }
 
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
 resource "google_monitoring_uptime_check_config" "api" {
   count        = var.public_host == "" ? 0 : 1
   project      = var.project_id
@@ -49,7 +53,7 @@ resource "google_billing_budget" "monthly" {
   display_name    = "pulso-${var.env}"
 
   budget_filter {
-    projects = ["projects/${var.project_id}"]
+    projects = ["projects/${data.google_project.project.number}"]
   }
 
   amount {
