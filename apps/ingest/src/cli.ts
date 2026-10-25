@@ -4,6 +4,7 @@ import { fetchTseJson, findRepoRoot } from "@pulso/tse"
 import { GoogleSnapshotRepository } from "@pulso/cloud"
 import { collectElection } from "./collector"
 import { electionConfigFromEnv } from "./election-config"
+import { sweepMunicipalities } from "./municipalities"
 import { INGEST_ACTIVATION_AT, INGEST_DEACTIVATION_AT, isIngestActive } from "./window"
 
 const BASE = "https://resultados.tse.jus.br/oficial"
@@ -28,14 +29,21 @@ async function main(): Promise<void> {
   if (process.env.DATA_MODE === "real") {
     const bucketName = process.env.SNAPSHOT_BUCKET
     if (!bucketName) throw new Error("SNAPSHOT_BUCKET é obrigatório em DATA_MODE=real")
-    const summary = await collectElection(
-      electionConfigFromEnv(),
-      undefined,
-      new GoogleSnapshotRepository({
-        projectId: process.env.GCP_PROJECT,
-        bucketName,
-      }),
-    )
+    const repository = new GoogleSnapshotRepository({
+      projectId: process.env.GCP_PROJECT,
+      bucketName,
+    })
+    const config = electionConfigFromEnv()
+    if (process.env.MUNICIPAL_SWEEP_ONLY === "1") {
+      const summary = await sweepMunicipalities(config, repository, {
+        cargo: process.env.CARGO_ID ?? "1",
+        budgetMs: Number(process.env.MUNICIPAL_BUDGET_MS ?? 200_000),
+        limit: Number(process.env.MUNICIPAL_LIMIT ?? Number.POSITIVE_INFINITY),
+      })
+      console.log(`aquecimento municipal concluído: ${JSON.stringify(summary)}`)
+      return
+    }
+    const summary = await collectElection(config, undefined, repository)
     console.log(`coleta real concluída: ${JSON.stringify(summary)}`)
     return
   }

@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+import { describe, expect, it, vi } from "vitest"
+import type { SnapshotRepository, SnapshotKey } from "@pulso/cloud"
 import { createApp } from "./app"
 import { DataStore } from "./store"
 
@@ -54,6 +57,82 @@ describe("API", () => {
     expect(body.escopo.uf).toBe("SP")
     expect(body.dados.municipios.length).toBeGreaterThan(600)
     expect(body.status).toBe("ok")
+  })
+
+  it("modo real pinta municípios do cache compartilhado e muda o ETag ao carregar", async () => {
+    const body = JSON.parse(
+      readFileSync(
+        join(process.cwd(), "data/fixtures/tse/2026/6257/ap06017-c0001-e006257-u.json"),
+        "utf8",
+      ),
+    ) as unknown
+    const key: SnapshotKey = {
+      ciclo: "ele2026",
+      pleito: "6257",
+      escopo: "ap06017",
+      cargo: "1",
+    }
+    const repository: SnapshotRepository = {
+      getCurrent: async (requested) =>
+        requested.pleito === key.pleito &&
+        requested.escopo === key.escopo &&
+        requested.cargo === key.cargo
+          ? {
+              pointer: {
+                ...key,
+                idg: "2839103",
+                objectName: "snapshots/teste.json",
+                generatedAt: "2026-10-25T02:00:00.000Z",
+                collectedAt: "2026-10-25T02:00:01.000Z",
+                parserVersion: "1.0.0",
+              },
+              body,
+            }
+          : null,
+      putIfNewer: async (input) => input as never,
+      acquireLease: async () => false,
+    }
+    const store = new DataStore({ mode: "real", scenario: "fim", repository })
+    const instance = createApp({ store, rateLimit: 10_000 })
+    const first = await instance.inject({ method: "GET", url: "/api/v1/escopos/ap?pleito=6257" })
+    const firstBody = first.json()
+    expect(firstBody.dados.municipios).toHaveLength(16)
+    expect(firstBody.municipiosTotal).toBe(16)
+    expect(firstBody.municipiosCarregando).toBe(true)
+    expect(firstBody.dados.municipios.every((city: { cor: unknown }) => city.cor === null)).toBe(
+      true,
+    )
+
+    let second = first
+    await vi.waitFor(
+      async () => {
+        second = await instance.inject({ method: "GET", url: "/api/v1/escopos/ap?pleito=6257" })
+        expect(second.json().municipiosCarregados).toBeGreaterThan(0)
+      },
+      { timeout: 3_000, interval: 25 },
+    )
+    const secondBody = second.json()
+    expect(secondBody.municipiosCarregados).toBe(1)
+    expect(secondBody.municipiosCarregando).toBe(true)
+    expect(second.headers.etag).not.toBe(first.headers.etag)
+    const loaded = secondBody.dados.municipios.find(
+      (city: { ibge: number }) => city.ibge === 1600105,
+    )
+    expect(loaded.lider.partido).toBe("PT")
+    expect(loaded.cor.hex).toBeTruthy()
+    expect(loaded.percentual).toBeGreaterThan(0)
+    const pending = secondBody.dados.municipios.find(
+      (city: { ibge: number }) => city.ibge !== 1600105,
+    )
+    expect(pending.cor).toBeNull()
+    expect(pending.lider).toBeNull()
+
+    const cached = await instance.inject({
+      method: "GET",
+      url: "/api/v1/escopos/ap?pleito=6257",
+      headers: { "if-none-match": second.headers.etag as string },
+    })
+    expect(cached.statusCode).toBe(304)
   })
 
   it("serve município e cargos", async () => {

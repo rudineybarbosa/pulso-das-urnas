@@ -40,6 +40,8 @@ import {
   type ParsedScope,
 } from "@pulso/tse"
 
+type MunicipalityRow = NonNullable<NonNullable<ScopeSnapshot["dados"]>["municipios"]>[number]
+
 export type DataMode = "fake" | "real"
 export type Scenario =
   | "sem-votos"
@@ -74,6 +76,12 @@ const GOVERNOR = "3"
 const FIRST_ELECTION = "6257"
 const SECOND_ELECTION = "6258"
 
+const CITY_PANEL_TTL_MS = 15_000
+const CITY_ROWS_TTL_MS = 120_000
+const MUNICIPAL_REFRESH_MS = 120_000
+const MUNICIPAL_BATCH = 16
+const TSE_MIN_INTERVAL_MS = 300
+
 function readPartyTable(): PartyTable {
   const path = join(findRepoRoot(), "data", "party-colors.json")
   return JSON.parse(readFileSync(path, "utf8")) as PartyTable
@@ -100,6 +108,7 @@ export class DataStore {
   private readonly partyTable = readPartyTable()
   private readonly byUf = new Map<string, Map<string, ParsedScope>>()
   private readonly cityCache = new Map<string, { at: number; parsed: ParsedScope; etag?: string }>()
+  private readonly cityCollectedAt = new Map<string, string>()
   private readonly cityInflight = new Map<string, Promise<ParsedScope | null>>()
   private readonly leaderState = new Map<
     string,
@@ -113,11 +122,14 @@ export class DataStore {
   private readonly remoteRefreshedAt = new Map<string, number>()
   private readonly remoteRefreshInflight = new Map<string, Promise<void>>()
   private readonly remoteCollectedAt = new Map<string, string>()
-  private readonly municipalityRowsCache = new Map<
-    string,
-    NonNullable<ScopeSnapshot["dados"]>["municipios"]
-  >()
-  private readonly municipalityRowsInflight = new Map<string, Promise<void>>()
+  private readonly municipalityRows = new Map<string, Map<number, MunicipalityRow>>()
+  private readonly municipalityLoaded = new Map<string, Set<number>>()
+  private readonly municipalityTimes = new Map<string, Map<number, string>>()
+  private readonly municipalityVersion = new Map<string, number>()
+  private readonly municipalitySweepAt = new Map<string, number>()
+  private readonly municipalitySweepInflight = new Map<string, Promise<void>>()
+  private tseQueue: Promise<void> = Promise.resolve()
+  private lastTseRequestAt = 0
 
   constructor(options: StoreOptions = {}) {
     this.mode = options.mode ?? "fake"
@@ -168,42 +180,119 @@ export class DataStore {
     tse: string,
     code: string,
     election = FIRST_ELECTION,
+    acceptStale = false,
+    allowFetch = true,
   ): Promise<ParsedScope | null> {
     const key = `${election}:${uf}:${tse}:${code}`
     const local = this.tryLoad(
       `2026/${election}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`,
     )
     if (local) return local
-    if (this.repository) {
-      const remote = await this.repository.getCurrent({
-        ciclo: "ele2026",
-        pleito: election,
-        escopo: `${uf.toLowerCase()}${tse}`,
-        cargo: code,
-      })
-      if (remote) {
-        const parsed = parseResult(remote.body as never)
-        this.cityCache.set(key, { at: this.now(), parsed, etag: remote.pointer.etag ?? undefined })
-        return parsed
-      }
-    }
-    if (this.mode !== "real") return null
+    const ttl = acceptStale ? CITY_ROWS_TTL_MS : CITY_PANEL_TTL_MS
     const cached = this.cityCache.get(key)
-    if (cached && this.now() - cached.at < 30_000) return cached.parsed
+    if (cached && this.now() - cached.at < ttl) return cached.parsed
+    if (cached) {
+      if (acceptStale) {
+        const remote = await this.readCitySnapshot(uf, tse, code, election)
+        if (remote) return remote.parsed
+        return cached.parsed
+      }
+      void this.refreshCity(uf, tse, code, election)
+      return cached.parsed
+    }
+    if (this.repository) {
+      const remote = await this.readCitySnapshot(uf, tse, code, election)
+      if (remote) return remote.parsed
+    }
+    if (this.mode !== "real" || !allowFetch) return null
+    return this.refreshCity(uf, tse, code, election)
+  }
+
+  private async readCitySnapshot(
+    uf: string,
+    tse: string,
+    code: string,
+    election: string,
+  ): Promise<{ parsed: ParsedScope; collectedAt: string; etag?: string } | null> {
+    if (!this.repository) return null
+    const remote = await this.repository.getCurrent({
+      ciclo: "ele2026",
+      pleito: election,
+      escopo: `${uf.toLowerCase()}${tse}`,
+      cargo: code,
+    })
+    if (!remote) return null
+    const parsed = parseResult(remote.body as never)
+    const key = `${election}:${uf}:${tse}:${code}`
+    const etag = remote.pointer.etag ?? undefined
+    const collectedAt = remote.pointer.collectedAt ?? parsed.generatedAt
+    this.cityCache.set(key, { at: this.now(), parsed, etag })
+    this.cityCollectedAt.set(key, collectedAt)
+    return { parsed, collectedAt, etag }
+  }
+
+  private async refreshCity(
+    uf: string,
+    tse: string,
+    code: string,
+    election: string,
+  ): Promise<ParsedScope | null> {
+    const key = `${election}:${uf}:${tse}:${code}`
+    const cached = this.cityCache.get(key)
     const inflight = this.cityInflight.get(key)
     if (inflight) return inflight
+    if (this.mode !== "real") return cached?.parsed ?? null
     const url = `https://resultados.tse.jus.br/oficial/ele2026/${election}/dados/${uf.toLowerCase()}/${uf.toLowerCase()}${tse}-c000${code}-e00${election}-u.json`
-    const task = fetchTseJson(url, { etag: cached?.etag })
-      .then((result) => {
+    const task = (async () => {
+      await this.waitTseSlot()
+      try {
+        const result = await fetchTseJson(url, { etag: cached?.etag })
         if (result.notModified || !result.body) return cached?.parsed ?? null
         const parsed = parseResult(result.body as never)
+        const collectedAt = new Date(this.now()).toISOString()
         this.cityCache.set(key, { at: this.now(), parsed, etag: result.etag ?? undefined })
+        this.cityCollectedAt.set(key, collectedAt)
+        if (this.repository) {
+          void this.repository
+            .putIfNewer({
+              ciclo: "ele2026",
+              pleito: election,
+              escopo: `${uf.toLowerCase()}${tse}`,
+              cargo: code,
+              idg: parsed.generationId,
+              generatedAt: parsed.generatedAt,
+              collectedAt,
+              parserVersion: "1.0.0",
+              etag: result.etag,
+              body: result.body,
+            })
+            .catch(() => undefined)
+        }
         return parsed
-      })
-      .catch(() => cached?.parsed ?? null)
-      .finally(() => this.cityInflight.delete(key))
+      } catch {
+        return cached?.parsed ?? null
+      }
+    })().finally(() => this.cityInflight.delete(key))
     this.cityInflight.set(key, task)
     return task
+  }
+
+  /**
+   * Uma única fila por instância limita as consultas ao TSE a ~3 por segundo,
+   * mesmo quando vários municípios são carregados em paralelo.
+   */
+  private waitTseSlot(): Promise<void> {
+    const previous = this.tseQueue
+    let release: () => void = () => {}
+    this.tseQueue = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    return previous.then(async () => {
+      const wait = Math.max(0, this.lastTseRequestAt + TSE_MIN_INTERVAL_MS - Date.now())
+      if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+      this.lastTseRequestAt = Date.now()
+      release()
+    })
   }
 
   progress(): number {
@@ -560,132 +649,224 @@ export class DataStore {
       election,
     )
     const cities = this.municipalities.ufs[uf] ?? []
-    const hasCompleteLocalCities =
-      cities.length > 0 &&
-      cities.every((city) =>
-        Boolean(
-          this.tryLoad(
-            `2026/${election}/${uf.toLowerCase()}${city.tse}-c000${code}-e00${election}-u.json`,
-          ),
-        ),
-      )
     const totalMunicipalities = cities.length
     if (snapshot.dados && this.mode === "real") {
       const rowsKey = `${election}:${uf}:${code}`
-      const rows = this.municipalityRowsCache.get(rowsKey) ?? []
-      snapshot.dados.municipios = this.municipalityRowsWithNames(uf, cities, rows)
-      snapshot.municipiosCarregados = rows.length
-      snapshot.municipiosTotal = totalMunicipalities
-      snapshot.municipiosCarregando = rows.length < totalMunicipalities
-      this.startMunicipalityRows(uf, code, this.dataElection(election, code), election)
-    } else if (snapshot.dados && hasCompleteLocalCities) {
-      snapshot.dados.municipios = await this.realMunicipalityRows(
-        uf,
-        code,
-        this.dataElection(election, code),
+      const rows = this.municipalityRows.get(rowsKey) ?? new Map()
+      const loaded = this.municipalityLoaded.get(rowsKey) ?? new Set<number>()
+      this.municipalityRows.set(rowsKey, rows)
+      this.municipalityLoaded.set(rowsKey, loaded)
+      snapshot.dados.municipios = cities.map(
+        (city) =>
+          rows.get(city.ibge) ?? {
+            ibge: city.ibge,
+            nome: city.nome,
+            uf,
+            cor: null,
+            lider: null,
+            percentual: null,
+          },
       )
+      snapshot.municipiosCarregados = loaded.size
+      snapshot.municipiosTotal = totalMunicipalities
+      snapshot.municipiosCarregando = loaded.size < totalMunicipalities
+      snapshot.municipiosAtualizadosEm = this.oldestMunicipalityTime(rowsKey)
+      snapshot.versao = `${snapshot.versao}:${loaded.size}:${this.municipalityVersion.get(rowsKey) ?? 0}`
+      this.maybeSweepMunicipalities(uf, code, this.dataElection(election, code), election)
+    } else if (snapshot.dados) {
+      const hasCompleteLocalCities =
+        cities.length > 0 &&
+        cities.every((city) =>
+          Boolean(
+            this.tryLoad(
+              `2026/${election}/${uf.toLowerCase()}${city.tse}-c000${code}-e00${election}-u.json`,
+            ),
+          ),
+        )
+      if (hasCompleteLocalCities) {
+        snapshot.dados.municipios = await this.localMunicipalityRows(
+          uf,
+          code,
+          this.dataElection(election, code),
+        )
+      } else {
+        snapshot.dados.municipios = cities.map((city) => {
+          const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
+          const cityLeader = pickLeader(cityCandidates).candidate
+          const cityValid = cityCandidates.reduce((total, candidate) => total + candidate.votos, 0)
+          return {
+            ibge: city.ibge,
+            nome: city.nome,
+            uf,
+            cor: cityLeader ? this.color(cityLeader.partido) : null,
+            lider: cityLeader
+              ? {
+                  candidatoId: cityLeader.id,
+                  nome: cityLeader.nomeUrna,
+                  partido: cityLeader.partido,
+                  votos: cityLeader.votos,
+                }
+              : null,
+            percentual: cityLeader ? computeShare(cityLeader.votos, cityValid) : null,
+          }
+        })
+      }
       snapshot.municipiosCarregados = totalMunicipalities
       snapshot.municipiosTotal = totalMunicipalities
       snapshot.municipiosCarregando = false
-    } else if (snapshot.dados) {
-      snapshot.dados.municipios = (this.municipalities.ufs[uf] ?? []).map((city) => {
-        const cityCandidates = this.cityCandidates(parsed, code, city.ibge)
-        const cityLeader = pickLeader(cityCandidates).candidate
-        const cityValid = cityCandidates.reduce((total, candidate) => total + candidate.votos, 0)
-        return {
-          ibge: city.ibge,
-          nome: city.nome,
-          uf,
-          cor: cityLeader ? this.color(cityLeader.partido) : null,
-          lider: cityLeader
-            ? {
-                candidatoId: cityLeader.id,
-                nome: cityLeader.nomeUrna,
-                partido: cityLeader.partido,
-                votos: cityLeader.votos,
-              }
-            : null,
-          percentual: cityLeader ? computeShare(cityLeader.votos, cityValid) : null,
-        }
-      })
     }
     return snapshot
   }
 
-  private municipalityRowsWithNames(
-    uf: string,
-    cities: Array<{ ibge: number; nome: string }>,
-    rows: NonNullable<ScopeSnapshot["dados"]>["municipios"],
-  ): NonNullable<ScopeSnapshot["dados"]>["municipios"] {
-    const byIbge = new Map((rows ?? []).map((row) => [row.ibge, row]))
-    return cities.map(
-      (city) =>
-        byIbge.get(city.ibge) ?? {
-          ibge: city.ibge,
-          nome: city.nome,
-          uf,
-          cor: null,
-          lider: null,
-          percentual: null,
-        },
-    )
+  private oldestMunicipalityTime(key: string): string | undefined {
+    const times = this.municipalityTimes.get(key)
+    if (!times || times.size === 0) return undefined
+    let oldest: string | undefined
+    for (const time of times.values()) {
+      if (!oldest || Date.parse(time) < Date.parse(oldest)) oldest = time
+    }
+    return oldest
   }
 
-  private startMunicipalityRows(
+  private maybeSweepMunicipalities(
     uf: string,
     code: string,
     dataElection: string,
     displayElection: string,
   ): void {
     const key = `${displayElection}:${uf}:${code}`
-    if (this.municipalityRowsInflight.has(key)) return
-    const task = (async () => {
-      await this.realMunicipalityRows(uf, code, dataElection, key)
-    })().finally(() => this.municipalityRowsInflight.delete(key))
-    this.municipalityRowsInflight.set(key, task)
+    if (this.municipalitySweepInflight.has(key)) return
+    const last = this.municipalitySweepAt.get(key) ?? 0
+    if (this.now() - last < MUNICIPAL_REFRESH_MS) return
+    const task = this.sweepMunicipalities(uf, code, dataElection, displayElection).finally(() => {
+      this.municipalitySweepInflight.delete(key)
+      this.municipalitySweepAt.set(key, this.now())
+    })
+    this.municipalitySweepInflight.set(key, task)
   }
 
-  private async realMunicipalityRows(
+  /**
+   * Monta/atualiza as linhas municipais a partir do cache compartilhado.
+   * Só consulta o TSE quando o município ainda não existe em lugar nenhum,
+   * e nesse caso apenas uma instância detém o lease daquele estado.
+   */
+  private async sweepMunicipalities(
+    uf: string,
+    code: string,
+    dataElection: string,
+    displayElection: string,
+  ): Promise<void> {
+    const key = `${displayElection}:${uf}:${code}`
+    const cities = this.municipalities.ufs[uf] ?? []
+    const rows = this.municipalityRows.get(key) ?? new Map()
+    const loaded = this.municipalityLoaded.get(key) ?? new Set<number>()
+    const times = this.municipalityTimes.get(key) ?? new Map<number, string>()
+    this.municipalityRows.set(key, rows)
+    this.municipalityLoaded.set(key, loaded)
+    this.municipalityTimes.set(key, times)
+    let lease = true
+    const acquire = this.repository?.acquireLease
+    if (acquire) {
+      lease = await acquire
+        .call(this.repository, `municipios:${key}`, 5 * 60_000)
+        .catch(() => false)
+    }
+    try {
+      for (let index = 0; index < cities.length; index += MUNICIPAL_BATCH) {
+        const batch = cities.slice(index, index + MUNICIPAL_BATCH)
+        await Promise.all(
+          batch.map(async (city) => {
+            const parsed = await this.loadCity(uf, city.tse, code, dataElection, true, lease)
+            if (!parsed) return
+            const row = this.municipalityRow(uf, city, code, parsed)
+            if (!row) return
+            const previous = rows.get(city.ibge)
+            rows.set(city.ibge, row)
+            loaded.add(city.ibge)
+            times.set(
+              city.ibge,
+              this.cityCollectedAt.get(`${dataElection}:${uf}:${city.tse}:${code}`) ??
+                new Date(this.now()).toISOString(),
+            )
+            if (JSON.stringify(previous) !== JSON.stringify(row)) {
+              this.municipalityVersion.set(key, (this.municipalityVersion.get(key) ?? 0) + 1)
+            }
+          }),
+        )
+      }
+    } finally {
+      this.municipalitySweepAt.set(key, this.now())
+    }
+  }
+
+  private municipalityRow(
+    uf: string,
+    city: { ibge: number; nome: string },
+    code: string,
+    parsed: ParsedScope,
+  ): MunicipalityRow | null {
+    const office = this.office(parsed, code)
+    if (!office) return null
+    const candidates = this.candidates(parsed, code)
+    const leader = pickLeader(candidates).candidate
+    return {
+      ibge: city.ibge,
+      nome: city.nome,
+      uf,
+      cor: leader ? this.color(leader.partido) : null,
+      lider: leader
+        ? {
+            candidatoId: leader.id,
+            nome: leader.nomeUrna,
+            partido: leader.partido,
+            votos: leader.votos,
+          }
+        : null,
+      percentual: leader ? computeShare(leader.votos, office.validVotes) : null,
+    }
+  }
+
+  private updateMunicipalityRow(
+    uf: string,
+    city: { ibge: number; nome: string; tse: string },
+    code: string,
+    displayElection: string,
+    dataElection: string,
+    parsed: ParsedScope,
+  ): void {
+    const row = this.municipalityRow(uf, city, code, parsed)
+    if (!row) return
+    const key = `${displayElection}:${uf}:${code}`
+    const rows = this.municipalityRows.get(key) ?? new Map()
+    const loaded = this.municipalityLoaded.get(key) ?? new Set<number>()
+    const times = this.municipalityTimes.get(key) ?? new Map<number, string>()
+    const previous = rows.get(city.ibge)
+    rows.set(city.ibge, row)
+    loaded.add(city.ibge)
+    times.set(
+      city.ibge,
+      this.cityCollectedAt.get(`${dataElection}:${uf}:${city.tse}:${code}`) ??
+        new Date(this.now()).toISOString(),
+    )
+    this.municipalityRows.set(key, rows)
+    this.municipalityLoaded.set(key, loaded)
+    this.municipalityTimes.set(key, times)
+    if (JSON.stringify(previous) !== JSON.stringify(row)) {
+      this.municipalityVersion.set(key, (this.municipalityVersion.get(key) ?? 0) + 1)
+    }
+  }
+
+  private async localMunicipalityRows(
     uf: string,
     code: string,
     election: string,
-    cacheKey?: string,
   ): Promise<NonNullable<ScopeSnapshot["dados"]>["municipios"]> {
     const cities = this.municipalities.ufs[uf] ?? []
     const rows: NonNullable<ScopeSnapshot["dados"]>["municipios"] = []
-    for (let index = 0; index < cities.length; index += 4) {
-      const batch = cities.slice(index, index + 4)
-      const parsedBatch = await Promise.all(
-        batch.map(async (city) => ({
-          city,
-          parsed: await this.loadCity(uf, city.tse, code, election),
-        })),
-      )
-      for (const { city, parsed } of parsedBatch) {
-        const candidates = this.candidates(parsed, code)
-        const office = this.office(parsed, code)
-        const leader = pickLeader(candidates).candidate
-        const valid = office?.validVotes ?? 0
-        rows.push({
-          ibge: city.ibge,
-          nome: city.nome,
-          uf,
-          cor: leader ? this.color(leader.partido) : null,
-          lider: leader
-            ? {
-                candidatoId: leader.id,
-                nome: leader.nomeUrna,
-                partido: leader.partido,
-                votos: leader.votos,
-              }
-            : null,
-          percentual: leader ? computeShare(leader.votos, valid) : null,
-        })
-      }
-      if (cacheKey) this.municipalityRowsCache.set(cacheKey, [...rows])
-      if (this.mode === "real" && index + 4 < cities.length) {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-      }
+    for (const city of cities) {
+      const parsed = await this.loadCity(uf, city.tse, code, election, true)
+      const row = parsed ? this.municipalityRow(uf, city, code, parsed) : null
+      if (row) rows.push(row)
     }
     return rows
   }
@@ -746,6 +927,7 @@ export class DataStore {
         validVotes: cityValid,
         hasEligibleLeader: cityLeader !== null,
       })
+      this.updateMunicipalityRow(uf, city, code, election, dataElection, cityParsed)
       return this.snapshotEnvelope(escopo, code, cityParsed, cityCandidates, cityStatus, election)
     }
     const parsed = this.parsedFor(uf, code, election)

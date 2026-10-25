@@ -31,6 +31,16 @@ export interface StoredSnapshot {
 export interface SnapshotRepository {
   putIfNewer(input: SnapshotInput): Promise<SnapshotPointer>
   getCurrent(key: SnapshotKey): Promise<StoredSnapshot | null>
+  /**
+   * Evita que várias instâncias consultem o TSE pelo mesmo estado ao mesmo tempo.
+   * Repositórios em memória (testes) podem omitir: sem lease, a consulta é permitida.
+   */
+  acquireLease?(key: string, ttlMs: number): Promise<boolean>
+  /** Ponteiro sem baixar o corpo, usado pelo aquecedor para reaproveitar o ETag. */
+  getPointer?(key: SnapshotKey): Promise<SnapshotPointer | null>
+  /** Cursor do aquecedor municipal, para continuar de onde a execução anterior parou. */
+  getCursor?(key: string): Promise<number | null>
+  setCursor?(key: string, value: number): Promise<void>
 }
 
 export function snapshotObjectName(input: SnapshotKey & { idg: string }): string {

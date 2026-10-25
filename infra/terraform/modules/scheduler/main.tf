@@ -16,6 +16,16 @@ variable "first_window_schedule" {
   default = "56-59 16 25 10 *"
 }
 
+variable "municipal_job_name" {
+  type    = string
+  default = ""
+}
+
+variable "municipal_schedule" {
+  type    = string
+  default = "*/5 16-23 25 10 *"
+}
+
 resource "google_cloud_scheduler_job" "ingest_first_window" {
   project   = var.project_id
   name      = "pulso-ingest-16h56"
@@ -49,6 +59,25 @@ resource "google_cloud_scheduler_job" "ingest" {
 
   retry_config {
     retry_count = 1
+  }
+}
+
+resource "google_cloud_scheduler_job" "municipal" {
+  count     = var.municipal_job_name == "" ? 0 : 1
+  project   = var.project_id
+  name      = "pulso-municipios-5m"
+  region    = var.region
+  schedule  = var.municipal_schedule
+  time_zone = "America/Sao_Paulo"
+
+  http_target {
+    http_method = "POST"
+    uri         = "https://run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/${var.municipal_job_name}:run"
+    oauth_token { service_account_email = var.service_account_email }
+  }
+
+  retry_config {
+    retry_count = 0
   }
 }
 

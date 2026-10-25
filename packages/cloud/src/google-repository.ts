@@ -81,4 +81,39 @@ export class GoogleSnapshotRepository implements SnapshotRepository {
     const [body] = await this.storage.bucket(this.bucketName).file(pointer.objectName).download()
     return { pointer, body: JSON.parse(body.toString("utf8")) as unknown }
   }
+
+  async getPointer(key: SnapshotKey): Promise<SnapshotPointer | null> {
+    const snapshot = await this.firestore.collection("current").doc(pointerDocumentName(key)).get()
+    return snapshot.exists ? (snapshot.data() as SnapshotPointer) : null
+  }
+
+  async getCursor(key: string): Promise<number | null> {
+    const snapshot = await this.firestore.collection("cursors").doc(key).get()
+    if (!snapshot.exists) return null
+    const value = Number(snapshot.get("value"))
+    return Number.isFinite(value) ? value : null
+  }
+
+  async setCursor(key: string, value: number): Promise<void> {
+    await this.firestore
+      .collection("cursors")
+      .doc(key)
+      .set({ value, updatedAt: new Date().toISOString() })
+  }
+
+  async acquireLease(key: string, ttlMs: number): Promise<boolean> {
+    const ref = this.firestore.collection("leases").doc(key.replace(/[^\w.-]+/g, "_"))
+    return this.firestore.runTransaction(async (transaction) => {
+      const current = await transaction.get(ref)
+      const now = Date.now()
+      const until = current.exists ? Number(current.get("until") ?? 0) : 0
+      if (until > now) return false
+      transaction.set(ref, {
+        until: now + ttlMs,
+        holder: process.env.K_SERVICE ?? "local",
+        acquiredAt: new Date(now).toISOString(),
+      })
+      return true
+    })
+  }
 }

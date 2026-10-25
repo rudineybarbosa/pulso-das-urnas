@@ -93,14 +93,15 @@ module "data" {
 }
 
 module "runtime" {
-  source              = "../../modules/runtime"
-  project_id          = var.project_id
-  env                 = local.env
-  region              = var.region
-  image               = var.image
-  snapshots_bucket    = module.data.snapshots_bucket
-  assets_bucket       = module.data.assets_bucket
-  min_instances       = 0
+  source           = "../../modules/runtime"
+  project_id       = var.project_id
+  env              = local.env
+  region           = var.region
+  image            = var.image
+  snapshots_bucket = module.data.snapshots_bucket
+  assets_bucket    = module.data.assets_bucket
+  # Dia da eleição: mantém a API aquecida. Voltar para 0 depois da apuração.
+  min_instances       = 1
   max_instances       = 6
   default_election_id = var.default_election_id
   depends_on          = [module.apis, module.data]
@@ -111,6 +112,7 @@ module "scheduler" {
   project_id            = var.project_id
   region                = var.region
   job_name              = module.runtime.job_name
+  municipal_job_name    = module.runtime.municipal_job_name
   service_account_email = module.runtime.ingest_service_account
   depends_on            = [module.runtime]
 }

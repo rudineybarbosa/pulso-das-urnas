@@ -113,6 +113,7 @@ export interface ScopeSnapshot {
   municipiosCarregados?: number
   municipiosTotal?: number
   municipiosCarregando?: boolean
+  municipiosAtualizadosEm?: string
   dados: ScopeData | null
 }
 
@@ -264,6 +265,7 @@ export const scopeSnapshotSchema = z.object({
   municipiosCarregados: z.number().optional(),
   municipiosTotal: z.number().optional(),
   municipiosCarregando: z.boolean().optional(),
+  municipiosAtualizadosEm: z.string().optional(),
   dados: z
     .object({
       apuracao: z.object({

@@ -17,6 +17,17 @@ type Props = {
   onSelect: (ibge: number) => void
 }
 
+const timeFormat = new Intl.DateTimeFormat("pt-BR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "America/Sao_Paulo",
+})
+
+function formatTime(iso: string): string {
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? "" : timeFormat.format(date)
+}
+
 function cityCode(properties: Record<string, unknown> | null | undefined): number {
   const value = properties?.codarea ?? properties?.id ?? properties?.CD_MUN ?? ""
   return Number.parseInt(String(value), 10)
@@ -111,10 +122,19 @@ export function StateMap({ uf, ibge, snapshot, onSelect }: Props) {
         ) : snapshot.municipiosCarregando ? (
           <span>
             Carregando votos municipais: {snapshot.municipiosCarregados ?? 0}/
-            {snapshot.municipiosTotal ?? "…"} municípios…
+            {snapshot.municipiosTotal ?? "…"}
+            {snapshot.municipiosTotal
+              ? ` (${Math.round(((snapshot.municipiosCarregados ?? 0) / snapshot.municipiosTotal) * 100)}%)`
+              : ""}{" "}
+            municípios…
           </span>
         ) : (
-          <span>Clique em um município para ver os votos por candidato.</span>
+          <span>
+            {snapshot.municipiosAtualizadosEm
+              ? `Líderes municipais de ${formatTime(snapshot.municipiosAtualizadosEm)} · `
+              : ""}
+            Clique em um município para ver os votos por candidato.
+          </span>
         )}
       </div>
     </div>

@@ -210,11 +210,14 @@ export function createApp(options: AppOptions = {}): FastifyInstance {
         request.id,
       )
     }
+    const snapshot = await store.scopeSnapshot(uf, validated.cargo, validated.election)
     return cached(
       request,
       reply,
-      await store.scopeSnapshot(uf, validated.cargo, validated.election),
-      "public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15",
+      snapshot,
+      snapshot.municipiosCarregando
+        ? "public, max-age=0, s-maxage=1, stale-while-revalidate=2, stale-if-error=15"
+        : "public, max-age=0, s-maxage=5, stale-while-revalidate=10, stale-if-error=15",
     )
   })
 

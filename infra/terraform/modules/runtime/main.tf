@@ -49,6 +49,18 @@ resource "google_project_iam_member" "api_datastore_viewer" {
   member  = "serviceAccount:${google_service_account.api.email}"
 }
 
+resource "google_project_iam_member" "api_datastore_editor" {
+  project = var.project_id
+  role    = "roles/datastore.editor"
+  member  = "serviceAccount:${google_service_account.api.email}"
+}
+
+resource "google_storage_bucket_iam_member" "api_snapshots_writer" {
+  bucket = var.snapshots_bucket
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.api.email}"
+}
+
 resource "google_project_iam_member" "ingest_datastore_editor" {
   project = var.project_id
   role    = "roles/datastore.editor"
@@ -99,7 +111,9 @@ resource "google_cloud_run_v2_service" "api" {
         value = var.default_election_id
       }
       resources {
-        limits = { cpu = "1", memory = "512Mi" }
+        limits            = { cpu = "1", memory = "512Mi" }
+        cpu_idle          = false
+        startup_cpu_boost = true
       }
     }
   }
@@ -178,7 +192,71 @@ resource "google_cloud_run_v2_job" "ingest" {
   }
 }
 
+resource "google_cloud_run_v2_job" "municipal" {
+  project  = var.project_id
+  name     = "pulso-municipios"
+  location = var.region
+
+  template {
+    template {
+      service_account = google_service_account.ingest.email
+      timeout         = "240s"
+      max_retries     = 0
+      containers {
+        image   = var.image
+        command = ["pnpm"]
+        args    = ["--filter", "@pulso/ingest", "dev"]
+        env {
+          name  = "DATA_MODE"
+          value = "real"
+        }
+        env {
+          name  = "MUNICIPAL_SWEEP_ONLY"
+          value = "1"
+        }
+        env {
+          name  = "MUNICIPAL_BUDGET_MS"
+          value = "180000"
+        }
+        env {
+          name  = "MUNICIPAL_LIMIT"
+          value = "900"
+        }
+        env {
+          name  = "CARGO_ID"
+          value = "1"
+        }
+        env {
+          name  = "INGEST_ACTIVATION_AT"
+          value = var.ingest_activation_at
+        }
+        env {
+          name  = "INGEST_DEACTIVATION_AT"
+          value = var.ingest_deactivation_at
+        }
+        env {
+          name  = "GCP_PROJECT"
+          value = var.project_id
+        }
+        env {
+          name  = "SNAPSHOT_BUCKET"
+          value = var.snapshots_bucket
+        }
+        env {
+          name  = "ELECTION_ID"
+          value = var.default_election_id
+        }
+        env {
+          name  = "CICLO"
+          value = "ele2026"
+        }
+      }
+    }
+  }
+}
+
 output "api_url" { value = google_cloud_run_v2_service.api.uri }
 output "api_service_account" { value = google_service_account.api.email }
 output "ingest_service_account" { value = google_service_account.ingest.email }
 output "job_name" { value = google_cloud_run_v2_job.ingest.name }
+output "municipal_job_name" { value = google_cloud_run_v2_job.municipal.name }
