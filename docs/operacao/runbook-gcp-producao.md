@@ -1,6 +1,6 @@
 # Runbook — primeira publicação do Pulso das Urnas na GCP
 
-**URL planejada:** `https://pulso-das-urnas.web.app`
+**URL planejada:** `https://pulsodasurnas.com.br`
 **Região:** `southamerica-east1` (São Paulo)
 **Janela do segundo turno:** 25/10/2026 16:55 até 26/10/2026 00:00 (`America/Sao_Paulo`)
 
@@ -10,7 +10,7 @@
 
 ```text
 Firebase Hosting
-  https://pulso-das-urnas.web.app
+  https://pulsodasurnas.com.br
        /api/** -> Cloud Run pulso-api
 
 Cloud Run pulso-api
@@ -95,7 +95,7 @@ No GitHub, em **Settings → Secrets and variables → Actions**, configure:
 - secret `GCP_DEPLOY_SA`: e-mail da service account de deploy;
 - secret `FIREBASE_TOKEN`: token criado com `npx firebase-tools login:ci`;
 - variable `GCP_PROJECT`: ID do projeto;
-- variable `PUBLIC_HOST`: host Firebase, por exemplo `pulso-das-urnas.web.app`.
+- variable `PUBLIC_HOST`: domínio personalizado `pulsodasurnas.com.br` após a validação DNS; `pulso-das-urnas.web.app` permanece como fallback.
 
 Não use chave JSON de service account no GitHub. Faça um workflow manual de plan antes de habilitar tags de produção.
 
