@@ -10,30 +10,31 @@ Cívica, calma e viva. A base é neutra (grafite e branco) para que **as cores d
 
 ### Cor
 
-| Token | Valor | Uso |
-|---|---|---|
-| `--bg` | `#F6F8FB` | Fundo da página |
-| `--surface` | `#FFFFFF` | Cartões, mapa, painéis |
-| `--ink` | `#0B1220` | Texto principal |
-| `--ink-muted` | `#4B5563` | Texto secundário (contraste 7,5:1) |
-| `--border` | `#D5DCE7` | Divisórias e contorno do mapa |
-| `--brand` | `#123B6D` | Cabeçalho, títulos |
-| `--brand-strong` | `#0A2547` | Hover do cabeçalho |
-| `--accent` | `#0E8C7F` | Links, foco de marca, pulso |
-| `--focus` | `#2563EB` | Anel de foco (3 px, offset 2 px) |
-| `--success` | `#067647` | Apuração finalizada |
-| `--warning` | `#B54708` | Dado desatualizado |
-| `--danger` | `#B42318` | Erro de fonte |
-| `--map-empty` | `#FFFFFF` | Estado sem voto apurado (branco) |
-| `--map-nodata` | `#E5E7EB` | Estado sem dado disponível (cinza médio) |
-| `--map-na` | `#F1F4F8` | Cargo não aplicável ao escopo (cinza claro, sempre com diagonal) |
-| `--map-no-leader` | `#6B7280` | Válidos sem candidato elegível (cinza escuro) |
-| `--map-hatch` | `#6B7280` | Traço da hachura de empate e da diagonal de "não aplicável" (≥ 3:1 sobre os preenchimentos) |
-| `--map-edge` | `#64748B` | Contorno de 1 px quando o preenchimento não atinge 3:1 contra o vizinho |
-| `--map-border` | `#94A3B8` | Contorno de estado/município |
-| `--map-hover` | `#0B1220` a 8% | Realce ao passar o mouse |
+| Token             | Valor          | Uso                                                                                         |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------- |
+| `--bg`            | `#F6F8FB`      | Fundo da página                                                                             |
+| `--surface`       | `#FFFFFF`      | Cartões, mapa, painéis                                                                      |
+| `--ink`           | `#0B1220`      | Texto principal                                                                             |
+| `--ink-muted`     | `#4B5563`      | Texto secundário (contraste 7,5:1)                                                          |
+| `--border`        | `#D5DCE7`      | Divisórias e contorno do mapa                                                               |
+| `--brand`         | `#123B6D`      | Cabeçalho, títulos                                                                          |
+| `--brand-strong`  | `#0A2547`      | Hover do cabeçalho                                                                          |
+| `--accent`        | `#0E8C7F`      | Links, foco de marca, pulso                                                                 |
+| `--focus`         | `#2563EB`      | Anel de foco (3 px, offset 2 px)                                                            |
+| `--success`       | `#067647`      | Apuração finalizada                                                                         |
+| `--warning`       | `#B54708`      | Dado desatualizado                                                                          |
+| `--danger`        | `#B42318`      | Erro de fonte                                                                               |
+| `--map-empty`     | `#FFFFFF`      | Estado sem voto apurado (branco)                                                            |
+| `--map-nodata`    | `#E5E7EB`      | Estado sem dado disponível (cinza médio)                                                    |
+| `--map-na`        | `#F1F4F8`      | Cargo não aplicável ao escopo (cinza claro, sempre com diagonal)                            |
+| `--map-no-leader` | `#6B7280`      | Válidos sem candidato elegível (cinza escuro)                                               |
+| `--map-hatch`     | `#6B7280`      | Traço da hachura de empate e da diagonal de "não aplicável" (≥ 3:1 sobre os preenchimentos) |
+| `--map-edge`      | `#64748B`      | Contorno de 1 px quando o preenchimento não atinge 3:1 contra o vizinho                     |
+| `--map-border`    | `#94A3B8`      | Contorno de estado/município                                                                |
+| `--map-hover`     | `#0B1220` a 8% | Realce ao passar o mouse                                                                    |
 
 Regras:
+
 - Texto sobre cor de partido usa **preto ou branco**, escolhido por contraste calculado (mínimo 4,5:1); nunca um terceiro tom.
 - Nunca usar cor como único indicador: sempre acompanhar de sigla do partido, nome do candidato ou padrão (hachura para empate).
 - Contraste mínimo 4,5:1 para texto normal e 3:1 para texto grande e elementos gráficos.
@@ -51,7 +52,7 @@ Regras:
 - Grade de 4 px; espaçamentos 8 / 12 / 16 / 24 / 32 / 48.
 - Raio: 8 px (controles), 12 px (cartões), 999 px (chips).
 - Sombra: `0 1px 2px rgb(11 18 32 / 0.06), 0 8px 24px rgb(11 18 32 / 0.08)` apenas em cartões flutuantes.
-- Largura máxima do conteúdo: 1200 px; mapa ocupa 100% da largura disponível com proporção 1:1 no mobile e 16:10 no desktop.
+- Largura máxima do conteúdo: 1200 px; no desktop, o mapa do Brasil ocupa o espaço restante ao lado do ranking nacional (240–300 px). O ranking mostra total de votos válidos, percentual e votos de cada candidato, com a mesma fonte e o mesmo horário do mapa; a lista rola dentro do cartão e não cria rolagem de página. No mobile, o ranking fica acima do mapa e o mapa mantém proporção 1:1.
 
 ## 3. Layout
 
@@ -76,7 +77,7 @@ Regras:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- Mobile: painel de votos vira *bottom sheet* com três alturas (fechado, metade, quase cheio), arrastável e com botão de fechar.
+- Mobile: painel de votos vira _bottom sheet_ com três alturas (fechado, metade, quase cheio), arrastável e com botão de fechar.
 - Desktop: painel lateral direito (360–420 px) quando há cidade selecionada; o mapa preserva o enquadramento.
 - O rodapé é o monitor de pulso: sticky no fim do conteúdo (nunca fixo sobre o mapa) em desktop e colapsável em mobile (altura 160 px, expandindo para 200 px).
 
@@ -108,44 +109,44 @@ Regras:
 
 Valores iniciais (revisar e completar na implementação, com fonte):
 
-| Sigla | Hex inicial |
-|---|---|
-| PT | `#C8102E` |
-| PL | `#0B4EA2` |
-| UNIÃO | `#F58220` |
-| PSD | `#0F7B4F` |
-| MDB | `#0B6E4F` |
-| PP | `#1D4ED8` |
-| PSDB | `#1B62B3` |
-| PDT | `#E03C31` |
-| PSB | `#CA8A04` |
-| PSOL | `#6D28D9` |
-| NOVO | `#EA580C` |
-| CIDADANIA | `#DB2777` |
-| SOLIDARIEDADE | `#15803D` |
-| REPUBLICANOS | `#1E3A8A` |
-| PCdoB | `#B91C1C` |
-| PV | `#2E7D32` |
-| REDE | `#0E8C7F` |
-| AVANTE | `#F59E0B` |
-| PODE | `#0EA5E9` |
-| PROS | `#7C3AED` |
-| PTB | `#334155` |
-| DC | `#475569` |
+| Sigla         | Hex inicial |
+| ------------- | ----------- |
+| PT            | `#C8102E`   |
+| PL            | `#0B4EA2`   |
+| UNIÃO         | `#F58220`   |
+| PSD           | `#0F7B4F`   |
+| MDB           | `#0B6E4F`   |
+| PP            | `#1D4ED8`   |
+| PSDB          | `#1B62B3`   |
+| PDT           | `#E03C31`   |
+| PSB           | `#CA8A04`   |
+| PSOL          | `#6D28D9`   |
+| NOVO          | `#EA580C`   |
+| CIDADANIA     | `#DB2777`   |
+| SOLIDARIEDADE | `#15803D`   |
+| REPUBLICANOS  | `#1E3A8A`   |
+| PCdoB         | `#B91C1C`   |
+| PV            | `#2E7D32`   |
+| REDE          | `#0E8C7F`   |
+| AVANTE        | `#F59E0B`   |
+| PODE          | `#0EA5E9`   |
+| PROS          | `#7C3AED`   |
+| PTB           | `#334155`   |
+| DC            | `#475569`   |
 
 > Estes valores são um ponto de partida visual, não uma afirmação de cor oficial. A implementação deve registrar a fonte de cada um ou substituí-lo.
 
 ## 6. Movimento
 
-| Interação | Duração | Curva |
-|---|---|---|
-| Hover de estado | 120 ms | `ease-out` |
-| Zoom do mapa | 600 ms | `cubic-bezier(0.2,0,0,1)` |
-| Troca de cor do estado | 400 ms | `ease-in-out` |
-| Entrada de painel | 240 ms | `cubic-bezier(0.2,0,0,1)` |
-| Selo "PULSO!" | 320 ms (entrada) / 1,6 s (permanência) / 200 ms (saída) | mola suave |
-| Monitor de pulso | rolagem de 1,4 s por ciclo + transição de altura de 600 ms | — |
-| Cena final | 2,4 s | sequência coreografada |
+| Interação              | Duração                                                    | Curva                     |
+| ---------------------- | ---------------------------------------------------------- | ------------------------- |
+| Hover de estado        | 120 ms                                                     | `ease-out`                |
+| Zoom do mapa           | 600 ms                                                     | `cubic-bezier(0.2,0,0,1)` |
+| Troca de cor do estado | 400 ms                                                     | `ease-in-out`             |
+| Entrada de painel      | 240 ms                                                     | `cubic-bezier(0.2,0,0,1)` |
+| Selo "PULSO!"          | 320 ms (entrada) / 1,6 s (permanência) / 200 ms (saída)    | mola suave                |
+| Monitor de pulso       | rolagem de 1,4 s por ciclo + transição de altura de 600 ms | —                         |
+| Cena final             | 2,4 s                                                      | sequência coreografada    |
 
 - Toda animação tem versão sem movimento; `prefers-reduced-motion` desliga a rolagem do pulso, o zoom animado e o coração.
 - Nada pisca mais de 3 vezes por segundo; nada bloqueia interação.

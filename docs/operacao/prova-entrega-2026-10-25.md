@@ -96,6 +96,24 @@ Correção: tratar `412`/`pre-condition` como objeto existente, repetir a transa
 registrar falhas de escrita no log. São Paulo foi reparado com nova execução do seed
 (`601` gravados, `44` já atuais) e a auditoria passou a `645/645`.
 
+## Atualização 19:20 — ranking nacional ao lado do mapa
+
+O mapa do Brasil passou a ter, à esquerda, um cartão com o total de votos válidos e o percentual
+geral de cada candidato (Presidente, disputa nacional), com votos e partido. A lista rola dentro
+do cartão; no desktop a página continua sem rolagem e no mobile o cartão fica acima do mapa.
+
+Verificado em produção:
+
+```text
+1440×900: cartão 285 px + mapa 1101 px · sem rolagem vertical/horizontal · 26 estados com cor
+1280×800: cartão 285 px + mapa 957 px  · sem rolagem vertical/horizontal
+390×844:  cartão 374 px acima do mapa  · sem rolagem horizontal
+6258:     2.904.139 válidos · LULA 51,5% · FLAVIO BOLSONARO 48,5%
+6257:     119.300.788 válidos · 10 candidatos · lista com rolagem interna
+```
+
+Commit: `c31a633` (API com `candidatos` + painel web).
+
 ## Janela eleitoral
 
 - Job de estados: `pulso-ingest` (a cada minuto).
