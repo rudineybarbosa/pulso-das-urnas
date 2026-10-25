@@ -178,7 +178,13 @@ export function App() {
                     </p>
                   </div>
                   <div className="home-layout">
-                    <CandidateRanking panorama={panorama.data} />
+                    <CandidateRanking
+                      title={`${panorama.data.cargoEmDestaque.nome} · nacional`}
+                      total={panorama.data.resumo.votosValidos}
+                      percentual={panorama.data.apuracao.percentual}
+                      generatedAt={panorama.data.fonte.generatedAt}
+                      candidates={panorama.data.candidatos ?? []}
+                    />
                     <div className="home-map">
                       <BrazilMap
                         panorama={panorama.data}
@@ -198,8 +204,14 @@ export function App() {
             }
           />
           <Route path="/telao" element={<TelaoPage election={election} />} />
-          <Route path="/br/:uf" element={<StatePage cargo={cargo} election={election} />} />
-          <Route path="/br/:uf/:city" element={<StatePage cargo={cargo} election={election} />} />
+          <Route
+            path="/br/:uf"
+            element={<StatePage cargo={cargo} election={election} panorama={panorama.data} />}
+          />
+          <Route
+            path="/br/:uf/:city"
+            element={<StatePage cargo={cargo} election={election} panorama={panorama.data} />}
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -240,7 +252,15 @@ function TelaoPage({ election }: { election: string }) {
   )
 }
 
-function StatePage({ cargo, election }: { cargo: string; election: string }) {
+function StatePage({
+  cargo,
+  election,
+  panorama,
+}: {
+  cargo: string
+  election: string
+  panorama?: Panorama | null
+}) {
   const { uf = "", city } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -285,6 +305,13 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
 
   const panel = municipality.data
   const cargosList = cargos.data?.cargos?.length ? cargos.data.cargos : CARGO_FALLBACK
+  const candidateColors = new Map(
+    (panorama?.candidatos ?? []).map((candidate) => [candidate.id, candidate.cor]),
+  )
+  const stateCandidates = (scope.data.dados?.candidatos ?? []).map((candidate) => ({
+    ...candidate,
+    cor: candidateColors.get(candidate.id),
+  }))
 
   return (
     <section className="view view--state" aria-labelledby="state-title">
@@ -306,7 +333,15 @@ function StatePage({ cargo, election }: { cargo: string; election: string }) {
           apurado
         </p>
       </div>
-      <div className={`state-layout ${panel ? "has-panel" : ""}`}>
+      <div className={`state-layout has-ranking ${panel ? "has-panel" : ""}`}>
+        <CandidateRanking
+          title={`${scope.data.cargo.nome} · ${scope.data.escopo.nome}`}
+          total={scope.data.dados?.resumo.votosValidos ?? 0}
+          percentual={scope.data.dados?.apuracao.percentual ?? 0}
+          generatedAt={scope.data.fonte.generatedAt}
+          candidates={stateCandidates}
+          hint="Percentuais sobre os votos válidos apurados neste estado."
+        />
         <StateMap
           uf={upper}
           ibge={scope.data.escopo.ibge ?? 0}

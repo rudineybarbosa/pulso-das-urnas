@@ -1377,3 +1377,35 @@ a {
     flex: 1 1 auto;
   }
 }
+
+/* Ranking estadual à esquerda do mapa do estado */
+.state-layout.has-ranking {
+  grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
+}
+.state-layout.has-ranking.has-panel {
+  grid-template-columns: minmax(220px, 250px) minmax(0, 1fr) 360px;
+}
+
+@media (max-width: 900px) {
+  .state-layout .candidate-panel,
+  .home-layout .candidate-panel {
+    align-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .state-layout.has-ranking {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .state-layout.has-ranking.has-panel {
+    grid-template-columns: 250px minmax(0, 1fr) 360px;
+  }
+  .state-layout .candidate-panel {
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .state-layout .candidate-panel__list {
+    flex: 1 1 auto;
+  }
+}

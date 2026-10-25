@@ -13,7 +13,7 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     await page.goto("/br")
     await page.locator('path[aria-label^="São Paulo:"]').click()
     await expect(page).toHaveURL(/\/br\/sp$/)
-    await expect(page.getByRole("heading", { name: "São Paulo" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "São Paulo", exact: true })).toBeVisible()
     await expect(page.locator("path.map__city").first()).toBeVisible()
 
     await page.locator("path.map__city").first().click({ force: true })
@@ -99,9 +99,12 @@ test.describe("Jornadas do Pulso das Urnas", () => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await page.goto("/br")
     await expect(page.locator(".pulse__scroll").first()).toBeVisible()
-    const animation = await page.locator(".pulse__scroll").first().evaluate((element) => {
-      return getComputedStyle(element).animationName
-    })
+    const animation = await page
+      .locator(".pulse__scroll")
+      .first()
+      .evaluate((element) => {
+        return getComputedStyle(element).animationName
+      })
     expect(animation).toBe("none")
   })
 
@@ -114,6 +117,8 @@ test.describe("Jornadas do Pulso das Urnas", () => {
 
   test("rota desconhecida mostra mensagem", async ({ page }) => {
     await page.goto("/br/xx/9999999")
-    await expect(page.getByText(/Não foi possível consultar os dados|Não encontramos/)).toBeVisible()
+    await expect(
+      page.getByText(/Não foi possível consultar os dados|Não encontramos/),
+    ).toBeVisible()
   })
 })
