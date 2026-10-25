@@ -342,7 +342,7 @@ Catálogo servido da base local (IBGE + TSE), não do TSE em tempo real.
 `text/event-stream`; eventos `snapshot` com o mesmo envelope do panorama, `heartbeat` a cada 15 s, `id` = versão. Reconexão com `Last-Event-ID`. Limite de conexões por instância documentado no runbook.
 
 ### 3.9 Saúde
-- `GET /healthz` → `200 {"status":"ok"}` (liveness).
+- `GET /readyz` → `200 {"status":"ready",...}` (readiness pública; `/healthz` é reservado pela borda do Cloud Run).
 - `GET /readyz` → `200` se catálogo e último snapshot legíveis; `503` caso contrário.
 
 ### 3.10 `GET /escopos/{uf}/cargos` e `GET /municipios/{ibge}/cargos`

@@ -123,12 +123,14 @@ module "hosting" {
 }
 
 module "observability" {
-  source                = "../../modules/observability"
-  project_id            = var.project_id
-  env                   = local.env
-  public_host           = var.public_host
-  billing_account       = var.billing_account
-  budget_usd            = "10"
+  source          = "../../modules/observability"
+  project_id      = var.project_id
+  env             = local.env
+  public_host     = var.public_host
+  billing_account = var.billing_account
+  # Billing account currency is BRL; R$50 is the rounded operational equivalent of US$10.
+  budget_amount         = "50"
+  budget_currency_code  = "BRL"
   early_warning_percent = 0.2
 }
 

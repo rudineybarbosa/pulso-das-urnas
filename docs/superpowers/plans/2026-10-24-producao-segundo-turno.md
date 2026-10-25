@@ -80,7 +80,7 @@
 - [ ] Testar ponteiro → objeto → contrato, fallback em falha, cache em memória, single-flight, frescor e ausência de fallback silencioso para 6257.
 - [ ] Implementar `CloudDataStore` com métodos assíncronos para panorama, UF, município, corrida, pleitos, cargos e validações.
 - [ ] Fazer `createApp` aguardar métodos cloud sem perder ETag/cache headers; incluir `pleito` nas chaves.
-- [ ] Manter `/healthz` como saúde de processo e fazer `/readyz` tolerar ausência do primeiro boletim com estado explícito.
+- [ ] Manter `/healthz` como saúde de processo local e fazer `/readyz` tolerar ausência do primeiro boletim com estado explícito para o tráfego público.
 - [ ] Executar testes API, contrato e typecheck.
 - [ ] Commitar com `feat: API real lê snapshots do storage com fallback`.
 
@@ -103,7 +103,7 @@
 - [ ] Criar bootstrap do bucket de tfstate com versionamento e acesso uniforme antes do backend.
 - [ ] Adicionar `datastore.viewer` para API, `datastore.editor` para ingestão, Storage viewer/creator, `run.invoker` para Scheduler e integração Hosting.
 - [ ] Configurar Cloud Run Job com `ELECTION_ID=6258`, janela, `CYCLE_COUNT=1`, `CYCLE_SECONDS=0` e `SNAPSHOT_BUCKET`.
-- [ ] Configurar Firebase site `pulso-das-urnas` e rewrites de `/healthz`, `/readyz`, `/api/**` antes do fallback SPA.
+- [ ] Configurar Firebase site `pulso-das-urnas` e rewrites de `/readyz`, `/api/**` antes do fallback SPA; `/healthz` é reservado pela borda do Cloud Run.
 - [ ] Validar com `terraform fmt -check -recursive`, `terraform init -backend=false` e `terraform validate` em dev/prod.
 - [ ] Commitar com `infra: preparar cloud run storage firestore e firebase`.
 

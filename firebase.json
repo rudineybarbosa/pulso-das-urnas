@@ -5,10 +5,6 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
-        "source": "/healthz",
-        "run": { "serviceId": "pulso-api", "region": "southamerica-east1" }
-      },
-      {
         "source": "/readyz",
         "run": { "serviceId": "pulso-api", "region": "southamerica-east1" }
       },
