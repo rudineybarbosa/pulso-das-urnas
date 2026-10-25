@@ -114,6 +114,24 @@ Verificado em produção:
 
 Commit: `c31a633` (API com `candidatos` + painel web).
 
+## Atualização 20:50 — ranking presidencial no estado
+
+Ao clicar em um estado, o cartão à esquerda mostra o total de votos válidos e o percentual de cada
+candidato a Presidente **naquele estado**, com partido, votos e cor. Com uma cidade aberta, o
+layout fica em três colunas: ranking, mapa e painel da cidade.
+
+Verificado em produção:
+
+```text
+RJ 1280×800: 2.758.049 válidos · 29,2% · FLAVIO BOLSONARO 53,2% · LULA 46,8%
+             mapa 980 px · sem rolagem vertical/horizontal
+SP com cidade: ranking 250 + mapa 614 + painel 360 · sem rolagem
+Mobile 390:  cartão acima do mapa · sem rolagem horizontal
+Lista:       tabindex=0 (região rolável focável) · axe sem violação séria
+```
+
+Commit: `64b5670` (web) e `c31a633` (API com `candidatos`).
+
 ## Janela eleitoral
 
 - Job de estados: `pulso-ingest` (a cada minuto).

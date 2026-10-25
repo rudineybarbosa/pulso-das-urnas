@@ -53,6 +53,7 @@ Regras:
 - Raio: 8 px (controles), 12 px (cartões), 999 px (chips).
 - Sombra: `0 1px 2px rgb(11 18 32 / 0.06), 0 8px 24px rgb(11 18 32 / 0.08)` apenas em cartões flutuantes.
 - Largura máxima do conteúdo: 1200 px; no desktop, o mapa do Brasil ocupa o espaço restante ao lado do ranking nacional (240–300 px). O ranking mostra total de votos válidos, percentual e votos de cada candidato, com a mesma fonte e o mesmo horário do mapa; a lista rola dentro do cartão e não cria rolagem de página. No mobile, o ranking fica acima do mapa e o mapa mantém proporção 1:1.
+- Ao abrir um estado, o mesmo cartão aparece à esquerda do mapa municipal com os percentuais de Presidente **naquele estado**; com uma cidade selecionada, a ordem é ranking, mapa e painel da cidade. O cartão é focável por teclado porque a lista pode rolar.
 
 ## 3. Layout
 
