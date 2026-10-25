@@ -414,6 +414,9 @@ a {
   border: 1px solid rgb(11 18 32 / 15%);
   display: inline-block;
 }
+.legend__chip--party {
+  background: var(--legend-color);
+}
 .legend__chip--empty {
   background: #fff;
 }
@@ -593,6 +596,7 @@ a {
 .candidate__bar span {
   display: block;
   height: 100%;
+  width: var(--candidate-width);
   background: var(--accent);
 }
 .candidate__situation {
@@ -724,9 +728,15 @@ a {
 }
 .pulse__trace {
   fill: none;
+  color: var(--pulse-color);
+  stroke: var(--pulse-color);
   stroke-linecap: round;
   stroke-linejoin: round;
+  opacity: 0.55;
   filter: drop-shadow(0 0 4px currentColor);
+}
+.pulse__trace--leader {
+  opacity: 1;
 }
 .pulse__scroll {
   animation: pulse-scroll 1.4s linear infinite;
@@ -834,6 +844,7 @@ a {
   height: 9px;
   border-radius: 50%;
   display: inline-block;
+  background: var(--party-color);
 }
 .pulse__hint {
   margin-left: auto;
