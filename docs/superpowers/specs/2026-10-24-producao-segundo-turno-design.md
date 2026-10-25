@@ -9,7 +9,7 @@
 1. O pleito padrão do dia será o segundo turno presidencial de 2026 (`6258`, cargo `1`).
 2. O primeiro turno (`6257`) continuará disponível por seletor de pleito e por URL compartilhável.
 3. A coleta será feita exclusivamente no servidor; o navegador nunca chamará o TSE.
-4. O job de ingestão será executado pelo Cloud Scheduler em `America/Sao_Paulo`, mas recusará qualquer execução fora da janela exata:
+4. O job de ingestão será executado pelo Cloud Scheduler em `America/Sao_Paulo`; o primeiro disparo será às 16:56, sem invocações antes da ativação, e o job recusará qualquer execução fora da janela exata:
    - início: `2026-10-25T16:55:00-03:00`;
    - fim: `2026-10-26T00:00:00-03:00`.
 5. Snapshots serão imutáveis no Cloud Storage. Firestore guardará somente catálogo, ponteiros da geração atual e locks de single-flight.
@@ -52,7 +52,7 @@ O frontend preserva `pleito` na URL. O seletor mostra “2º turno de 2026 — a
 - Bucket de estado criado por bootstrap antes do `terraform init`.
 - Artifact Registry para a imagem versionada da API/ingestão.
 - Cloud Run API com `min_instances = 0`, `max_instances = 6`, 512 MiB e 1 vCPU.
-- Cloud Run Job com uma coleta por execução; o Scheduler dispara a cada minuto na data programada.
+- Cloud Run Job com uma coleta por execução; dois jobs do Scheduler cobrem a cadência de um minuto a partir de 16:56 na data programada, respeitando a precisão mínima de um minuto do serviço.
 - `CYCLE_COUNT=1` no job de produção; a janela é controlada pela aplicação e não por relógio implícito do container.
 - Firebase Hosting com site explícito, rewrites de `/healthz`, `/readyz` e `/api/**`, e fallback da SPA.
 - `roles/storage.objectViewer` e `roles/datastore.viewer` para a API.

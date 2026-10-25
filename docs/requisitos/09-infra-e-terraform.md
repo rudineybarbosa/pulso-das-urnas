@@ -36,7 +36,7 @@ Versões: Terraform ≥ 1.9, `hashicorp/google` ≥ 6.0, `hashicorp/google-beta`
 | Artifact Registry | `pulso` | Docker, `southamerica-east1`, limpeza de imagens > 10 |
 | Cloud Run service | `pulso-api` | 512 MiB, 1 vCPU, concorrência 80, min 0 (1 na janela), max 6 (prod), timeout 30 s, `--no-allow-unauthenticated`? **público** via Hosting rewrite |
 | Cloud Run Job | `pulso-ingest` | 512 MiB, timeout 55 s, taskCount 1, retries 1 |
-| Cloud Scheduler | `pulso-ingest-1m` | `* 16-23 25 10 *`, fuso `America/Sao_Paulo`, ativação funcional às 16:55 de 25/10/2026, OAuth com SA de ingestão, alvo `jobs:run` |
+| Cloud Scheduler | `pulso-ingest-16h56` + `pulso-ingest-1m` | `56-59 16 25 10 *` + `* 17-23 25 10 *`, fuso `America/Sao_Paulo`, ativação funcional às 16:55 e primeiro disparo às 16:56 de 25/10/2026, OAuth com SA de ingestão, alvo `jobs:run` |
 | Firestore | `(default)` | Native, `southamerica-east1`, modo produção |
 | Bucket | `pulso-snapshots-{env}` | Standard, `southamerica-east1`, versionamento ligado, lifecycle 90 dias |
 | Bucket | `pulso-assets-{env}` | geo/catálogo, cache público, versionamento desligado |
@@ -178,8 +178,10 @@ gcloud run services update pulso-api \
   --project=pulso-das-urnas --region=southamerica-east1 --max-instances=0
 
 # 2) ingestão para de rodar (nenhum ciclo novo, nenhuma chamada ao TSE)
-gcloud scheduler jobs pause pulso-ingest-1m \
-  --project=pulso-das-urnas --location=southamerica-east1
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs pause "$job" \
+    --project=pulso-das-urnas --location=southamerica-east1
+done
 ```
 
 - **Responsável:** o plantonista nominal do dia. Acionar é decisão do plantão; não depende de merge nem de `apply`.
@@ -191,8 +193,10 @@ gcloud scheduler jobs pause pulso-ingest-1m \
 ```bash
 gcloud run services update pulso-api \
   --project=pulso-das-urnas --region=southamerica-east1 --max-instances=6
-gcloud scheduler jobs resume pulso-ingest-1m \
-  --project=pulso-das-urnas --location=southamerica-east1
+for job in pulso-ingest-16h56 pulso-ingest-1m; do
+  gcloud scheduler jobs resume "$job" \
+    --project=pulso-das-urnas --location=southamerica-east1
+done
 ```
 
 Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de considerar o incidente encerrado.
@@ -238,7 +242,7 @@ Ao voltar, rode a ingestão manual e confira `ingest_lag_seconds` antes de consi
 Aciona-se quando o orçamento bate 100% ou o custo projetado passa do teto do ambiente (dev US$ 1/mês; prod US$ 2/mês fora da eleição; US$ 10 na semana). Comandos, responsável e efeito estão em §6.1. Procedimento:
 
 1. Registrar horário, ambiente, valor no dashboard e causa provável.
-2. Executar as duas ações (API `max-instances=0` e `gcloud scheduler jobs pause pulso-ingest-1m`); confirmar com `gcloud run services describe pulso-api --project=pulso-das-urnas --region=southamerica-east1 --format='yaml(spec.template.metadata.annotations)' | grep maxScale` (deve mostrar `'0'`) e `gcloud scheduler jobs describe pulso-ingest-1m --project=pulso-das-urnas --location=southamerica-east1 --format='value(state)'` → `PAUSED`.
+2. Executar as duas ações (API `max-instances=0` e pausar `pulso-ingest-16h56` e `pulso-ingest-1m`); confirmar com `gcloud run services describe pulso-api --project=pulso-das-urnas --region=southamerica-east1 --format='yaml(spec.template.metadata.annotations)' | grep maxScale` (deve mostrar `'0'`) e consultar o estado dos dois jobs com `gcloud scheduler jobs describe JOB --project=pulso-das-urnas --location=southamerica-east1 --format='value(state)'` → `PAUSED`.
 3. Avisar no canal do projeto que a API está fora; a CDN segue servindo o cache por até 30 s na apuração (6 h após finalizada).
 4. Corrigir a causa antes de voltar; a volta é o inverso (`--max-instances=6` e `jobs resume`), seguida de ingestão manual e conferência de `ingest_lag_seconds`.
 5. Se o corte passar de 30 min em janela eleitoral, isso consome error budget (§7.6) e vira incidente registrado.
