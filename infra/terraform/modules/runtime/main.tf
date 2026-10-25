@@ -73,6 +73,12 @@ resource "google_storage_bucket_iam_member" "ingest_snapshots" {
   member = "serviceAccount:${google_service_account.ingest.email}"
 }
 
+resource "google_storage_bucket_iam_member" "ingest_snapshots_viewer" {
+  bucket = var.snapshots_bucket
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.ingest.email}"
+}
+
 resource "google_cloud_run_v2_service" "api" {
   project  = var.project_id
   name     = "pulso-api"

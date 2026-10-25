@@ -444,6 +444,14 @@ export class DataStore {
   }
 
   private apuracao(parsed: ParsedScope | null): Apuracao {
+    if (this.mode === "real") {
+      return {
+        secoesTotalizadas: parsed?.sections.counted ?? 0,
+        secoesTotal: parsed?.sections.total ?? 0,
+        percentual: Math.max(0, Math.min(100, parsed?.progress ?? 0)),
+        finalizada: Boolean(parsed?.finished),
+      }
+    }
     const progress = parsed ? this.progress() : 0
     return {
       secoesTotalizadas: Math.round((parsed?.sections.counted ?? 0) * (progress / 100)),
@@ -552,34 +560,36 @@ export class DataStore {
   private async refreshRemote(election: string): Promise<void> {
     const repository = this.repository
     if (!repository) return
-    try {
-      const national = await repository.getCurrent({
-        ciclo: "ele2026",
-        pleito: election,
-        escopo: "br",
-        cargo: PRESIDENT,
-      })
-      if (national) {
-        this.remoteNational.set(election, parseResult(national.body as never))
-        this.remoteCollectedAt.set(election, national.pointer.collectedAt)
-      }
-      const byUf = this.remoteByUf.get(election) ?? new Map<string, ParsedScope>()
-      await Promise.all(
-        UF_CODES.map(async ([uf]) => {
-          const current = await repository.getCurrent({
-            ciclo: "ele2026",
-            pleito: election,
-            escopo: uf.toLowerCase(),
-            cargo: PRESIDENT,
-          })
-          if (current) byUf.set(uf, parseResult(current.body as never))
+    const byUf = this.remoteByUf.get(election) ?? new Map<string, ParsedScope>()
+    const scopes = ["br", ...UF_CODES.map(([uf]) => uf)]
+    const results = await Promise.allSettled(
+      scopes.map(async (scope) => ({
+        scope,
+        current: await repository.getCurrent({
+          ciclo: "ele2026",
+          pleito: election,
+          escopo: scope.toLowerCase(),
+          cargo: PRESIDENT,
         }),
-      )
-      this.remoteByUf.set(election, byUf)
-      this.remoteRefreshedAt.set(election, this.now())
-    } catch {
-      // Keep the last successful snapshot and let the source age expose the outage.
+      })),
+    )
+    for (const result of results) {
+      if (result.status !== "fulfilled" || !result.value.current) continue
+      const { scope, current } = result.value
+      try {
+        const parsed = parseResult(current.body as never)
+        if (scope === "br") {
+          this.remoteNational.set(election, parsed)
+          this.remoteCollectedAt.set(election, current.pointer.collectedAt)
+        } else {
+          byUf.set(scope.toUpperCase(), parsed)
+        }
+      } catch {
+        // Um arquivo inválido não pode congelar os outros 27 escopos.
+      }
     }
+    this.remoteByUf.set(election, byUf)
+    this.remoteRefreshedAt.set(election, this.now())
   }
 
   private electionMeta(election: string): { pleitoId: string; name: string; turn: number } | null {
@@ -635,6 +645,8 @@ export class DataStore {
       })
       const color = leader && !tie ? this.color(leader.partido) : null
       const absent = status === "sem_dado" || status === "nao_aplicavel"
+      const stateProgress =
+        this.mode === "real" ? Math.max(0, Math.min(100, parsed?.progress ?? 0)) : progress
       return {
         uf,
         nome: UF_NAMES[uf] ?? uf,
@@ -650,7 +662,7 @@ export class DataStore {
             }
           : null,
         votosValidos: absent ? null : valid,
-        percentualApurado: absent ? null : progress,
+        percentualApurado: absent ? null : stateProgress,
         status,
         origem: null,
         disputaAcirrada: stable.acirrada,
@@ -1117,9 +1129,13 @@ export class DataStore {
       interesses:
         this.progress() === 0 || validVotes === 0 || (this.mode === "real" && !parsed)
           ? "sem_voto"
-          : this.finished()
-            ? "finalizado"
-            : "ao_vivo",
+          : this.mode === "real"
+            ? parsed?.finished
+              ? "finalizado"
+              : "ao_vivo"
+            : this.finished()
+              ? "finalizado"
+              : "ao_vivo",
     }
   }
 
