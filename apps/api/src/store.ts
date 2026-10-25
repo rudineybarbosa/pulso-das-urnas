@@ -79,6 +79,8 @@ const SECOND_ELECTION = "6258"
 const CITY_PANEL_TTL_MS = 15_000
 const CITY_ROWS_TTL_MS = 120_000
 const MUNICIPAL_REFRESH_MS = 120_000
+const MUNICIPAL_FRESH_MS = 180_000
+const PANEL_FRESH_MS = 30_000
 const MUNICIPAL_BATCH = 16
 const TSE_MIN_INTERVAL_MS = 400
 
@@ -193,21 +195,57 @@ export class DataStore {
     const ttl = acceptStale ? CITY_ROWS_TTL_MS : CITY_PANEL_TTL_MS
     const cached = this.cityCache.get(key)
     if (cached && this.now() - cached.at < ttl) return cached.parsed
-    if (cached) {
-      if (acceptStale) {
-        const remote = await this.readCitySnapshot(uf, tse, code, election)
-        if (remote) return remote.parsed
-        return cached.parsed
-      }
+    if (cached && !acceptStale) {
       void this.refreshCity(uf, tse, code, election)
       return cached.parsed
     }
+    let parsed = cached?.parsed ?? null
     if (this.repository) {
       const remote = await this.readCitySnapshot(uf, tse, code, election)
-      if (remote) return remote.parsed
+      if (remote) {
+        parsed = remote.parsed
+        if (!acceptStale) {
+          this.refreshCityIfStale(
+            uf,
+            tse,
+            code,
+            election,
+            this.isLiveElection(election) ? PANEL_FRESH_MS : Number.POSITIVE_INFINITY,
+          )
+        }
+      }
     }
-    if (this.mode !== "real" || !allowFetch) return null
-    return this.refreshCity(uf, tse, code, election)
+    if (!parsed) {
+      if (this.mode !== "real" || !allowFetch) return null
+      return this.refreshCity(uf, tse, code, election)
+    }
+    if (acceptStale && allowFetch) {
+      this.refreshCityIfStale(
+        uf,
+        tse,
+        code,
+        election,
+        this.isLiveElection(election) ? MUNICIPAL_FRESH_MS : Number.POSITIVE_INFINITY,
+      )
+    }
+    return parsed
+  }
+
+  private isLiveElection(election: string): boolean {
+    return election === SECOND_ELECTION || election === "6260"
+  }
+
+  private refreshCityIfStale(
+    uf: string,
+    tse: string,
+    code: string,
+    election: string,
+    freshMs: number,
+  ): void {
+    const key = `${election}:${uf}:${tse}:${code}`
+    const collectedAt = this.cityCollectedAt.get(key)
+    if (collectedAt && this.now() - Date.parse(collectedAt) < freshMs) return
+    void this.refreshCity(uf, tse, code, election)
   }
 
   /**
