@@ -1,5 +1,5 @@
-import { fetchTseJson, loadMunicipalities, parseResult } from "@pulso/tse"
-import { GoogleSnapshotRepository } from "@pulso/cloud"
+import { fetchTseJson, loadMunicipalities, parseResult } from "../../packages/tse/src/index.ts"
+import { GoogleSnapshotRepository } from "../../packages/cloud/src/index.ts"
 
 const projectId = process.env.GCP_PROJECT ?? "pulso-das-urnas"
 const bucketName = process.env.SNAPSHOT_BUCKET ?? "pulso-snapshots-prod"
