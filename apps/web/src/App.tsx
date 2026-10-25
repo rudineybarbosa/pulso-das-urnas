@@ -12,6 +12,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query"
 import type { Localidade, Panorama, ScopeSnapshot } from "@pulso/contracts"
 import { BrazilMap } from "./features/map/BrazilMap"
+import { CandidateRanking } from "./features/map/CandidateRanking"
 import { StateMap } from "./features/map/StateMap"
 import { Legend } from "./features/map/Legend"
 import { DataTable, type TableRow } from "./features/map/DataTable"
@@ -176,11 +177,16 @@ export function App() {
                       em um estado para ver os municípios.
                     </p>
                   </div>
-                  <BrazilMap
-                    panorama={panorama.data}
-                    onSelect={(uf) => navigate(withSearch(`/br/${uf.toLowerCase()}`))}
-                  />
-                  <Legend panorama={panorama.data} />
+                  <div className="home-layout">
+                    <CandidateRanking panorama={panorama.data} />
+                    <div className="home-map">
+                      <BrazilMap
+                        panorama={panorama.data}
+                        onSelect={(uf) => navigate(withSearch(`/br/${uf.toLowerCase()}`))}
+                      />
+                      <Legend panorama={panorama.data} />
+                    </div>
+                  </div>
                   <DataTable
                     caption={`Liderança por estado — ${panorama.data.cargoSelecionado.nome}`}
                     rows={panoramaRows(panorama.data)}

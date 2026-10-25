@@ -137,6 +137,15 @@ export interface StateSummary {
   empate?: boolean
 }
 
+export interface PanoramaCandidate {
+  id: string
+  nomeUrna: string
+  partido: string
+  votos: number
+  percentual: number
+  cor: string
+}
+
 export interface Panorama {
   apiVersion: "1"
   modo?: "fake" | "real"
@@ -150,6 +159,7 @@ export interface Panorama {
   cargoSelecionado: Office
   apuracao: Apuracao
   resumo: Resumo
+  candidatos: PanoramaCandidate[]
   estados: StateSummary[]
 }
 
@@ -317,6 +327,18 @@ export const panoramaSchema = z.object({
   cargoSelecionado: z.object({ id: z.string(), nome: z.string() }),
   apuracao: z.object({ percentual: z.number(), finalizada: z.boolean() }).passthrough(),
   resumo: z.object({ votosValidos: z.number() }).passthrough(),
+  candidatos: z
+    .array(
+      z.object({
+        id: z.string(),
+        nomeUrna: z.string(),
+        partido: z.string(),
+        votos: z.number(),
+        percentual: z.number(),
+        cor: z.string(),
+      }),
+    )
+    .default([]),
   estados: z.array(
     z
       .object({

@@ -34,6 +34,7 @@ const panorama: Panorama = {
     eleitorado: 140,
     basePercentual: "validos",
   },
+  candidatos: [],
   estados: [
     {
       uf: "SP",

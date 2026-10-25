@@ -1235,3 +1235,145 @@ a {
     animation: none !important;
   }
 }
+
+/* Ranking nacional ao lado do mapa */
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 285px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+.home-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+.candidate-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-height: 0;
+  min-width: 0;
+}
+.candidate-panel h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.candidate-panel__total {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.candidate-panel__total strong {
+  display: block;
+  font-size: clamp(24px, 2.4vw, 34px);
+  line-height: 1.05;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.candidate-panel__meta {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.candidate-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+}
+.candidate-panel__item {
+  display: grid;
+  grid-template-columns: 18px 10px minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.candidate-panel__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.candidate-panel__rank {
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.candidate-panel__color {
+  display: inline-flex;
+}
+.candidate-panel__identity {
+  display: grid;
+  min-width: 0;
+}
+.candidate-panel__identity strong {
+  font-size: 13px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.candidate-panel__identity small {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+.candidate-panel__percent {
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.candidate-panel__votes {
+  grid-column: 3 / 5;
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.candidate-panel__hint {
+  margin: 10px 0 0;
+  font-size: 10px;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 900px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+  .candidate-panel__list {
+    max-height: 280px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .home-map {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .home-map .map-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .candidate-panel {
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .candidate-panel__list {
+    flex: 1 1 auto;
+  }
+}

@@ -688,6 +688,14 @@ export class DataStore {
       cargoSelecionado: this.officeInfo(national, code),
       apuracao: this.apuracao(national),
       resumo: this.resumo(national),
+      candidatos: orderCandidates(this.candidates(national, PRESIDENT)).map((candidate) => ({
+        id: candidate.id,
+        nomeUrna: candidate.nomeUrna,
+        partido: candidate.partido,
+        votos: candidate.votos,
+        percentual: candidate.percentual,
+        cor: this.color(candidate.partido).hex,
+      })),
       estados: states,
     }
   }
