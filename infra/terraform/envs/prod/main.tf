@@ -100,11 +100,13 @@ module "runtime" {
   image            = var.image
   snapshots_bucket = module.data.snapshots_bucket
   assets_bucket    = module.data.assets_bucket
-  # Dia da eleição: mantém a API aquecida. Voltar para 0 depois da apuração.
-  min_instances       = 1
-  max_instances       = 6
-  default_election_id = var.default_election_id
-  depends_on          = [module.apis, module.data]
+  # Fora da janela eleitoral a API escala a zero; o site continua no ar.
+  # Na eleição: min_instances = 1 e always_allocated_cpu = true.
+  min_instances        = 0
+  always_allocated_cpu = false
+  max_instances        = 6
+  default_election_id  = var.default_election_id
+  depends_on           = [module.apis, module.data]
 }
 
 module "scheduler" {

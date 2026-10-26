@@ -5,6 +5,13 @@ variable "image" { type = string }
 variable "snapshots_bucket" { type = string }
 variable "assets_bucket" { type = string }
 variable "min_instances" { type = number }
+
+# Durante a janela eleitoral, true mantém CPU alocada para a varredura municipal
+# em segundo plano. Fora dela, false deixa a API escalar a zero sem custo ocioso.
+variable "always_allocated_cpu" {
+  type    = bool
+  default = false
+}
 variable "max_instances" { type = number }
 variable "default_election_id" {
   type    = string
@@ -118,7 +125,7 @@ resource "google_cloud_run_v2_service" "api" {
       }
       resources {
         limits            = { cpu = "1", memory = "512Mi" }
-        cpu_idle          = false
+        cpu_idle          = !var.always_allocated_cpu
         startup_cpu_boost = true
       }
     }

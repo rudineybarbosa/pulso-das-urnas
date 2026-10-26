@@ -317,11 +317,12 @@ done
 
 ### 16:30
 
-Aqueça a API:
+Aqueça a API. No Terraform, use `min_instances = 1` e `always_allocated_cpu = true` (a CPU
+alocada é necessária para a varredura municipal em segundo plano). Em emergência:
 
 ```bash
 gcloud run services update pulso-api \
-  --project "$PROJECT_ID" --region "$REGION" --min 1
+  --project "$PROJECT_ID" --region "$REGION" --min 1 --no-cpu-throttling
 ```
 
 Confira budget, IAM, URL, Storage, Firestore e logs.
@@ -374,12 +375,24 @@ for job in pulso-ingest-16h56 pulso-ingest-1m pulso-municipios-5m; do
     --project "$PROJECT_ID" --location "$REGION"
 done
 gcloud run services update pulso-api \
-  --project "$PROJECT_ID" --region "$REGION" --min 0
+  --project "$PROJECT_ID" --region "$REGION" --min 0 --cpu-throttling
 ```
 
-O site permanece acessível com o último snapshot. Depois da apuração, volte
-`min_instances = 0` em `infra/terraform/envs/prod/main.tf` e aplique o plano para retirar o custo
-fixo; mantenha `cpu_idle = false` apenas durante a janela eleitoral.
+O site permanece acessível com o último snapshot. A configuração de custo zero ocioso já é o
+padrão em `infra/terraform/envs/prod/main.tf`:
+
+```hcl
+min_instances        = 0
+always_allocated_cpu = false
+```
+
+Com isso a API escala a zero; a primeira visita após inatividade faz cold start (cerca de 2 s) e
+depois fica quente enquanto houver tráfego. Os jobs `pulso-ingest` e `pulso-municipios` não
+consomem nada parados; o Scheduler fica pausado até a próxima eleição. Custos residuais são só
+Storage/Firestore do snapshot final, imagens antigas no Artifact Registry e logs.
+
+Para religar na próxima eleição: `min_instances = 1`, `always_allocated_cpu = true`, aplicar o
+Terraform, retomar os três jobs do Scheduler e rodar o seed do pleito.
 
 ## 11. Rollback e kill switch
 
