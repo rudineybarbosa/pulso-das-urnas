@@ -132,6 +132,40 @@ Lista:       tabindex=0 (região rolável focável) · axe sem violação séria
 
 Commit: `64b5670` (web) e `c31a633` (API com `candidatos`).
 
+## 26/10/2026 — versão estática e desligamento
+
+O site foi convertido para uma versão estática depois da apuração final. O navegador não faz
+nenhuma chamada a `/api/**`; todo o conteúdo vem de arquivos em `/static`.
+
+```text
+Build estático:       5.641 arquivos · 48 MB
+Municípios:           5.571 × 2 pleitos (Presidente)
+Localidades:          5.598 (27 estados + 5.571 municípios)
+Resultado final:      124.082.273 válidos · LULA 51,8% · FLAVIO BOLSONARO 48,2%
+Verificação:          27 estados com cor · SP 645 municípios · cidade · busca · 1º turno
+Requisições /api:     0
+Erros de página:      0 · respostas 4xx em /static ou /geo: 0
+Mobile 390:           sem rolagem horizontal; desktop 1280 sem rolagem
+```
+
+O pacote estático foi validado primeiro em um canal de preview do Firebase Hosting e depois no
+canal de produção. O `firebase.static.json` remove os rewrites de `/api` e `/readyz`.
+
+Limpeza executada após a validação:
+
+- bucket `pulso-snapshots-prod` esvaziado (5.571 snapshots municipais + estados);
+- serviço Cloud Run `pulso-api` removido;
+- jobs `pulso-ingest` e `pulso-municipios` removidos;
+- os três jobs do Cloud Scheduler removidos;
+- 16 imagens antigas do Artifact Registry removidas; mantida apenas `ranking-nacional`.
+
+Limitação do arquivo estático: o 2º turno (Presidente) é completo; a revisão do 1º turno tem
+mapa/ranking de Presidente e painel municipal de Presidente. Os demais cargos do 1º turno não
+foram incluídos porque multiplicariam o volume por vários cargos (Deputado Estadual chega a
+centenas de candidatos por município).
+
+Commit: `a76cd92`.
+
 ## Janela eleitoral
 
 - Job de estados: `pulso-ingest` (a cada minuto).
@@ -144,11 +178,11 @@ Commit: `64b5670` (web) e `c31a633` (API com `candidatos`).
 
 ## Rollback
 
-```bash
-gcloud run services update-traffic pulso-api \
-  --project pulso-das-urnas --region southamerica-east1 \
-  --to-revisions=<revisao-anterior>=100
-```
+O release estático atual é o arquivo final. O Firebase Hosting mantém o histórico de releases;
+voltar a um release anterior da era da API não funciona sem recriar a API e reimportar os
+snapshots do TSE.
 
-O frontend anterior continua no Firebase Hosting e pode ser republicado pelo histórico de
-versões. O cache no Storage/Firestore é imutável por `idg`; nenhum dado é apagado no rollback.
+Os dados finais estão nos arquivos `/static` do release publicado e em `apps/web/dist/static` na
+máquina que fez o build. O código da API e os scripts de ingestão continuam no repositório; o
+bucket foi esvaziado. Para reconstruir a versão dinâmica no futuro, basta rodar a ingestão do TSE,
+recriar a infraestrutura com Terraform e publicar com `firebase.json`.
