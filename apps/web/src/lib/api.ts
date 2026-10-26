@@ -1,21 +1,12 @@
-export interface ApiErrorBody {
-  title?: string
-  detail?: string
-  code?: string
-  status?: number
-}
+import { ApiError, type ApiErrorBody } from "./errors"
+import { staticJson } from "./static"
 
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-    public readonly code?: string,
-  ) {
-    super(message)
-  }
-}
+export { ApiError, type ApiErrorBody }
+
+const STATIC_MODE = import.meta.env.VITE_STATIC_MODE === "true"
 
 export async function getJson<T>(path: string): Promise<T> {
+  if (STATIC_MODE) return staticJson<T>(path)
   const response = await fetch(`/api/v1${path}`, { headers: { Accept: "application/json" } })
   if (!response.ok) {
     let body: ApiErrorBody = {}

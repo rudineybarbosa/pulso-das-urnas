@@ -23,7 +23,9 @@
     "size": "size-limit",
     "geo:build": "node scripts/geo/build.mjs",
     "geo:budget": "node scripts/geo/budget.mjs",
-    "ingest": "pnpm --filter @pulso/ingest dev"
+    "ingest": "pnpm --filter @pulso/ingest dev",
+    "build:static": "VITE_STATIC_MODE=true VITE_DEFAULT_ELECTION=6258 pnpm --filter @pulso/web build && pnpm --filter @pulso/api exec tsx src/static-export.ts",
+    "deploy:static": "pnpm build:static && npx firebase-tools deploy --only hosting --config firebase.static.json --project pulso-das-urnas"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

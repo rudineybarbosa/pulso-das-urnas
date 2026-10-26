@@ -473,3 +473,56 @@ Depois da URL responder corretamente:
 5. Monitore soft 404, canonical divergente, páginas não indexadas e Core Web Vitals.
 
 Isso aumenta a chance de descoberta, mas não garante primeiro lugar no Google.
+
+## 14. Versão estática final (sem API)
+
+Use quando a apuração terminou e o site não precisa mais consultar a API. O build lê o
+repositório de snapshots e grava JSONs em `apps/web/dist/static`; a API deixa de ser chamada pelo
+navegador.
+
+```bash
+# 1. build com o modo estático + exportação dos dados finais
+GCP_PROJECT=pulso-das-urnas SNAPSHOT_BUCKET=pulso-snapshots-prod pnpm build:static
+
+# 2. conferir no preview
+npx firebase-tools hosting:channel:deploy static-final \
+  --config firebase.static.json --project pulso-das-urnas
+
+# 3. publicar no canal de produção do Hosting
+npx firebase-tools deploy --only hosting \
+  --config firebase.static.json --project pulso-das-urnas
+```
+
+Valide no preview:
+
+- `/br` carrega o mapa e o ranking sem nenhuma chamada a `/api/**`;
+- `/br/sp`, `/br/sp/sao-paulo` e a busca funcionam;
+- `6258` mostra a apuração encerrada e `6257` abre a revisão;
+- o rodapé informa “Versão estática dos resultados finais do TSE”.
+
+Só depois de validar, limpe os dados que não serão mais consultados:
+
+```bash
+# esvazia o bucket de snapshots (o bucket vazio não gera custo de armazenamento)
+gcloud storage rm --recursive "gs://pulso-snapshots-prod/**"
+
+# remove a API e os jobs que não serão mais executados
+gcloud run services delete pulso-api \
+  --project pulso-das-urnas --region southamerica-east1 --quiet
+gcloud run jobs delete pulso-ingest \
+  --project pulso-das-urnas --region southamerica-east1 --quiet
+gcloud run jobs delete pulso-municipios \
+  --project pulso-das-urnas --region southamerica-east1 --quiet
+for job in pulso-ingest-16h56 pulso-ingest-1m pulso-municipios-5m; do
+  gcloud scheduler jobs delete "$job" \
+    --project pulso-das-urnas --location southamerica-east1 --quiet
+done
+```
+
+O Firebase Hosting continua no ar e é gratuito dentro da cota. O `firebase.static.json` não tem
+rewrite para `/api`, então nenhum visitante alcança a API antiga.
+
+Limitação conhecida do arquivo estático: o 2º turno (Presidente) é completo; a revisão do 1º turno
+traz o mapa/ranking de Presidente e o painel municipal de Presidente. Os demais cargos do 1º turno
+não entram no pacote estático porque multiplicariam o volume por vários cargos (Deputado Estadual
+chega a centenas de candidatos por município).

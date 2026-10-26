@@ -65,6 +65,8 @@ export interface StoreOptions {
   speed?: number
   now?: () => number
   repository?: SnapshotRepository
+  /** false congela o pleito para exportação estática: sem TSE em segundo plano. */
+  live?: boolean
 }
 
 interface PartyTable {
@@ -105,6 +107,7 @@ export class DataStore {
   private readonly speed: number
   private readonly now: () => number
   private readonly startedAt: number
+  private readonly live: boolean
   private readonly catalog = loadCatalog()
   private readonly municipalities = loadMunicipalities()
   private readonly partyTable = readPartyTable()
@@ -141,6 +144,7 @@ export class DataStore {
     this.speed = options.speed ?? 600
     this.now = options.now ?? (() => Date.now())
     this.repository = options.repository
+    this.live = options.live ?? true
     this.startedAt = this.now()
     this.nationalPresident = this.tryLoad("2026/6257/br-c0001-e006257-u.json")
     this.secondTurnPresident = this.tryLoad("2026/6258/br-c0001-e006258-u.json")
@@ -232,7 +236,7 @@ export class DataStore {
   }
 
   private isLiveElection(election: string): boolean {
-    return election === SECOND_ELECTION || election === "6260"
+    return this.live && (election === SECOND_ELECTION || election === "6260")
   }
 
   private refreshCityIfStale(
@@ -757,7 +761,7 @@ export class DataStore {
       snapshot.municipiosAtualizadosEm = this.oldestMunicipalityTime(rowsKey)
       snapshot.versao = `${snapshot.versao}:${loaded.size}:${this.municipalityVersion.get(rowsKey) ?? 0}`
       const complete = loaded.size >= totalMunicipalities
-      if (!complete || this.isLiveElection(election)) {
+      if (this.live && (!complete || this.isLiveElection(election))) {
         this.maybeSweepMunicipalities(uf, code, this.dataElection(election, code), election)
       }
     } else if (snapshot.dados) {

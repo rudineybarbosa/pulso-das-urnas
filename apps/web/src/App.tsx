@@ -226,6 +226,12 @@ export function App() {
           </p>
           <p>Este site não é um serviço oficial do TSE.</p>
           <p>Sem cookies de rastreio · acessibilidade WCAG 2.2 AA · arte original</p>
+          {import.meta.env.VITE_STATIC_MODE === "true" ? (
+            <p>
+              Versão estática dos resultados finais do TSE — sem consulta em tempo real. Revisão do
+              1º turno: Presidente.
+            </p>
+          ) : null}
         </footer>
       )}
     </div>
